@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "RetailEstimation",
+    "slug": "retailestimation",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brightechlogo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/brightechlogo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brightechlogo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.brightechsoftware.retailestimation"
+    },
+    "web": {
+      "favicon": "./assets/brightechlogo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bca0e92c-61ab-488d-8115-d64a945a7ab2"
+      }
+    },
+    "owner": "brightechsoftware"
+  }
+}
