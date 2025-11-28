@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
-import { moderateScale } from '../../../Utills/Scalling'; // Adjust path as needed
+import { moderateScale } from '../../../Utills/Scalling';
 
-// This function will create styles based on the theme object from context
 export const createEstimationPreviewModalStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
   
@@ -21,20 +20,251 @@ export const createEstimationPreviewModalStyles = (theme) => {
       borderWidth: 1,
       borderColor: COLORS.borderColor,
     },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: moderateScale(16),
+    },
     modalTitle: {
       fontSize: moderateScale(SIZES.h5),
-      fontWeight: 'bold',
       textAlign: "center",
-      marginBottom: moderateScale(15),
       color: COLORS.title,
       ...FONTS.h5,
+      flex: 1,
+      
+    },
+    closeButton: {
+      padding: moderateScale(4),
+    },
+    printerStatusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: moderateScale(12),
+      backgroundColor: COLORS.surfaceVariant,
+      borderRadius: SIZES.radius_sm,
+      marginBottom: moderateScale(12),
+      borderWidth: 1,
+      borderColor: COLORS.outline,
+    },
+    statusIndicator: {
+      width: moderateScale(8),
+      height: moderateScale(8),
+      borderRadius: moderateScale(4),
+    },
+    statusTextContainer: {
+      flex: 1,
+      marginLeft: moderateScale(12),
+    },
+    printerStatusText: {
+      fontSize: moderateScale(SIZES.font),
+      fontWeight: '600',
+      ...FONTS.font,
+    },
+    statusDescription: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.textLight,
+      marginTop: moderateScale(2),
+      ...FONTS.fontSm,
+    },
+    statusError: {
+      fontSize: moderateScale(SIZES.fontXs),
+      color: COLORS.danger,
+      marginTop: moderateScale(2),
+      ...FONTS.fontXs,
+    },
+    loadingIndicator: {
+      marginLeft: moderateScale(10),
+    },
+    refreshButton: {
+      padding: moderateScale(8),
+    },
+    printerDetails: {
+      backgroundColor: COLORS.primaryLight,
+      padding: moderateScale(12),
+      borderRadius: SIZES.radius_sm,
+      marginBottom: moderateScale(12),
+    },
+    printerInfoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: moderateScale(4),
     },
     printerInfo: {
       fontSize: moderateScale(SIZES.fontSm),
-      textAlign: "center",
-      marginBottom: moderateScale(10),
+      color: COLORS.text,
+      marginLeft: moderateScale(8),
+      ...FONTS.fontSm,
+    },
+    lastChecked: {
+      fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.textLight,
-      fontStyle: "italic",
+      fontStyle: 'italic',
+      ...FONTS.fontXs,
+    },
+    errorContainer: {
+      backgroundColor: COLORS.warning + '20',
+      padding: moderateScale(16),
+      borderRadius: SIZES.radius_sm,
+      marginBottom: moderateScale(12),
+      alignItems: 'center',
+    },
+    errorHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: moderateScale(8),
+    },
+    errorTitle: {
+      fontSize: moderateScale(SIZES.h6),
+      color: COLORS.danger,
+      marginLeft: moderateScale(8),
+      ...FONTS.h6,
+    },
+    errorText: {
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.text,
+      textAlign: 'center',
+      marginBottom: moderateScale(8),
+      ...FONTS.font,
+    },
+    errorSubText: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.textLight,
+      textAlign: 'center',
+      ...FONTS.fontSm,
+    },
+    troubleshootList: {
+      marginTop: moderateScale(8),
+      width: '100%',
+    },
+    troubleshootItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: moderateScale(6),
+    },
+    troubleshootText: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.text,
+      marginLeft: moderateScale(8),
+      ...FONTS.fontSm,
+    },
+    connectionActionButtons: {
+      flexDirection: 'row',
+      marginTop: moderateScale(12),
+      gap: moderateScale(8),
+    },
+    checkConnectionButton: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: COLORS.info,
+      padding: moderateScale(10),
+      borderRadius: SIZES.radius_sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: moderateScale(8),
+    },
+    setupPrinterButton: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: COLORS.primary,
+      padding: moderateScale(10),
+      borderRadius: SIZES.radius_sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: moderateScale(8),
+    },
+    checkConnectionText: {
+      color: COLORS.buttonText,
+      fontSize: moderateScale(SIZES.fontSm),
+      fontWeight: '600',
+      ...FONTS.fontSm,
+    },
+    setupPrinterText: {
+      color: COLORS.buttonText,
+      fontSize: moderateScale(SIZES.fontSm),
+      fontWeight: '600',
+      ...FONTS.fontSm,
+    },
+    errorStateContainer: {
+      alignItems: 'center',
+      padding: moderateScale(20),
+      flex: 1,
+      justifyContent: 'center',
+    },
+    errorIcon: {
+      marginBottom: moderateScale(16),
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: moderateScale(8),
+    },
+    detailText: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.text,
+      marginLeft: moderateScale(8),
+      ...FONTS.fontSm,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: moderateScale(12),
+      marginBottom: moderateScale(20),
+      width: '100%',
+    },
+    primaryButton: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: COLORS.primary,
+      paddingVertical: moderateScale(12),
+      paddingHorizontal: moderateScale(16),
+      borderRadius: SIZES.radius_sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: moderateScale(8),
+    },
+    secondaryButton: {
+      flex: 1,
+      flexDirection: 'row',
+      backgroundColor: COLORS.surfaceVariant,
+      paddingVertical: moderateScale(12),
+      paddingHorizontal: moderateScale(16),
+      borderRadius: SIZES.radius_sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: moderateScale(8),
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+    },
+    primaryButtonText: {
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.buttonText,
+      fontWeight: '600',
+      ...FONTS.font,
+    },
+    secondaryButtonText: {
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.primary,
+      fontWeight: '600',
+      ...FONTS.font,
+    },
+    quickPreview: {
+      backgroundColor: COLORS.surfaceVariant,
+      padding: moderateScale(16),
+      borderRadius: SIZES.radius_sm,
+      width: '100%',
+    },
+    previewTitle: {
+      fontSize: moderateScale(SIZES.h6),
+      color: COLORS.title,
+      marginBottom: moderateScale(8),
+      ...FONTS.h6,
+    },
+    previewContent: {
+      gap: moderateScale(4),
+    },
+    previewText: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.text,
       ...FONTS.fontSm,
     },
     previewContainer: {
@@ -45,6 +275,9 @@ export const createEstimationPreviewModalStyles = (theme) => {
       padding: SIZES.padding,
       marginBottom: moderateScale(15),
       backgroundColor: COLORS.surfaceVariant,
+    },
+    previewContentContainer: {
+      paddingBottom: moderateScale(20),
     },
     section: {
       marginBottom: moderateScale(10),
@@ -120,9 +353,27 @@ export const createEstimationPreviewModalStyles = (theme) => {
     totalsSection: {
       marginTop: moderateScale(10),
     },
+    grandTotalRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginVertical: moderateScale(8),
+      backgroundColor: COLORS.primaryLight,
+      padding: moderateScale(8),
+      borderRadius: SIZES.radius_sm,
+    },
+    grandTotalText: {
+      fontSize: moderateScale(SIZES.font),
+      fontWeight: 'bold',
+      color: COLORS.primary,
+      ...FONTS.font,
+    },
     footer: {
       alignItems: "center",
       marginTop: moderateScale(10),
+      paddingTop: moderateScale(10),
+      borderTopWidth: 1,
+      borderTopColor: COLORS.borderColor,
     },
     buttonContainer: {
       flexDirection: "row",
@@ -130,10 +381,14 @@ export const createEstimationPreviewModalStyles = (theme) => {
       gap: moderateScale(10),
     },
     cancelButton: {
+      flexDirection: 'row',
       backgroundColor: COLORS.secondary,
-      padding: SIZES.padding,
+      padding: moderateScale(12),
       borderRadius: SIZES.radius,
       flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: moderateScale(8),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
@@ -141,29 +396,34 @@ export const createEstimationPreviewModalStyles = (theme) => {
       elevation: 3,
     },
     printButton: {
+      flexDirection: 'row',
       backgroundColor: COLORS.primary,
-      padding: SIZES.padding,
+      padding: moderateScale(12),
       borderRadius: SIZES.radius,
       flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: moderateScale(8),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
       shadowRadius: 4,
       elevation: 3,
     },
+    printButtonDisabled: {
+      backgroundColor: COLORS.placeholder,
+      opacity: 0.6,
+    },
     buttonText: {
       color: COLORS.buttonText,
-      textAlign: "center",
       fontSize: moderateScale(SIZES.font),
       fontWeight: '600',
       ...FONTS.font,
     },
-    disabledButton: {
-      backgroundColor: COLORS.placeholder,
-      opacity: 0.6,
+    connectionActions: {
+      marginBottom: moderateScale(12),
     },
   });
 };
 
-// Default export for convenience
 export default createEstimationPreviewModalStyles;

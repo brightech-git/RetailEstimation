@@ -17,6 +17,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import { useToast } from "../../Context/ToastContext";
 import Footer from "../../Components/Footer/Footer";
 import { useTheme } from "../../../Context/ThemeContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";   // 👈 ADDED
 import { getStyles } from "./LoginStyles";
 
 const { width } = Dimensions.get("window");
@@ -24,10 +25,11 @@ const { width } = Dimensions.get("window");
 const LoginScreen = ({ navigation }) => {
   const { login, loading } = useContext(LoginContext);
   const { showToast } = useToast();
-  const { theme, isDarkMode } = useTheme(); // 👈 removed toggleTheme since not needed here
+  const { theme, isDarkMode } = useTheme();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -35,6 +37,8 @@ const LoginScreen = ({ navigation }) => {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const formScale = useRef(new Animated.Value(0.95)).current;
 
+
+  // UI animations
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
@@ -50,9 +54,10 @@ const LoginScreen = ({ navigation }) => {
     ]).start();
   }, []);
 
+  // 🚀 LOGIN LOGIC — Store Employee ID
   const handleLogin = async () => {
-    if (!username || !password) {
-      showToast("Please enter username and password", "warning");
+    if (!username || !password || !employeeId) {
+      showToast("Please enter username, password & Employee ID", "warning");
       return;
     }
 
@@ -62,11 +67,21 @@ const LoginScreen = ({ navigation }) => {
     ]).start();
 
     try {
-      const success = await login(username, password);
+      // Pass employeeId inside login()
+      const success = await login(username, password, employeeId);
+
       if (success) {
+        await AsyncStorage.setItem("EMPLOYEE_ID", employeeId); // 👈 SAVE
+       console.log("Employee ID saved:", employeeId);
+         // ✅ Reset form after successful login
+      setUsername("");
+      setPassword("");
+      setEmployeeId("");
         showToast("Login successful!", "success");
         setTimeout(() => navigation.replace("Home"), 600);
-      } else showToast("Invalid username or password", "error");
+      } else {
+        showToast("Invalid username or password", "error");
+      }
     } catch (err) {
       showToast("Login failed. Please try again", "error");
     }
@@ -93,7 +108,7 @@ const LoginScreen = ({ navigation }) => {
           <Animated.View
             style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
           >
-            {/* Logo / Title */}
+            {/* Logo */ }
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
               <Text style={styles.title}>
                 Retail{"\n"}
@@ -102,7 +117,7 @@ const LoginScreen = ({ navigation }) => {
               <Text style={styles.subtitle}>Exquisite Craftsmanship</Text>
             </Animated.View>
 
-            {/* Login Form */}
+            {/* Form */ }
             <Animated.View style={[styles.formContainer, { transform: [{ scale: formScale }] }]}>
               <LinearGradient
                 colors={
@@ -129,7 +144,13 @@ const LoginScreen = ({ navigation }) => {
                     secureTextEntry
                     value={password}
                     onChangeText={setPassword}
-                    onSubmitEditing={handleLogin}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Employee ID"
+                    placeholderTextColor={theme.COLORS.placeholder}
+                    value={employeeId}
+                    onChangeText={setEmployeeId}
                   />
 
                   <TouchableOpacity
@@ -138,10 +159,7 @@ const LoginScreen = ({ navigation }) => {
                     disabled={loading}
                     activeOpacity={0.85}
                   >
-                    <LinearGradient
-                      colors={theme.COLORS.gradientPrimary}
-                      style={styles.gradientButton}
-                    >
+                    <LinearGradient colors={theme.COLORS.gradientPrimary} style={styles.gradientButton}>
                       {loading ? (
                         <ActivityIndicator color={theme.COLORS.title} size="small" />
                       ) : (

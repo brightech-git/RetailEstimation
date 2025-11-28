@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "RetailEstimation",
-    "slug": "retailestimation",
+    "slug": "bmg-estimation",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/brightechlogo.png",
@@ -29,9 +29,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "bca0e92c-61ab-488d-8115-d64a945a7ab2"
+        "projectId": "0f84c655-d461-41d3-b9a6-6aafc1f74dc9"
       }
     },
-    "owner": "brightechsoftware"
+    "owner": "suresh11"
   }
 }

@@ -188,6 +188,8 @@ export const createFonts = (COLORS) => ({
   subheading: { fontFamily: "DMSerif",  },
   body: { fontFamily: "DancingScript" },
   text: { fontFamily: "Domine", },
+  text1: { fontFamily: "TrajanProBold", },
+  text2: { fontFamily: "TrajanPro", },
 });
 
 /* -------------------------------------------------------------------------- */

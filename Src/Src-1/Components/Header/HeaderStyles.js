@@ -178,8 +178,8 @@ drawerContainer: {
 
 closeDrawer: {
   position: "absolute",
-  top: Platform.OS === "ios" ? verticalScale(40) : verticalScale(20), // small top margin
-  right: scale(15),                                                  // aligns to right edge
+  top: Platform.OS === "ios" ? verticalScale(40) : verticalScale(0), // small top margin
+  right: scale(2),                                                  // aligns to right edge
   zIndex: 2100,
   padding: scale(6),
   backgroundColor: "rgba(0,0,0,0.05)",                               // light touch background
@@ -189,7 +189,7 @@ closeDrawer: {
 
 
 drawerHeader: {
-  alignItems: "center",
+  alignItems: "flex-start",
   marginBottom: verticalScale(30),
   paddingBottom: verticalScale(15),
   borderBottomWidth: 0.6,
@@ -197,8 +197,8 @@ drawerHeader: {
 },
 
 drawerLogo: {
-  width: scale(70),
-  height: scale(70),
+  width: scale(150),
+  height: scale(80),
   borderRadius: moderateScale(14),
   marginBottom: verticalScale(8),
   backgroundColor: COLORS.surfaceVariant,

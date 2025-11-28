@@ -120,11 +120,11 @@ const MainHeader = () => {
         <View style={styles.topSection}>
           {/* Left: Theme Toggle */}
           <TouchableOpacity style={styles.iconContainer} onPress={toggleTheme}>
-            <Ionicons
+            {/* <Ionicons
               name={isDarkMode ? "sunny-outline" : "moon-outline"}
               size={styles.iconSize + 2}
               color={theme.COLORS.warning}
-            />
+            /> */}
           </TouchableOpacity>
 
           {/* Center: Company Logo + Name */}

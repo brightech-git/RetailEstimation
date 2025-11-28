@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -10,14 +10,16 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
   Alert,
+  RefreshControl,
+  Keyboard,
 } from "react-native";
-import { useTheme } from "../../../Context/ThemeContext"; // Adjust path as needed
+import { useTheme } from "../../../Context/ThemeContext";
 import { usePrinterService } from "../../Service/IpServices";
 import { useToast } from "../../Context/ToastContext";
-import { createPrinterSettingsStyles } from "./PrinterStyles"; // Adjust path as needed
-import Icon from "react-native-vector-icons/Ionicons";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { createPrinterSettingsStyles } from "./PrinterStyles";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Constants
 const DEFAULT_PORT = "9100";
@@ -25,11 +27,12 @@ const IP_PATTERN = /^(\d{1,3}\.){3}\d{1,3}$/;
 const MIN_PORT = 1;
 const MAX_PORT = 65535;
 const PREVIEW_PRINTER_COUNT = 3;
+const STORAGE_KEY_EMPLOYEE = "EMPLOYEE_ID";
+const STORAGE_KEY_USERDATA = "userData";
 
-// Helper function to safely convert ID to string
+// Helper Functions
 const safeIdToString = (id) => id?.toString() ?? "";
 
-// Helper function to validate IP address with proper range checking
 const isValidIP = (ip) => {
   if (!IP_PATTERN.test(ip)) return false;
   return ip.split(".").every((octet) => {
@@ -38,30 +41,59 @@ const isValidIP = (ip) => {
   });
 };
 
+const isValidPort = (port) => {
+  const portNum = Number(port);
+  return !isNaN(portNum) && portNum >= MIN_PORT && portNum <= MAX_PORT;
+};
+
 const PrinterSettings = () => {
   const { theme } = useTheme();
   const styles = createPrinterSettingsStyles(theme);
   const { showToast } = useToast();
   const printerService = usePrinterService();
   const navigation = useNavigation();
-  // State management
+  
+  // Refs
+  const isMountedRef = useRef(true);
+  const scrollViewRef = useRef(null);
+  
+  // State Management
   const [printerList, setPrinterList] = useState([]);
   const [currentPrinter, setCurrentPrinterState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [host, setHost] = useState("");
   const [port, setPort] = useState(DEFAULT_PORT);
   const [printerName, setPrinterName] = useState("");
+  
+  const [employeeId, setEmployeeId] = useState("");
+
   const [showPrinterList, setShowPrinterList] = useState(false);
   const [editingPrinter, setEditingPrinter] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  // Load printer data on mount
+  // Cleanup on unmount
   useEffect(() => {
-    loadPrinterData();
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
+
+  // Load employee ID on mount
+  useEffect(() => {
+    loadEmployeeId();
+  }, []);
+
+  // Load printer data when employee ID changes
+  useEffect(() => {
+    if (employeeId) {
+      loadPrinterData();
+    }
+  }, [employeeId]);
 
   // Update form when current printer changes
   useEffect(() => {
@@ -74,26 +106,61 @@ const PrinterSettings = () => {
     }
   }, [currentPrinter]);
 
+  // Load employee ID from AsyncStorage
+  const loadEmployeeId = useCallback(async () => {
+    try {
+      let storedEmployeeId = await AsyncStorage.getItem(STORAGE_KEY_EMPLOYEE);
+      
+      if (!storedEmployeeId) {
+        const userData = await AsyncStorage.getItem(STORAGE_KEY_USERDATA);
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          storedEmployeeId = parsedUser.employeeId || parsedUser.id || "";
+        }
+      }
+
+      if (storedEmployeeId && isMountedRef.current) {
+        setEmployeeId(storedEmployeeId);
+      } else {
+        showToast("Employee ID not found. Please login again.", "error");
+      }
+    } catch (error) {
+      console.error("Error loading employee ID:", error);
+      showToast("Failed to load employee data", "error");
+    }
+  }, [showToast]);
+
   // Load printer data from service
   const loadPrinterData = useCallback(async () => {
+    if (!employeeId) return;
+    
     try {
-      setIsLoading(true);
-      const printers = await printerService.getAllPrinters();
+      console.log("🖨️ Loading printers for employee:", employeeId);
+      
+      const employeePrinters = await printerService.getPrintersByEmployee(employeeId);
 
-      setPrinterList(printers || []);
+      if (!isMountedRef.current) return;
 
-      // Find active printer - using the data structure from your API
-      const activePrinter = printers?.find(
+      console.log("📦 Printers loaded:", employeePrinters?.length || 0);
+
+      setPrinterList(employeePrinters || []);
+
+      const activePrinter = (employeePrinters || []).find(
         (printer) => printer.active === true
       );
       setCurrentPrinterState(activePrinter || null);
     } catch (error) {
       console.error("Error loading printer data:", error);
-      showToast("Failed to load printer settings", "error");
+      if (isMountedRef.current) {
+        showToast("Failed to load printer settings", "error");
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  }, [printerService, showToast]);
+  }, [printerService, showToast, employeeId]);
 
   // Validate form input
   const validateInput = useCallback(() => {
@@ -107,41 +174,44 @@ const PrinterSettings = () => {
 
     if (!isValidIP(trimmedHost)) {
       showToast(
-        "Please enter a valid IP address (e.g., 192.168.1.100)",
+        "Invalid IP address. Format: 192.168.1.100",
         "warning"
       );
       return false;
     }
 
-    const portNum = Number(trimmedPort);
-    if (
-      !trimmedPort ||
-      isNaN(portNum) ||
-      portNum < MIN_PORT ||
-      portNum > MAX_PORT
-    ) {
+    if (!employeeId) {
+      showToast("Employee ID not available", "error");
+      return false;
+    }
+
+    if (!isValidPort(trimmedPort)) {
       showToast(
-        `Please enter a valid port number (${MIN_PORT}-${MAX_PORT})`,
+        `Port must be between ${MIN_PORT} and ${MAX_PORT}`,
         "warning"
       );
       return false;
     }
 
     return true;
-  }, [host, port, showToast]);
+  }, [host, port, employeeId, showToast]);
 
   // Save or update printer
   const handleSavePrinter = useCallback(async () => {
-    if (!validateInput() || isSaving) return;
+    if (!validateInput() || isSaving || !employeeId) return;
 
+    Keyboard.dismiss();
     setIsSaving(true);
-    const printerDisplayName = printerName.trim() || `Printer ${host.trim()}`;
+
+    const trimmedHost = host.trim();
+    const printerDisplayName = printerName.trim() || `Printer ${trimmedHost}`;
 
     const printerData = {
-      ipAddress: host.trim(),
+      ipAddress: trimmedHost,
       port: Number(port),
       name: printerDisplayName,
       active: editingPrinter?.active || false,
+      empId: Number(employeeId),
     };
 
     try {
@@ -160,14 +230,16 @@ const PrinterSettings = () => {
       if (!editingPrinter) {
         resetForm();
       }
+
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     } catch (error) {
-      showToast(
-        error.message || "Failed to save printer configuration",
-        "error"
-      );
-      console.error(error);
+      const errorMessage = error.message || "Failed to save printer";
+      showToast(errorMessage, "error");
+      console.error("Save printer error:", error);
     } finally {
-      setIsSaving(false);
+      if (isMountedRef.current) {
+        setIsSaving(false);
+      }
     }
   }, [
     validateInput,
@@ -175,6 +247,7 @@ const PrinterSettings = () => {
     printerName,
     host,
     port,
+    employeeId,
     editingPrinter,
     printerService,
     loadPrinterData,
@@ -185,58 +258,80 @@ const PrinterSettings = () => {
   const handleSetCurrentPrinter = useCallback(
     async (printer) => {
       try {
-        const updatePromises = printerList.map(async (p) => {
+        console.log("🎯 Setting printer as active:", printer.name);
+        
+        // First, deactivate all other printers for this employee
+        const employeePrinters = printerList.filter(
+          (p) => p.empId?.toString() === employeeId
+        );
+
+        const updatePromises = employeePrinters.map(async (p) => {
           const isTargetPrinter = p.id === printer.id;
-          const shouldUpdate = isTargetPrinter || p.active;
-
-          if (!shouldUpdate) return p;
-
-          return await printerService.updatePrinter({
-            id: p.id,
-            ipAddress: p.ip_address,
-            port: p.port,
-            name: p.name,
-            active: isTargetPrinter,
-          });
+          
+          // Only update if status needs to change
+          if ((isTargetPrinter && !p.active) || (!isTargetPrinter && p.active)) {
+            return await printerService.updatePrinter({
+              id: p.id,
+              ipAddress: p.ip_address,
+              port: p.port,
+              name: p.name,
+              active: isTargetPrinter,
+              empId: p.empId,
+            });
+          }
+          return p;
         });
 
         await Promise.all(updatePromises);
-        await loadPrinterData();
-
-        setShowPrinterList(false);
-        showToast(`Current printer set to ${printer.name}`, "success");
+        
+        if (isMountedRef.current) {
+          await loadPrinterData();
+          setShowPrinterList(false);
+          showToast(`${printer.name} is now active`, "success");
+        }
       } catch (error) {
-        console.error("Error in handleSetCurrentPrinter:", error);
-        showToast(error.message || "Failed to set current printer", "error");
+        console.error("Error setting current printer:", error);
+        showToast(error.message || "Failed to set active printer", "error");
       }
     },
-    [printerList, printerService, loadPrinterData, showToast]
+    [printerList, printerService, loadPrinterData, showToast, employeeId]
   );
 
   // Clear active printer
   const clearCurrentPrinter = useCallback(async () => {
     try {
-      const updatePromises = printerList
-        .filter((p) => p.active)
-        .map(
-          async (p) =>
-            await printerService.updatePrinter({
-              id: p.id,
-              ipAddress: p.ip_address,
-              port: p.port,
-              name: p.name,
-              active: false,
-            })
-        );
+      const employeePrinters = printerList.filter(
+        (p) => p.empId?.toString() === employeeId && p.active
+      );
+
+      if (employeePrinters.length === 0) {
+        showToast("No active printer to clear", "info");
+        return;
+      }
+
+      const updatePromises = employeePrinters.map(
+        async (p) =>
+          await printerService.updatePrinter({
+            id: p.id,
+            ipAddress: p.ip_address,
+            port: p.port,
+            name: p.name,
+            active: false,
+            empId: p.empId,
+          })
+      );
 
       await Promise.all(updatePromises);
-      await loadPrinterData();
-      showToast("Current printer cleared", "info");
+      
+      if (isMountedRef.current) {
+        await loadPrinterData();
+        showToast("Active printer cleared", "info");
+      }
     } catch (error) {
       console.error("Error clearing current printer:", error);
-      showToast("Failed to clear current printer", "error");
+      showToast("Failed to clear active printer", "error");
     }
-  }, [printerList, printerService, loadPrinterData, showToast]);
+  }, [printerList, printerService, loadPrinterData, showToast, employeeId]);
 
   // Edit printer
   const handleEditPrinter = useCallback((printer) => {
@@ -245,6 +340,8 @@ const PrinterSettings = () => {
     setPort(printer.port.toString());
     setPrinterName(printer.name || "");
     setShowPrinterList(false);
+    
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, []);
 
   // Delete printer
@@ -261,11 +358,15 @@ const PrinterSettings = () => {
             onPress: async () => {
               try {
                 await printerService.deletePrinter(printer.id);
-                await loadPrinterData();
-                showToast("Printer deleted successfully", "success");
+                
+                if (isMountedRef.current) {
+                  await loadPrinterData();
+                  showToast("Printer deleted successfully", "success");
+                }
               } catch (error) {
-                showToast(error.message || "Failed to delete printer", "error");
-                console.error(error);
+                const errorMessage = error.message || "Failed to delete printer";
+                showToast(errorMessage, "error");
+                console.error("Delete printer error:", error);
               }
             },
           },
@@ -283,33 +384,46 @@ const PrinterSettings = () => {
     setEditingPrinter(null);
   }, []);
 
-  // Clear all printers
+  // Clear all printers for current employee
   const handleClearAllPrinters = useCallback(async () => {
     try {
-      await Promise.all(
-        printerList.map((printer) => printerService.deletePrinter(printer.id))
+      const employeePrinters = printerList.filter(
+        (p) => p.empId?.toString() === employeeId
       );
 
-      await loadPrinterData();
-      setShowClearConfirm(false);
-      showToast("All printers have been deleted", "success");
+      if (employeePrinters.length === 0) {
+        showToast("No printers to delete", "info");
+        setShowClearConfirm(false);
+        return;
+      }
+
+      await Promise.all(
+        employeePrinters.map((printer) => printerService.deletePrinter(printer.id))
+      );
+
+      if (isMountedRef.current) {
+        await loadPrinterData();
+        setShowClearConfirm(false);
+        showToast(`${employeePrinters.length} printer(s) deleted`, "success");
+      }
     } catch (error) {
       console.error("Error clearing printers:", error);
-      showToast("Failed to clear printer configuration", "error");
+      showToast("Failed to clear printers", "error");
     }
-  }, [printerList, printerService, loadPrinterData, showToast]);
+  }, [printerList, printerService, loadPrinterData, showToast, employeeId]);
 
   // Refresh printers
-  const refreshPrinters = useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
     await loadPrinterData();
     showToast("Printer list updated", "info");
   }, [loadPrinterData, showToast]);
 
   // Filter printers based on search query
   const filteredPrinters = useMemo(() => {
-    if (!searchQuery) return printerList;
+    if (!searchQuery.trim()) return printerList;
 
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
     return printerList.filter(
       (printer) =>
         printer.name.toLowerCase().includes(query) ||
@@ -318,22 +432,20 @@ const PrinterSettings = () => {
     );
   }, [printerList, searchQuery]);
 
-  // Sort printers by active status and date
+  // Sort printers - active first, then by usage/date
   const sortedPrinters = useMemo(() => {
     return [...filteredPrinters].sort((a, b) => {
-      // Active printer first
       if (a.active && !b.active) return -1;
       if (!a.active && b.active) return 1;
 
-      // Then by last used or created date
-      const aDate = new Date(a.last_used || a.created_at);
-      const bDate = new Date(b.last_used || b.created_at);
+      const aDate = new Date(a.last_used || a.created_at || 0);
+      const bDate = new Date(b.last_used || b.created_at || 0);
 
       return bDate - aDate;
     });
   }, [filteredPrinters]);
 
-  // Render individual printer item
+  // Render printer item
   const renderPrinterItem = useCallback(
     ({ item }) => {
       const isCurrent = item.active === true;
@@ -343,17 +455,18 @@ const PrinterSettings = () => {
           style={[styles.printerItem, isCurrent && styles.currentPrinterItem]}
         >
           <View style={styles.printerInfo}>
-            <Text style={styles.printerName}>{item.name}</Text>
+            <View style={styles.printerNameRow}>
+              <Text style={styles.printerName}>{item.name}</Text>
+              {isCurrent && (
+                <View style={styles.currentBadge}>
+                  <View style={styles.activeDot} />
+                  <Text style={styles.currentBadgeText}>ACTIVE</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.printerAddress}>
               {item.ip_address}:{item.port}
             </Text>
-            {isCurrent && (
-              <View style={styles.printerMeta}>
-                <View style={styles.currentBadge}>
-                  <Text style={styles.currentBadgeText}>ACTIVE</Text>
-                </View>
-              </View>
-            )}
           </View>
           <View style={styles.printerActions}>
             {!isCurrent && (
@@ -361,20 +474,20 @@ const PrinterSettings = () => {
                 style={[styles.actionButton, styles.selectButton]}
                 onPress={() => handleSetCurrentPrinter(item)}
               >
-                <Text style={styles.actionButtonText}>Select</Text>
+                <MaterialIcons name="check-circle" size={16} color="#fff" />
               </TouchableOpacity>
             )}
             <TouchableOpacity
               style={[styles.actionButton, styles.editButton]}
               onPress={() => handleEditPrinter(item)}
             >
-              <Text style={styles.actionButtonText}>Edit</Text>
+              <MaterialIcons name="edit" size={16} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
               onPress={() => handleDeletePrinter(item)}
             >
-              <Text style={styles.actionButtonText}>Delete</Text>
+              <MaterialIcons name="delete" size={16} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -383,10 +496,10 @@ const PrinterSettings = () => {
     [handleSetCurrentPrinter, handleEditPrinter, handleDeletePrinter, styles]
   );
 
-  // Key extractor for FlatList
+  // Key extractor
   const keyExtractor = useCallback((item) => safeIdToString(item.id), []);
 
-  // Show loading state
+  // Loading state
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -397,95 +510,154 @@ const PrinterSettings = () => {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      ref={scrollViewRef}
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={[theme.COLORS.primary]}
+          tintColor={theme.COLORS.primary}
+        />
+      }
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialIcons name="arrow-back" size={24} color={theme.COLORS.buttonText} />
+          <MaterialIcons
+            name="arrow-back"
+            size={24}
+            color={theme.COLORS.buttonText}
+          />
         </TouchableOpacity>
 
-        <Text style={styles.mainTitle}>Printer Configuration</Text>
+        <Text style={styles.mainTitle}>Printer Settings</Text>
 
         <TouchableOpacity
-          style={[styles.refreshButton, isLoading && styles.disabledButton]}
-          onPress={refreshPrinters}
-          disabled={isLoading}
+          style={[styles.refreshButton, isRefreshing && styles.disabledButton]}
+          onPress={handleRefresh}
+          disabled={isRefreshing}
         >
-          <MaterialIcons name="refresh" size={20} color={theme.COLORS.buttonText} />
+          <MaterialIcons
+            name="refresh"
+            size={20}
+            color={theme.COLORS.buttonText}
+          />
         </TouchableOpacity>
       </View>
 
-      {/* Current Printer Display */}
+      {/* Compact Current Printer */}
       {currentPrinter && (
-        <View style={styles.currentPrinterSection}>
-          <View style={styles.currentPrinterHeader}>
-            <Text style={styles.currentPrinterLabel}>Active Printer</Text>
-            <View style={styles.statusIndicator} />
+        <View style={styles.compactCurrentPrinter}>
+          <View style={styles.compactPrinterInfo}>
+            <View style={styles.compactPrinterIcon}>
+              <MaterialIcons name="print" size={20} color={theme.COLORS.primary} />
+            </View>
+            <View style={styles.compactPrinterDetails}>
+              <View style={styles.compactPrinterHeader}>
+                <Text style={styles.compactPrinterName}>{currentPrinter.name}</Text>
+                <View style={styles.compactActiveBadge}>
+                  <View style={styles.compactActiveDot} />
+                  <Text style={styles.compactActiveBadgeText}>Active</Text>
+                </View>
+              </View>
+              <Text style={styles.compactPrinterAddress}>
+                {currentPrinter.ip_address}:{currentPrinter.port}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.currentPrinterName}>{currentPrinter.name}</Text>
-          <Text style={styles.currentPrinterAddress}>
-            {currentPrinter.ip_address}:{currentPrinter.port}
-          </Text>
           <TouchableOpacity
-            style={styles.clearCurrentButton}
+            style={styles.compactClearButton}
             onPress={clearCurrentPrinter}
           >
-            <Text style={styles.clearCurrentButtonText}>
-              Clear Active Printer
-            </Text>
+            <MaterialIcons name="close" size={18} color={theme.COLORS.danger} />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Add/Edit Printer Form */}
+      {/* Add/Edit Form */}
       <View style={styles.formSection}>
         <View style={styles.formHeader}>
-          <Text style={styles.sectionTitle}>
-            {editingPrinter ? "Edit Printer" : "Add New Printer"}
-          </Text>
+          <View style={styles.formTitleRow}>
+            <MaterialIcons 
+              name={editingPrinter ? "edit" : "add-circle-outline"} 
+              size={22} 
+              color={theme.COLORS.primary} 
+            />
+            <Text style={styles.sectionTitle}>
+              {editingPrinter ? "Edit Printer" : "Add New Printer"}
+            </Text>
+          </View>
           {editingPrinter && (
-            <TouchableOpacity onPress={resetForm}>
-              <Text style={styles.cancelEditText}>Cancel Edit</Text>
+            <TouchableOpacity onPress={resetForm} style={styles.cancelEditButton}>
+              <MaterialIcons name="close" size={18} color={theme.COLORS.danger} />
+              <Text style={styles.cancelEditText}>Cancel</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <Text style={styles.label}>Printer Name (Optional)</Text>
-        <TextInput
-          style={styles.input}
-          value={printerName}
-          onChangeText={setPrinterName}
-          placeholder="e.g. Kitchen Printer, Counter Printer"
-          placeholderTextColor={theme.COLORS.placeholder}
-          editable={!isSaving}
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>
+            Printer Name <Text style={styles.optionalText}>(Optional)</Text>
+          </Text>
+          <View style={styles.inputWrapper}>
+            <MaterialIcons name="label" size={18} color={theme.COLORS.textLight} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={printerName}
+              onChangeText={setPrinterName}
+              placeholder="e.g. Kitchen Printer"
+              placeholderTextColor={theme.COLORS.placeholder}
+              editable={!isSaving}
+              maxLength={50}
+            />
+          </View>
+        </View>
 
-        <Text style={styles.label}>Printer IP Address *</Text>
-        <TextInput
-          style={styles.input}
-          value={host}
-          onChangeText={setHost}
-          placeholder="e.g. 192.168.0.8"
-          placeholderTextColor={theme.COLORS.placeholder}
-          keyboardType="numeric"
-          editable={!isSaving}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>
+            IP Address <Text style={styles.requiredText}>*</Text>
+          </Text>
+          <View style={styles.inputWrapper}>
+            <MaterialIcons name="computer" size={18} color={theme.COLORS.textLight} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={host}
+              onChangeText={setHost}
+              placeholder="192.168.0.8"
+              placeholderTextColor={theme.COLORS.placeholder}
+              keyboardType="numeric"
+              editable={!isSaving}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={15}
+            />
+          </View>
+        </View>
 
-        <Text style={styles.label}>Port *</Text>
-        <TextInput
-          style={styles.input}
-          value={port}
-          onChangeText={setPort}
-          placeholder={DEFAULT_PORT}
-          keyboardType="numeric"
-          placeholderTextColor={theme.COLORS.placeholder}
-          editable={!isSaving}
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>
+            Port <Text style={styles.requiredText}>*</Text>
+          </Text>
+          <View style={styles.inputWrapper}>
+            <MaterialIcons name="settings-ethernet" size={18} color={theme.COLORS.textLight} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={port}
+              onChangeText={setPort}
+              placeholder={DEFAULT_PORT}
+              keyboardType="numeric"
+              placeholderTextColor={theme.COLORS.placeholder}
+              editable={!isSaving}
+              maxLength={5}
+            />
+          </View>
+        </View>
 
         <TouchableOpacity
           style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
@@ -495,26 +667,40 @@ const PrinterSettings = () => {
           {isSaving ? (
             <ActivityIndicator size="small" color={theme.COLORS.buttonText} />
           ) : (
-            <Text style={styles.buttonText}>
-              {editingPrinter ? "Update" : "Add Printer"}
-            </Text>
+            <>
+              <MaterialIcons 
+                name={editingPrinter ? "save" : "add"} 
+                size={20} 
+                color={theme.COLORS.buttonText} 
+              />
+              <Text style={styles.buttonText}>
+                {editingPrinter ? "Update Printer" : "Add Printer"}
+              </Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* Saved Printers List */}
+      {/* Printer List */}
       <View style={styles.savedPrintersSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Saved Printers ({printerList.length})
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <MaterialIcons name="list" size={22} color={theme.COLORS.primary} />
+            <Text style={styles.sectionTitle}>
+              Your Printers
+            </Text>
+            <View style={styles.printerCountBadge}>
+              <Text style={styles.printerCountText}>{printerList.length}</Text>
+            </View>
+          </View>
           <View style={styles.sectionActions}>
             {printerList.length > PREVIEW_PRINTER_COUNT && (
               <TouchableOpacity
-                style={styles.manageButton}
+                style={styles.viewAllButton}
                 onPress={() => setShowPrinterList(true)}
               >
-                <Text style={styles.manageButtonText}>View All</Text>
+                <Text style={styles.viewAllButtonText}>View All</Text>
+                <MaterialIcons name="arrow-forward" size={14} color={theme.COLORS.primary} />
               </TouchableOpacity>
             )}
             {printerList.length > 0 && (
@@ -522,7 +708,8 @@ const PrinterSettings = () => {
                 style={styles.clearAllButton}
                 onPress={() => setShowClearConfirm(true)}
               >
-                <Text style={styles.clearAllButtonText}>Clear All</Text>
+                <MaterialIcons name="delete-sweep" size={16} color={theme.COLORS.buttonText} />
+                <Text style={styles.clearAllButtonText}>Clear</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -530,8 +717,8 @@ const PrinterSettings = () => {
 
         {printerList.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>🖨️</Text>
-            <Text style={styles.emptyText}>No saved printers</Text>
+            <MaterialIcons name="print-disabled" size={56} color={theme.COLORS.textLight} style={styles.emptyStateIcon} />
+            <Text style={styles.emptyText}>No printers configured</Text>
             <Text style={styles.emptySubtext}>
               Add your first printer to get started
             </Text>
@@ -546,7 +733,7 @@ const PrinterSettings = () => {
         )}
       </View>
 
-      {/* Full Printer List Modal */}
+      {/* Full List Modal */}
       <Modal
         visible={showPrinterList}
         animationType="slide"
@@ -557,26 +744,43 @@ const PrinterSettings = () => {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>
-                  All Printers ({printerList.length})
-                </Text>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    Your Printers ({printerList.length})
+                  </Text>
+                  <TouchableOpacity 
+                    onPress={() => setShowPrinterList(false)}
+                    style={styles.modalCloseButton}
+                  >
+                    <MaterialIcons name="close" size={24} color={theme.COLORS.text} />
+                  </TouchableOpacity>
+                </View>
 
                 {printerList.length > 0 && (
-                  <TextInput
-                    style={styles.searchInput}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    placeholder="Search printers..."
-                    placeholderTextColor={theme.COLORS.placeholder}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
+                  <View style={styles.searchWrapper}>
+                    <MaterialIcons name="search" size={20} color={theme.COLORS.textLight} style={styles.searchIcon} />
+                    <TextInput
+                      style={styles.searchInput}
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      placeholder="Search printers..."
+                      placeholderTextColor={theme.COLORS.placeholder}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
                 )}
 
                 {filteredPrinters.length === 0 ? (
                   <View style={styles.emptyState}>
+                    <MaterialIcons 
+                      name={searchQuery ? "search-off" : "print-disabled"} 
+                      size={56} 
+                      color={theme.COLORS.textLight} 
+                      style={styles.emptyStateIcon} 
+                    />
                     <Text style={styles.emptyText}>
-                      {searchQuery ? "No printers found" : "No saved printers"}
+                      {searchQuery ? "No printers found" : "No printers configured"}
                     </Text>
                   </View>
                 ) : (
@@ -588,25 +792,13 @@ const PrinterSettings = () => {
                     showsVerticalScrollIndicator={false}
                   />
                 )}
-
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={() => {
-                      setShowPrinterList(false);
-                      setSearchQuery("");
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Close</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Clear All Confirmation Modal */}
+      {/* Clear Confirmation Modal */}
       <Modal
         visible={showClearConfirm}
         animationType="fade"
@@ -615,10 +807,13 @@ const PrinterSettings = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.confirmModal}>
+            <View style={styles.confirmIconContainer}>
+              <MaterialIcons name="warning" size={48} color={theme.COLORS.danger} />
+            </View>
             <Text style={styles.confirmTitle}>Delete All Printers?</Text>
             <Text style={styles.confirmMessage}>
               This will permanently delete all {printerList.length} printer
-              {printerList.length !== 1 ? "s" : ""} from the database. This
+              {printerList.length !== 1 ? "s" : ""} from your account. This
               action cannot be undone.
             </Text>
             <View style={styles.confirmButtons}>
@@ -626,7 +821,7 @@ const PrinterSettings = () => {
                 style={[styles.confirmButton, styles.cancelConfirmButton]}
                 onPress={() => setShowClearConfirm(false)}
               >
-                <Text style={styles.confirmButtonText}>Cancel</Text>
+                <Text style={styles.cancelConfirmButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.confirmButton, styles.deleteConfirmButton]}

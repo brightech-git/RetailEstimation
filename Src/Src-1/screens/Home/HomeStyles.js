@@ -144,7 +144,7 @@ export const createHomeStyles = (theme) => {
       borderRadius: SIZES.radius_sm,
     },
     trannoText: {
-      fontSize: moderateScale(SIZES.font+2),
+      fontSize: moderateScale(SIZES.font),
       // fontWeight: 'bold',
       color: COLORS.primary,
       ...FONTS.text,

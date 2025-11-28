@@ -27,6 +27,7 @@ import useEstimationData from "../../Services/TagDetailsService";
 import { createHomeScreenStyles } from "./HomeStyles"; // Adjust path as needed
 import { scale } from "../../Utills/Scalling";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Constants
 const FALLBACK_IMAGE = require("../../Assets/Images/fallback.jpeg");
