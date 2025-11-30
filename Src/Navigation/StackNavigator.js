@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LoginScreen from "../Src-1/screens/Login/LoginScreen";
 import HomeScreen from "../Src-1/screens/Home/HomeScreen";
 import PrintScreen from "../Src-1/screens/AddPrinter/PrintMain";
+import WebViewPrintScreen from '../Src-1/screens/WebViewPrint/WebViewPrintScreen'
 import Homescreen1 from "../Src-2/Screens/Home/Home";
 
 // Context
@@ -51,6 +52,11 @@ function AppStack() {
         <Stack.Screen
           name="Print"
           component={PrintScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="WebViewPrint"
+          component={WebViewPrintScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

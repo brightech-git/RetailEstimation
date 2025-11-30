@@ -34,3 +34,21 @@ export const PRINTER_COMMANDS = {
   FEED_LINE: '\x0A', // Line feed
   FEED_LINES: (lines) => `\x1B\x64${String.fromCharCode(lines)}`, // Feed n lines
 };
+
+// PRINTER_COMMANDS.js
+export const QR = (data) => {
+  const model = Buffer.from([0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]);
+  const size = Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x08]); 
+  const error = Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]);  
+
+  const storeLen = data.length + 3;
+  const pL = storeLen % 256;
+  const pH = Math.floor(storeLen / 256);
+
+  const store = Buffer.from([0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30]);
+  const message = Buffer.from(data);
+
+  const print = Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
+
+  return Buffer.concat([model, size, error, store, message, print]);
+};

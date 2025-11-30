@@ -6,18 +6,25 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
 } from "react-native";
 import { useTheme } from "../../../Context/ThemeContext";
 import { createEstimationPreviewModalStyles } from "./EstimationPreviewModalStyles";
 import { MaterialIcons } from "@expo/vector-icons";
 
 // Common utility functions
-export const formatDate = (dateString) => {
+export const formatDateSafe = (dateString) => {
   if (!dateString) return "";
+
+  // If already in DD-MM-YYYY, return as is
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+    return dateString;
+  }
+
   const date = new Date(dateString);
   if (isNaN(date)) return dateString;
-  return date.toLocaleDateString("en-GB");
+
+  return date.toLocaleDateString("en-GB"); // DD/MM/YYYY
 };
 
 const getCurrentTime = () => {
@@ -31,16 +38,16 @@ const getCurrentTime = () => {
 };
 
 // Preview Modal Component for Estimation Slip
-const EstimationPreviewModal = ({ 
-  visible, 
-  onClose, 
-  onPrint, 
-  slipData, 
+const EstimationPreviewModal = ({
+  visible,
+  onClose,
+  onPrint,
+  slipData,
   currentPrinter,
   printerStatus,
   onCheckConnection,
   onRefreshPrinter,
-  navigation
+  navigation,
 }) => {
   const { theme } = useTheme();
   const styles = createEstimationPreviewModalStyles(theme);
@@ -57,7 +64,11 @@ const EstimationPreviewModal = ({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Estimation Slip Preview</Text>
             <View style={styles.errorContainer}>
-              <MaterialIcons name="error-outline" size={48} color={theme.COLORS.danger} />
+              <MaterialIcons
+                name="error-outline"
+                size={48}
+                color={theme.COLORS.danger}
+              />
               <Text style={styles.errorText}>No slip data available</Text>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
                 <Text style={styles.buttonText}>Close</Text>
@@ -95,33 +106,33 @@ const EstimationPreviewModal = ({
         text: "Checking printer connection...",
         color: theme.COLORS.warning || "#FFA000",
         icon: "🔄",
-        status: "checking"
+        status: "checking",
       };
     }
-    
+
     if (printerStatus.connected && currentPrinter) {
       return {
         text: `Connected to ${currentPrinter.name}`,
         color: theme.COLORS.success || "#1B9721",
         icon: "✅",
-        status: "connected"
+        status: "connected",
       };
     }
-    
+
     if (currentPrinter) {
       return {
         text: `Offline - ${currentPrinter.name}`,
         color: theme.COLORS.danger || "#C62828",
         icon: "❌",
-        status: "offline"
+        status: "offline",
       };
     }
-    
+
     return {
       text: "No printer configured",
       color: theme.COLORS.textLight || "#4A4A4A",
       icon: "⚙️",
-      status: "not_configured"
+      status: "not_configured",
     };
   };
 
@@ -131,29 +142,29 @@ const EstimationPreviewModal = ({
     if (printerStatus.checking) {
       return;
     }
-    
+
     if (!printerStatus.connected) {
       Alert.alert(
         "Printer Not Ready",
-        currentPrinter 
+        currentPrinter
           ? `Cannot connect to "${currentPrinter.name}". Please check the connection.`
           : "No printer configured. Please set up a printer first.",
         [
           { text: "Cancel", style: "cancel" },
-          { 
-            text: "Setup Printer", 
+          {
+            text: "Setup Printer",
             onPress: () => {
               onClose();
               setTimeout(() => {
                 navigation.navigate("Print");
               }, 300);
-            }
-          }
+            },
+          },
         ]
       );
       return;
     }
-    
+
     onPrint();
   };
 
@@ -185,64 +196,90 @@ const EstimationPreviewModal = ({
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Estimation Slip Preview</Text>
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <MaterialIcons name="close" size={24} color={theme.COLORS.text} />
+                <MaterialIcons
+                  name="close"
+                  size={24}
+                  color={theme.COLORS.text}
+                />
               </TouchableOpacity>
             </View>
-            
+
             {/* Printer Status Display */}
             <View style={styles.printerStatusContainer}>
-              <View style={[styles.statusIndicator, { backgroundColor: statusDisplay.color }]} />
+              <View
+                style={[
+                  styles.statusIndicator,
+                  { backgroundColor: statusDisplay.color },
+                ]}
+              />
               <View style={styles.statusTextContainer}>
-                <Text style={[styles.printerStatusText, { color: statusDisplay.color }]}>
+                <Text
+                  style={[
+                    styles.printerStatusText,
+                    { color: statusDisplay.color },
+                  ]}
+                >
                   {statusDisplay.text}
                 </Text>
                 <Text style={styles.statusDescription}>
-                  {currentPrinter 
+                  {currentPrinter
                     ? "Printer is offline or not reachable"
-                    : "No printer configured for your account"
-                  }
+                    : "No printer configured for your account"}
                 </Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.refreshButton}
                 onPress={handleRefreshPrinter}
               >
-                <MaterialIcons name="refresh" size={20} color={theme.COLORS.primary} />
+                <MaterialIcons
+                  name="refresh"
+                  size={20}
+                  color={theme.COLORS.primary}
+                />
               </TouchableOpacity>
             </View>
 
             {/* Error State Content */}
             <View style={styles.errorStateContainer}>
-              <MaterialIcons 
-                name="print-disabled" 
-                size={80} 
-                color={theme.COLORS.textLight} 
+              <MaterialIcons
+                name="print-disabled"
+                size={80}
+                color={theme.COLORS.textLight}
                 style={styles.errorIcon}
               />
-              
+
               <Text style={styles.errorTitle}>
-                {currentPrinter ? "Printer Connection Issue" : "Printer Not Configured"}
+                {currentPrinter
+                  ? "Printer Connection Issue"
+                  : "Printer Not Configured"}
               </Text>
-              
+
               <Text style={styles.errorDescription}>
-                {currentPrinter 
+                {currentPrinter
                   ? `Unable to connect to "${currentPrinter.name}". Please check the printer configuration and network connection.`
-                  : "You need to set up a printer before you can print estimation slips."
-                }
+                  : "You need to set up a printer before you can print estimation slips."}
               </Text>
 
               {currentPrinter && (
                 <View style={styles.printerDetails}>
                   <View style={styles.detailRow}>
-                    <MaterialIcons name="dns" size={16} color={theme.COLORS.textLight} />
+                    <MaterialIcons
+                      name="dns"
+                      size={16}
+                      color={theme.COLORS.textLight}
+                    />
                     <Text style={styles.detailText}>
                       {currentPrinter.ip_address}:{currentPrinter.port}
                     </Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <MaterialIcons name="wifi" size={16} color={theme.COLORS.textLight} />
+                    <MaterialIcons
+                      name="wifi"
+                      size={16}
+                      color={theme.COLORS.textLight}
+                    />
                     <Text style={styles.detailText}>
-                      Network: {currentPrinter.ip_address.split('.')[0]}.x.x.x
+                      Network: {currentPrinter.ip_address.split(".")[0]}.x.x.x
                     </Text>
                   </View>
                 </View>
@@ -251,23 +288,29 @@ const EstimationPreviewModal = ({
               {/* Action Buttons */}
               <View style={styles.actionButtons}>
                 {currentPrinter && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.secondaryButton}
                     onPress={onCheckConnection}
                   >
-                    <MaterialIcons name="wifi-tethering" size={18} color={theme.COLORS.primary} />
-                    <Text style={styles.secondaryButtonText}>Check Connection</Text>
+                    <MaterialIcons
+                      name="wifi-tethering"
+                      size={18}
+                      color={theme.COLORS.primary}
+                    />
+                    <Text style={styles.secondaryButtonText}>
+                      Check Connection
+                    </Text>
                   </TouchableOpacity>
                 )}
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.primaryButton}
                   onPress={handleSetupPrinter}
                 >
-                  <MaterialIcons 
-                    name={currentPrinter ? "settings" : "add"} 
-                    size={18} 
-                    color={theme.COLORS.buttonText} 
+                  <MaterialIcons
+                    name={currentPrinter ? "settings" : "add"}
+                    size={18}
+                    color={theme.COLORS.buttonText}
                   />
                   <Text style={styles.primaryButtonText}>
                     {currentPrinter ? "Change Printer" : "Setup Printer"}
@@ -311,12 +354,22 @@ const EstimationPreviewModal = ({
               <MaterialIcons name="close" size={24} color={theme.COLORS.text} />
             </TouchableOpacity>
           </View>
-          
+
           {/* Printer Status Display */}
           <View style={styles.printerStatusContainer}>
-            <View style={[styles.statusIndicator, { backgroundColor: statusDisplay.color }]} />
+            <View
+              style={[
+                styles.statusIndicator,
+                { backgroundColor: statusDisplay.color },
+              ]}
+            />
             <View style={styles.statusTextContainer}>
-              <Text style={[styles.printerStatusText, { color: statusDisplay.color }]}>
+              <Text
+                style={[
+                  styles.printerStatusText,
+                  { color: statusDisplay.color },
+                ]}
+              >
                 {statusDisplay.text}
               </Text>
               {currentPrinter && (
@@ -325,15 +378,23 @@ const EstimationPreviewModal = ({
                 </Text>
               )}
             </View>
-            
+
             {printerStatus.checking ? (
-              <ActivityIndicator size="small" color={statusDisplay.color} style={styles.loadingIndicator} />
+              <ActivityIndicator
+                size="small"
+                color={statusDisplay.color}
+                style={styles.loadingIndicator}
+              />
             ) : (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.refreshButton}
                 onPress={handleRefreshPrinter}
               >
-                <MaterialIcons name="refresh" size={20} color={theme.COLORS.primary} />
+                <MaterialIcons
+                  name="refresh"
+                  size={20}
+                  color={theme.COLORS.primary}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -358,14 +419,15 @@ const EstimationPreviewModal = ({
             <View style={styles.row}>
               <Text style={styles.boldText}>ESTIMATION SLIP</Text>
               <Text style={styles.boldText}>
-                Est.No: {sample?.tranno || ""} - {sample?.company_id || "SFH"}
+                Est.No: {sample?.tranno || ""} - {"BMG"}
               </Text>
             </View>
 
             <View style={styles.row}>
               <Text style={styles.text}>
-                Date: {formatDate(sample?.trandate)}
+                Date: {formatDateSafe(sample?.trandate)}
               </Text>
+
               <Text style={styles.text}>Gold: {goldRate.toFixed(0)}/Gm</Text>
             </View>
 
@@ -402,7 +464,8 @@ const EstimationPreviewModal = ({
                   {/* Main Item */}
                   <View style={styles.itemRow}>
                     <Text style={[styles.boldText, styles.colDesc]}>
-                      {itemNumber} {itemName} ({item.pcs} Pcs) [{item.itemid}-{item.tagno}]
+                      {itemNumber} {itemName} ({item.pcs} Pcs) [{item.itemid}-
+                      {item.tagno}]
                     </Text>
                   </View>
 
@@ -446,14 +509,22 @@ const EstimationPreviewModal = ({
                   ))}
 
                   {/* MC */}
-                  {item.mcgrm && (
+                  {/* {item.mcgrm && (
                     <View style={styles.itemRow}>
-                      <Text style={[styles.text, styles.colDesc]}>MC:</Text>
+                      <Text style={[styles.text, styles.colDesc]}>MC PER GRAM:</Text>
                       <Text style={[styles.text, styles.colAmount]}>
                         {item.mcgrm?.toFixed(0)}
                       </Text>
                     </View>
                   )}
+                  {item.mcharge && (
+                    <View style={styles.itemRow}>
+                      <Text style={[styles.text, styles.colDesc]}>MC TOTAL:</Text>
+                      <Text style={[styles.text, styles.colAmount]}>
+                        {item.mcharge?.toFixed(0)}
+                      </Text>
+                    </View>
+                  )} */}
 
                   {/* Subitem Names */}
                   {stones.map((stone, stoneIdx) =>
@@ -533,19 +604,21 @@ const EstimationPreviewModal = ({
 
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.cancelButton} 
-              onPress={onClose}
-            >
-              <MaterialIcons name="close" size={18} color={theme.COLORS.buttonText} />
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <MaterialIcons
+                name="close"
+                size={18}
+                color={theme.COLORS.buttonText}
+              />
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[
-                styles.printButton, 
-                (!printerStatus.connected || printerStatus.checking) && styles.printButtonDisabled
-              ]} 
+                styles.printButton,
+                (!printerStatus.connected || printerStatus.checking) &&
+                  styles.printButtonDisabled,
+              ]}
               onPress={handlePrintPress}
               disabled={!printerStatus.connected || printerStatus.checking}
             >
@@ -553,10 +626,10 @@ const EstimationPreviewModal = ({
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <MaterialIcons 
-                    name="print" 
-                    size={18} 
-                    color={theme.COLORS.buttonText} 
+                  <MaterialIcons
+                    name="print"
+                    size={18}
+                    color={theme.COLORS.buttonText}
                   />
                   <Text style={styles.buttonText}>
                     {printerStatus.connected ? "Print Now" : "Setup Printer"}

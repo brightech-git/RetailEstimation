@@ -3,14 +3,16 @@ import { Alert } from "react-native";
 import axios from "axios";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
 
-
-
-
 export const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   if (isNaN(date)) return dateString;
-  return date.toLocaleDateString("en-GB");
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`; // DD-MM-YYYY
 };
 
 export const getCurrentTime = () => {
@@ -46,24 +48,354 @@ export const mergeItems = (items) => {
 };
 
 // Helper function to format text with styling
+// Enhanced helper function to format text with styling and alignment
 const formatStyledLine = (
   leftText,
   rightText,
   style = FONTS.NORMAL,
+  align = FONTS.ALIGN_CENTER,
   totalWidth = 40
 ) => {
   const left = leftText || "";
   const right = rightText || "";
 
-  let line = style + left;
+  // Apply 20 characters left padding
+  const paddedLeft = " ".repeat(2) + left;
+
+  // Apply alignment first
+  let line = align + style + paddedLeft;
 
   if (right) {
-    const spacesNeeded = totalWidth - left.length - right.length;
+    const spacesNeeded = totalWidth - paddedLeft.length - right.length;
     const spaces = spacesNeeded > 0 ? " ".repeat(spacesNeeded) : " ";
     line += spaces + right;
   }
 
-  return line + FONTS.NORMAL + "\n";
+  // For left-aligned text without right content
+  if (!right && align === FONTS.ALIGN_LEFT) {
+    line = align + style + paddedLeft;
+  }
+
+  return line + FONTS.NORMAL + FONTS.ALIGN_LEFT + "\n";
+};
+
+// Fixed-width column formatter
+const col = (text, width, align = "left") => {
+  text = text?.toString() ?? "";
+  if (text.length > width) {
+    return text.substring(0, width); // truncate if too long
+  }
+  if (align === "right") {
+    return text.padStart(width, " ");
+  }
+  return text.padEnd(width, " ");
+};
+
+// Table row formatter (matches your printed image layout)
+const formatRow = (desc, weight = "", va = "", amt = "") => {
+  return (
+    col(desc, 24) + // Description column
+    col(weight, 10, "right") +
+    col(va, 8, "right") +
+    col(amt, 10, "right") +
+    "\n"
+  );
+};
+
+// BEST WORKING QR CODE FOR ALL THERMAL PRINTERS (2025 Updated)
+const printQRCode = (estimationNo) => {
+  if (!estimationNo) estimationNo = "NO_EST";
+
+  const data = estimationNo.toString();
+  let qr = "";
+
+  // DO NOT reset printer here — it breaks alignment
+  // qr += "\x1B\x40";  <-- removed
+
+  // 1. QR Model 2
+  qr += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
+
+  // 2. Module Size = 5
+  qr += "\x1D\x28\x6B\x03\x00\x31\x43\x05";
+
+  // 3. Error Correction Level M
+  qr += "\x1D\x28\x6B\x03\x00\x31\x45\x49";
+
+  // 4. Store QR Data
+  const len = data.length + 3;
+  const pL = len % 256;
+  const pH = Math.floor(len / 256);
+
+  qr +=
+    "\x1D\x28\x6B" +
+    String.fromCharCode(pL) +
+    String.fromCharCode(pH) +
+    "\x31\x50\x30" +
+    data;
+
+  // 5. Print QR Code
+  qr += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+
+  // ❌ REMOVED: extra bottom space
+  // qr += "\x1B\x64\x03";
+
+  return qr;
+};
+
+// CORRECTED QR Code Generation Functions
+const generateQRCodeESCPOS = (text) => {
+  if (!text) return "";
+
+  let commands = "";
+
+  try {
+    console.log("🔳 Generating QR code for:", text);
+
+    // CORRECT ESC/POS QR Code Commands for most thermal printers
+    // Using GS commands for QR code
+
+    // Initialize QR code
+    commands += "\x1B\x40"; // Initialize printer
+
+    // QR Code: Select Model (Model 2)
+    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
+
+    // QR Code: Set Size (3-10, 6 is medium)
+    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
+
+    // QR Code: Set Error Correction Level (L=48, M=49, Q=50, H=51)
+    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33";
+
+    // QR Code: Store Data
+    const data = text;
+    const len = data.length + 3;
+    const pL = len & 0xff;
+    const pH = (len >> 8) & 0xff;
+
+    commands +=
+      "\x1D\x28\x6B" +
+      String.fromCharCode(pL) +
+      String.fromCharCode(pH) +
+      "\x31\x50\x30";
+    commands += data;
+
+    // QR Code: Print
+    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+
+    // Add space after QR code
+    commands += "\n\n";
+
+    console.log("✅ QR code commands generated successfully");
+  } catch (error) {
+    console.error("❌ ESC/POS QR Code generation error:", error);
+    // Fallback
+    commands += FONTS.ALIGN_CENTER;
+    commands += `[ QR: ${text} ]\n`;
+    commands += "(Scan this code)\n\n";
+    commands += FONTS.ALIGN_LEFT;
+  }
+
+  return commands;
+};
+
+// Alternative method using different ESC/POS commands
+const generateQRCodeAlternative = (text) => {
+  if (!text) return "";
+
+  let commands = "";
+
+  try {
+    console.log("🔳 Generating alternative QR code for:", text);
+
+    // Alternative method using different command structure
+    commands += "\x1B\x40"; // Initialize
+
+    // Set QR code function type
+    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00"; // Model 2
+
+    // Set QR code size
+    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x08"; // Size 8
+
+    // Set error correction
+    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33"; // Level L
+
+    // Store the data in the symbol storage area
+    const dataLength = text.length + 3;
+    const pL = dataLength % 256;
+    const pH = Math.floor(dataLength / 256);
+
+    commands +=
+      "\x1D\x28\x6B" +
+      String.fromCharCode(pL) +
+      String.fromCharCode(pH) +
+      "\x31\x50\x30";
+    commands += text;
+
+    // Print the QR code
+    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+
+    // Feed lines
+    commands += "\n\n";
+  } catch (error) {
+    console.error("❌ Alternative QR code failed:", error);
+    commands += `QR Code: ${text}\n\n`;
+  }
+
+  return commands;
+};
+
+// Simple and reliable QR code method
+const generateSimpleQRCode = (text) => {
+  if (!text) return "";
+
+  let commands = "";
+
+  try {
+    console.log("🔳 Generating simple QR code for:", text);
+
+    // Very basic and compatible QR code commands
+    commands += "\x1B\x40"; // Initialize
+
+    // QR Code Model - Model 2 is most compatible
+    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
+
+    // QR Code Size - Smaller size for better compatibility
+    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x04";
+
+    // Error Correction - Level L (7%)
+    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33";
+
+    // Store QR Code Data
+    const len = text.length + 3;
+    commands +=
+      "\x1D\x28\x6B" +
+      String.fromCharCode(len % 256) +
+      String.fromCharCode(Math.floor(len / 256)) +
+      "\x31\x50\x30";
+    commands += text;
+
+    // Print QR Code
+    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+
+    // Add some space
+    commands += "\n\n";
+  } catch (error) {
+    console.error("❌ Simple QR code failed:", error);
+    // Text fallback
+    commands += FONTS.ALIGN_CENTER;
+    commands += "══════════════\n";
+    commands += `QR: ${text}\n`;
+    commands += "══════════════\n\n";
+    commands += FONTS.ALIGN_LEFT;
+  }
+
+  return commands;
+};
+
+// Working QR code method that actually generates the barcode
+const generateWorkingQRCode = (text) => {
+  if (!text) return "";
+
+  let commands = "";
+
+  try {
+    console.log("🔳 Generating WORKING QR code for:", text);
+
+    // This is the most reliable method for thermal printers
+    // Using standard ESC/POS QR code commands
+
+    // Initialize printer
+    commands += "\x1B\x40";
+
+    // Set QR code model - Model 2 (most compatible)
+    // GS ( k pL pH cn fn n
+    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
+
+    // Set QR code size - module size (1-16, 3 is small, 6 is medium)
+    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
+
+    // Set error correction level - L (7%)
+    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33";
+
+    // Store QR code data
+    const data = text;
+    const dataLength = data.length + 3;
+    const pL = dataLength & 0xff;
+    const pH = (dataLength >> 8) & 0xff;
+
+    // GS ( k pL pH cn fn m d1...dk
+    commands +=
+      "\x1D\x28\x6B" +
+      String.fromCharCode(pL) +
+      String.fromCharCode(pH) +
+      "\x31\x50\x30";
+    commands += data;
+
+    // Print QR code
+    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+
+    // Feed some lines after QR code
+    commands += "\n\n";
+
+    console.log("✅ WORKING QR code generated successfully");
+  } catch (error) {
+    console.error("❌ WORKING QR code failed:", error);
+    // Create a visual representation of QR code
+    commands += FONTS.ALIGN_CENTER;
+    commands += "┌──────────────┐\n";
+    commands += "│   ██████     │\n";
+    commands += "│   ██  ██     │\n";
+    commands += "│   ██████     │\n";
+    commands += `│   QR: ${text.padEnd(6)}  │\n`;
+    commands += "└──────────────┘\n";
+    commands += "(Scan this code)\n\n";
+    commands += FONTS.ALIGN_LEFT;
+  }
+
+  return commands;
+};
+
+// Test all QR code methods and use the first one that works
+const generateQRCodeWithFallback = (text) => {
+  if (!text) return "";
+
+  console.log("🔄 Testing multiple QR code methods for:", text);
+
+  // List of methods to try in order
+  const methods = [
+    generateWorkingQRCode,
+    generateSimpleQRCode,
+    generateQRCodeESCPOS,
+    generateQRCodeAlternative,
+  ];
+
+  for (let i = 0; i < methods.length; i++) {
+    try {
+      const qrCode = methods[i](text);
+      if (qrCode && qrCode.length > 20) {
+        // Basic validation
+        console.log(`✅ QR Code Method ${i + 1} successful`);
+        return qrCode;
+      }
+    } catch (error) {
+      console.log(`❌ QR Code Method ${i + 1} failed:`, error.message);
+    }
+  }
+
+  // All methods failed - use ultimate fallback
+  console.log("⚠️ All QR code methods failed, using text representation");
+  let fallback = FONTS.ALIGN_CENTER;
+  fallback += "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n";
+  fallback += "█ QR CODE SCAN  █\n";
+  fallback += "█                █\n";
+  fallback += FONTS.BOLD_ON + `█     ${text}        █\n` + FONTS.BOLD_OFF;
+  fallback += "█                █\n";
+  fallback += "█  FOR DETAILS   █\n";
+  fallback += "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀\n";
+  fallback += FONTS.ALIGN_LEFT;
+  fallback += "\n";
+
+  return fallback;
 };
 
 // Create a standalone printer service instance
@@ -276,7 +608,6 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
 };
 
 // Function to get active printer from API - ENHANCED VERSION
-// In EstimationPrinterService.js - UPDATED getActivePrinter function
 export const getActivePrinter = async (employeeId, apiBaseUrl) => {
   try {
     console.log("🖨️ Fetching printers for employee:", employeeId);
@@ -335,6 +666,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
     return null; // Return null on error instead of throwing
   }
 };
+
 // Function to check printer connectivity
 export const checkPrinterConnection = async (
   printer = null,
@@ -428,9 +760,7 @@ export const checkPrinterConnection = async (
   }
 };
 
-// Print estimation to printer
-// Print estimation to printer - UPDATED to handle no active printer gracefully
-// Print estimation to printer - COMPLETE VERSION
+// Print estimation to printer - COMPLETE VERSION WITH WORKING QR CODE
 export const printEstimationToPrinter = async (
   slipData,
   currentPrinter = null,
@@ -519,9 +849,13 @@ export const printEstimationToPrinter = async (
         const offerWeight = offer.netwt || 0;
         const offerBoardRate = offer.board_rate || 0;
         const offerDiscount = offerWeight * offerBoardRate;
+        const trandate =
+          sample?.trandate && sample.trandate.includes("-")
+            ? sample.trandate
+            : formatDate(sample?.trandate);
 
         // Build the print content with styling
-        let printContent = "";
+        let printContent = FONTS.ALIGN_CENTER;
 
         // Initialize printer
         printContent += PRINTER_COMMANDS.INIT;
@@ -549,11 +883,11 @@ export const printEstimationToPrinter = async (
         // Estimation Info
         printContent += formatStyledLine(
           "ESTIMATION SLIP",
-          `Est.No: ${sample?.tranno || ""} - ${sample?.company_id || "SFH"}`,
+          `Est.No: ${sample?.tranno || ""} - ${"BMG"}`,
           FONTS.BOLD_ON
         );
         printContent += formatStyledLine(
-          `Date: ${formatDate(sample?.trandate)}`,
+          `Date: ${trandate}`,
           `Gold: ${goldRate.toFixed(0)}/Gm`
         );
         printContent += formatStyledLine(
@@ -577,14 +911,18 @@ export const printEstimationToPrinter = async (
           const stones = item.stones || [];
 
           // Main item row with bold
+
+          const indent = "    "; // 4 spaces, tweak as needed
+
           printContent += formatStyledLine(
-            `${itemNumber} ${itemName} (${item.pcs} Pcs) [${item.itemid}-${item.tagno}]`,
+            `${indent}${itemNumber} ${itemName} (${item.pcs} Pcs) [${item.itemid}-${item.tagno}]`,
             "",
-            FONTS.BOLD_ON
+            FONTS.BOLD_ON,
+            FONTS.ALIGN_LEFT
           );
 
           printContent += formatStyledLine(
-            "Rate",
+            `Rate:${silverRate.toFixed(0)} `,
             `${(item.grswt || 0).toFixed(3)}    ${
               item.wastper && item.wastper > 0 ? item.wastper.toFixed(1) : ""
             }    ${(item.amount || 0).toFixed(0)}`
@@ -607,14 +945,6 @@ export const printEstimationToPrinter = async (
               }        ${stone.stnamt?.toFixed(0) || "0"}`
             );
           });
-
-          // MC if exists
-          if (item.mcgrm) {
-            printContent += formatStyledLine(
-              "MC:",
-              `${item.mcgrm?.toFixed(0)}`
-            );
-          }
 
           // Subitem names
           stones.forEach((stone) => {
@@ -662,18 +992,19 @@ export const printEstimationToPrinter = async (
 
         printContent += "-----------------------------------------\n";
 
-        // Footer
-        printContent += formatStyledLine(
-          "[BMG]",
-          `Est.No: ${sample?.tranno || ""}`,
-          FONTS.BOLD_ON
-        );
+        // --- QR CODE SECTION (clean + centered + minimal spacing) ---
+        printContent += "\n"; // small top gap
+        printContent += FONTS.ALIGN_CENTER; // ensure QR is centered
 
-        // Feed some lines and cut
+        const estNo = sample?.tranno || "NA";
+        console.log("Printing QR Code for Estimation No:", estNo);
+
+        // QR (centered)
+        printContent += `Est.No: ${estNo}\n`;
+        printContent += printQRCode(estNo);
+
         printContent += PRINTER_COMMANDS.FEED_LINES(3);
         printContent += PRINTER_COMMANDS.CUT;
-
-        printContent += "\n\n";
 
         console.log("📝 Sending print data to printer...");
         console.log("📄 Print content length:", printContent.length);
@@ -693,7 +1024,7 @@ export const printEstimationToPrinter = async (
               client.destroy();
               console.log("✅ Print completed successfully");
               resolve();
-            }, 1000); // Increased timeout to ensure data is fully sent
+            }, 1000);
           });
         } catch (error) {
           console.log("❌ Write exception:", error);
@@ -732,6 +1063,7 @@ export const printEstimationToPrinter = async (
     throw error;
   }
 };
+
 // Export all functions
 export default {
   formatDate,
@@ -742,4 +1074,7 @@ export default {
   getActivePrinter,
   checkPrinterConnection,
   createPrinterService,
+  generateQRCodeESCPOS,
+  generateWorkingQRCode,
+  generateQRCodeWithFallback,
 };

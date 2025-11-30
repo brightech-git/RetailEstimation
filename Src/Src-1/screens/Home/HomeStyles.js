@@ -180,6 +180,32 @@ export const createHomeStyles = (theme) => {
       backgroundColor: COLORS.placeholder,
       opacity: 0.6,
     },
+    printButtonsContainer: {
+    flexDirection: 'column',
+    gap: 10,
+},
+quickPrintButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+},
+quickButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+},
+thermalButton: {
+    backgroundColor: '#007AFF',
+},
+htmlButton: {
+    backgroundColor: '#34C759',
+},
+quickButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+},
   });
 };
 
