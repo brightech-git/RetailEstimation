@@ -30,17 +30,27 @@ export const mergeItems = (items) => {
   items.forEach((item) => {
     const key = `${item.itemid}-${item.tagno}`;
     if (!map.has(key)) {
-      map.set(key, { ...item, taxes: [...(item.taxes || [])] });
+      map.set(key, {
+        ...item,
+        taxes: [...(item.taxes || [])],
+      });
     } else {
       const existing = map.get(key);
       existing.pcs += item.pcs || 0;
       existing.netwt += item.netwt || 0;
       existing.grswt += item.grswt || 0;
       existing.amount += item.amount || 0;
+      existing.wastage += item.wastage || 0;
+      existing.mcharge += item.mcharge || 0;
+
+      // Merge taxes
       (item.taxes || []).forEach((tax) => {
         const idx = existing.taxes.findIndex((t) => t.tax_id === tax.tax_id);
-        if (idx >= 0) existing.taxes[idx].tax_amount += tax.tax_amount || 0;
-        else existing.taxes.push({ ...tax });
+        if (idx >= 0) {
+          existing.taxes[idx].tax_amount += tax.tax_amount || 0;
+        } else {
+          existing.taxes.push({ ...tax });
+        }
       });
     }
   });
@@ -48,7 +58,6 @@ export const mergeItems = (items) => {
 };
 
 // Helper function to format text with styling
-// Enhanced helper function to format text with styling and alignment
 const formatStyledLine = (
   leftText,
   rightText,
@@ -142,262 +151,6 @@ const printQRCode = (estimationNo) => {
   return qr;
 };
 
-// CORRECTED QR Code Generation Functions
-const generateQRCodeESCPOS = (text) => {
-  if (!text) return "";
-
-  let commands = "";
-
-  try {
-    console.log("🔳 Generating QR code for:", text);
-
-    // CORRECT ESC/POS QR Code Commands for most thermal printers
-    // Using GS commands for QR code
-
-    // Initialize QR code
-    commands += "\x1B\x40"; // Initialize printer
-
-    // QR Code: Select Model (Model 2)
-    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
-
-    // QR Code: Set Size (3-10, 6 is medium)
-    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
-
-    // QR Code: Set Error Correction Level (L=48, M=49, Q=50, H=51)
-    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33";
-
-    // QR Code: Store Data
-    const data = text;
-    const len = data.length + 3;
-    const pL = len & 0xff;
-    const pH = (len >> 8) & 0xff;
-
-    commands +=
-      "\x1D\x28\x6B" +
-      String.fromCharCode(pL) +
-      String.fromCharCode(pH) +
-      "\x31\x50\x30";
-    commands += data;
-
-    // QR Code: Print
-    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-
-    // Add space after QR code
-    commands += "\n\n";
-
-    console.log("✅ QR code commands generated successfully");
-  } catch (error) {
-    console.error("❌ ESC/POS QR Code generation error:", error);
-    // Fallback
-    commands += FONTS.ALIGN_CENTER;
-    commands += `[ QR: ${text} ]\n`;
-    commands += "(Scan this code)\n\n";
-    commands += FONTS.ALIGN_LEFT;
-  }
-
-  return commands;
-};
-
-// Alternative method using different ESC/POS commands
-const generateQRCodeAlternative = (text) => {
-  if (!text) return "";
-
-  let commands = "";
-
-  try {
-    console.log("🔳 Generating alternative QR code for:", text);
-
-    // Alternative method using different command structure
-    commands += "\x1B\x40"; // Initialize
-
-    // Set QR code function type
-    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00"; // Model 2
-
-    // Set QR code size
-    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x08"; // Size 8
-
-    // Set error correction
-    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33"; // Level L
-
-    // Store the data in the symbol storage area
-    const dataLength = text.length + 3;
-    const pL = dataLength % 256;
-    const pH = Math.floor(dataLength / 256);
-
-    commands +=
-      "\x1D\x28\x6B" +
-      String.fromCharCode(pL) +
-      String.fromCharCode(pH) +
-      "\x31\x50\x30";
-    commands += text;
-
-    // Print the QR code
-    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-
-    // Feed lines
-    commands += "\n\n";
-  } catch (error) {
-    console.error("❌ Alternative QR code failed:", error);
-    commands += `QR Code: ${text}\n\n`;
-  }
-
-  return commands;
-};
-
-// Simple and reliable QR code method
-const generateSimpleQRCode = (text) => {
-  if (!text) return "";
-
-  let commands = "";
-
-  try {
-    console.log("🔳 Generating simple QR code for:", text);
-
-    // Very basic and compatible QR code commands
-    commands += "\x1B\x40"; // Initialize
-
-    // QR Code Model - Model 2 is most compatible
-    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
-
-    // QR Code Size - Smaller size for better compatibility
-    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x04";
-
-    // Error Correction - Level L (7%)
-    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33";
-
-    // Store QR Code Data
-    const len = text.length + 3;
-    commands +=
-      "\x1D\x28\x6B" +
-      String.fromCharCode(len % 256) +
-      String.fromCharCode(Math.floor(len / 256)) +
-      "\x31\x50\x30";
-    commands += text;
-
-    // Print QR Code
-    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-
-    // Add some space
-    commands += "\n\n";
-  } catch (error) {
-    console.error("❌ Simple QR code failed:", error);
-    // Text fallback
-    commands += FONTS.ALIGN_CENTER;
-    commands += "══════════════\n";
-    commands += `QR: ${text}\n`;
-    commands += "══════════════\n\n";
-    commands += FONTS.ALIGN_LEFT;
-  }
-
-  return commands;
-};
-
-// Working QR code method that actually generates the barcode
-const generateWorkingQRCode = (text) => {
-  if (!text) return "";
-
-  let commands = "";
-
-  try {
-    console.log("🔳 Generating WORKING QR code for:", text);
-
-    // This is the most reliable method for thermal printers
-    // Using standard ESC/POS QR code commands
-
-    // Initialize printer
-    commands += "\x1B\x40";
-
-    // Set QR code model - Model 2 (most compatible)
-    // GS ( k pL pH cn fn n
-    commands += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
-
-    // Set QR code size - module size (1-16, 3 is small, 6 is medium)
-    commands += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
-
-    // Set error correction level - L (7%)
-    commands += "\x1D\x28\x6B\x03\x00\x31\x45\x33";
-
-    // Store QR code data
-    const data = text;
-    const dataLength = data.length + 3;
-    const pL = dataLength & 0xff;
-    const pH = (dataLength >> 8) & 0xff;
-
-    // GS ( k pL pH cn fn m d1...dk
-    commands +=
-      "\x1D\x28\x6B" +
-      String.fromCharCode(pL) +
-      String.fromCharCode(pH) +
-      "\x31\x50\x30";
-    commands += data;
-
-    // Print QR code
-    commands += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-
-    // Feed some lines after QR code
-    commands += "\n\n";
-
-    console.log("✅ WORKING QR code generated successfully");
-  } catch (error) {
-    console.error("❌ WORKING QR code failed:", error);
-    // Create a visual representation of QR code
-    commands += FONTS.ALIGN_CENTER;
-    commands += "┌──────────────┐\n";
-    commands += "│   ██████     │\n";
-    commands += "│   ██  ██     │\n";
-    commands += "│   ██████     │\n";
-    commands += `│   QR: ${text.padEnd(6)}  │\n`;
-    commands += "└──────────────┘\n";
-    commands += "(Scan this code)\n\n";
-    commands += FONTS.ALIGN_LEFT;
-  }
-
-  return commands;
-};
-
-// Test all QR code methods and use the first one that works
-const generateQRCodeWithFallback = (text) => {
-  if (!text) return "";
-
-  console.log("🔄 Testing multiple QR code methods for:", text);
-
-  // List of methods to try in order
-  const methods = [
-    generateWorkingQRCode,
-    generateSimpleQRCode,
-    generateQRCodeESCPOS,
-    generateQRCodeAlternative,
-  ];
-
-  for (let i = 0; i < methods.length; i++) {
-    try {
-      const qrCode = methods[i](text);
-      if (qrCode && qrCode.length > 20) {
-        // Basic validation
-        console.log(`✅ QR Code Method ${i + 1} successful`);
-        return qrCode;
-      }
-    } catch (error) {
-      console.log(`❌ QR Code Method ${i + 1} failed:`, error.message);
-    }
-  }
-
-  // All methods failed - use ultimate fallback
-  console.log("⚠️ All QR code methods failed, using text representation");
-  let fallback = FONTS.ALIGN_CENTER;
-  fallback += "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n";
-  fallback += "█ QR CODE SCAN  █\n";
-  fallback += "█                █\n";
-  fallback += FONTS.BOLD_ON + `█     ${text}        █\n` + FONTS.BOLD_OFF;
-  fallback += "█                █\n";
-  fallback += "█  FOR DETAILS   █\n";
-  fallback += "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀\n";
-  fallback += FONTS.ALIGN_LEFT;
-  fallback += "\n";
-
-  return fallback;
-};
-
 // Create a standalone printer service instance
 const createPrinterService = (baseUrl) => {
   const API_URL = `${baseUrl}/printers`;
@@ -440,7 +193,7 @@ const createPrinterService = (baseUrl) => {
   };
 };
 
-// Fetch estimation data
+// Fetch estimation data - UPDATED TO USE ONLY FIRST ITEM'S GST
 export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
   console.log("🔍 fetchEstimationData called with:", {
     estBatchNo,
@@ -511,29 +264,56 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
       silverRate = sample.silverrate || 0;
     }
 
+    // Calculate totals
     const totalpcs = items.reduce((sum, i) => sum + (i.pcs || 0), 0);
     const totalGrossWeight = items.reduce((sum, i) => sum + (i.grswt || 0), 0);
     const baseAmount = items.reduce((sum, i) => sum + (i.amount || 0), 0);
+    const totalWastage = items.reduce((sum, i) => sum + (i.wastage || 0), 0);
+    const totalMcharge = items.reduce((sum, i) => sum + (i.mcharge || 0), 0);
 
+    // Get GST values from FIRST ITEM only - UPDATED LOGIC
     let cgstAmount = 0;
     let sgstAmount = 0;
-    items.forEach((item) => {
-      (item.taxes || []).forEach((tax) => {
-        const taxId = (tax.tax_id || "").toUpperCase();
-        if (taxId === "CG") cgstAmount += tax.tax_amount || 0;
-        else if (taxId === "SG") sgstAmount += tax.tax_amount || 0;
-      });
-    });
+    let totalTaxAmount = 0;
 
-    const grandTotal = baseAmount + cgstAmount + sgstAmount;
+    // Use only the first item's taxes
+    if (items.length > 0 && items[0].taxes) {
+      items[0].taxes.forEach((tax) => {
+        const taxAmount = tax.tax_amount || 0;
+        totalTaxAmount += taxAmount;
+
+        const taxId = (tax.tax_id || "").toUpperCase();
+        if (taxId === "CG") {
+          cgstAmount += taxAmount;
+        } else if (taxId === "SG") {
+          sgstAmount += taxAmount;
+        } else {
+          // If tax_id is not specified, split equally between CGST and SGST
+          cgstAmount += taxAmount / 2;
+          sgstAmount += taxAmount / 2;
+        }
+      });
+    }
+
+    // Calculate grand total including all taxes
+    const grandTotal = baseAmount + totalTaxAmount;
 
     console.log("💰 Totals:", {
       totalpcs,
       totalGrossWeight,
       baseAmount,
+      totalWastage,
+      totalMcharge,
       cgstAmount,
       sgstAmount,
+      totalTaxAmount,
       grandTotal,
+    });
+
+    console.log("📊 Using GST from first item only:", {
+      firstItemTaxes: items[0]?.taxes,
+      calculatedCGST: cgstAmount,
+      calculatedSGST: sgstAmount,
     });
 
     // Fetch stones for each item
@@ -573,14 +353,17 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
       totalpcs,
       totalGrossWeight,
       baseAmount,
+      totalWastage,
+      totalMcharge,
       cgstAmount,
       sgstAmount,
+      totalTaxAmount,
       grandTotal,
       offer,
       itemsWithStones,
     };
 
-    console.log("✅ Successfully built slip data");
+    console.log("✅ Successfully built slip data with first item GST");
     return result;
   } catch (error) {
     console.error("❌ Fetch error details:", {
@@ -760,7 +543,7 @@ export const checkPrinterConnection = async (
   }
 };
 
-// Print estimation to printer - COMPLETE VERSION WITH WORKING QR CODE
+// Print estimation to printer - UPDATED WITH FIRST ITEM GST
 export const printEstimationToPrinter = async (
   slipData,
   currentPrinter = null,
@@ -911,7 +694,6 @@ export const printEstimationToPrinter = async (
           const stones = item.stones || [];
 
           // Main item row with bold
-
           const indent = "    "; // 4 spaces, tweak as needed
 
           printContent += formatStyledLine(
@@ -921,8 +703,13 @@ export const printEstimationToPrinter = async (
             FONTS.ALIGN_LEFT
           );
 
+          const rateValue =
+            item.salemode === "R"
+              ? (item.amount || 0).toFixed(0)
+              : (parseFloat(item.boardrate) || 0).toFixed(0);
+
           printContent += formatStyledLine(
-            `Rate:${silverRate.toFixed(0)} `,
+            `Rate:${rateValue} `,
             `${(item.grswt || 0).toFixed(3)}    ${
               item.wastper && item.wastper > 0 ? item.wastper.toFixed(1) : ""
             }    ${(item.amount || 0).toFixed(0)}`
@@ -957,7 +744,7 @@ export const printEstimationToPrinter = async (
           });
         });
 
-        // Totals Section
+        // Totals Section with FIRST ITEM GST
         printContent += "-----------------------------------------\n";
         printContent += formatStyledLine(
           `Tot.Pcs: ${totalpcs}`,
@@ -972,14 +759,22 @@ export const printEstimationToPrinter = async (
           );
         }
 
+        // Show GST from FIRST ITEM only
         printContent += formatStyledLine(
           "CGST (1.5%)",
-          `${cgstAmount.toFixed(0)}`
+          `${cgstAmount.toFixed(2)}`
         );
         printContent += formatStyledLine(
           "SGST (1.5%)",
-          `${sgstAmount.toFixed(0)}`
+          `${sgstAmount.toFixed(2)}`
         );
+
+        // // Show total tax amount (from first item only)
+        // printContent += formatStyledLine(
+        //   "Total Tax",
+        //   `${(cgstAmount + sgstAmount).toFixed(0)}`
+        // );
+
         printContent += "-----------------------------------------\n";
 
         // Grand Total with large font
@@ -992,7 +787,7 @@ export const printEstimationToPrinter = async (
 
         printContent += "-----------------------------------------\n";
 
-        // --- QR CODE SECTION (clean + centered + minimal spacing) ---
+        // QR CODE SECTION
         printContent += "\n"; // small top gap
         printContent += FONTS.ALIGN_CENTER; // ensure QR is centered
 
@@ -1074,7 +869,4 @@ export default {
   getActivePrinter,
   checkPrinterConnection,
   createPrinterService,
-  generateQRCodeESCPOS,
-  generateWorkingQRCode,
-  generateQRCodeWithFallback,
 };

@@ -257,11 +257,11 @@ const MainHeader = () => {
                 }}
               >
                 <Ionicons
-                  name="home-outline"
+                  name="home"
                   size={26}
                   color={theme.COLORS.iconPrimary}
                 />
-                <Text style={styles.drawerText}>Home</Text>
+                <Text style={styles.drawerText}>Quick Estimate</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

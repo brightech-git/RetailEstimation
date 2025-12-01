@@ -267,6 +267,7 @@ const loadActivePrinter = useCallback(async () => {
       try {
         console.log("🎬 Preview callback triggered with data");
         setSlipData(data);
+        console.log("👁️ Showing preview modal",slipData);
         setPreviewVisible(true);
       } catch (error) {
         console.error("❌ Error showing preview:", error);
@@ -350,7 +351,7 @@ const executePrint = useCallback(async () => {
       
       const currentEmployeeId = await loadEmployeeId();
       await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL);
-      console.log("✅ Print job completed successfully");
+      console.log("✅ Print job completed successfully",slipData);
       
       Alert.alert("Success", "Estimation slip printed successfully!");
     } else {

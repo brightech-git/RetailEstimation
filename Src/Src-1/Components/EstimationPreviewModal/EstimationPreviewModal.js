@@ -24,7 +24,11 @@ export const formatDateSafe = (dateString) => {
   const date = new Date(dateString);
   if (isNaN(date)) return dateString;
 
-  return date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 };
 
 const getCurrentTime = () => {
@@ -92,8 +96,11 @@ const EstimationPreviewModal = ({
     sgstAmount,
     grandTotal,
     offer,
-    itemsWithStones,
+    itemsWithStones, // Use this for display as it contains stones data
   } = slipData;
+
+  // Use itemsWithStones if available, otherwise fall back to items
+  const displayItems = itemsWithStones && itemsWithStones.length > 0 ? itemsWithStones : items;
 
   const offerWeight = offer.netwt || 0;
   const offerBoardRate = offer.board_rate || 0;
@@ -179,6 +186,13 @@ const EstimationPreviewModal = ({
     if (onRefreshPrinter) {
       onRefreshPrinter();
     }
+  };
+
+  // Calculate rate value for display
+  const getRateValue = (item) => {
+    return item.salemode === "R"
+      ? (item.amount || 0).toFixed(0)
+      : (parseFloat(item.boardrate) || 0).toFixed(0);
   };
 
   // Show only printer status when not connected
@@ -324,7 +338,7 @@ const EstimationPreviewModal = ({
               <Text style={styles.previewTitle}>Slip Preview</Text>
               <View style={styles.previewContent}>
                 <Text style={styles.previewText}>
-                  Est.No: {sample?.tranno || ""} • Items: {items.length}
+                  Est.No: {sample?.tranno || ""} • Items: {displayItems.length}
                 </Text>
                 <Text style={styles.previewText}>
                   Total: ₹{grandTotal.toFixed(0)} • Pcs: {totalpcs}
@@ -427,7 +441,6 @@ const EstimationPreviewModal = ({
               <Text style={styles.text}>
                 Date: {formatDateSafe(sample?.trandate)}
               </Text>
-
               <Text style={styles.text}>Gold: {goldRate.toFixed(0)}/Gm</Text>
             </View>
 
@@ -451,7 +464,7 @@ const EstimationPreviewModal = ({
             <View style={styles.dashedLine} />
 
             {/* Items List */}
-            {itemsWithStones.map((item, idx) => {
+            {displayItems.map((item, idx) => {
               const itemName = (item.itemname || "").toUpperCase();
               const itemNumber = idx + 1;
               const stones = item.stones || [];
@@ -470,7 +483,9 @@ const EstimationPreviewModal = ({
                   </View>
 
                   <View style={styles.itemRow}>
-                    <Text style={[styles.text, styles.colDesc]}>Rate</Text>
+                    <Text style={[styles.text, styles.colDesc]}>
+                      Rate:{getRateValue(item)}
+                    </Text>
                     <Text style={[styles.text, styles.colWeight]}>
                       {item.grswt?.toFixed(3) || "0.000"}
                     </Text>
@@ -491,6 +506,8 @@ const EstimationPreviewModal = ({
                       <Text style={[styles.text, styles.colWeight]}>
                         {item.netwt?.toFixed(3) || "0.000"}
                       </Text>
+                      <Text style={[styles.text, styles.colVA]}></Text>
+                      <Text style={[styles.text, styles.colAmount]}></Text>
                     </View>
                   )}
 
@@ -502,29 +519,12 @@ const EstimationPreviewModal = ({
                         {stone.stnwt?.toFixed(3) || "0.000"}
                         {stone.stoneunit || ""}
                       </Text>
+                      <Text style={[styles.text, styles.colVA]}></Text>
                       <Text style={[styles.text, styles.colAmount]}>
                         {stone.stnamt?.toFixed(0) || "0"}
                       </Text>
                     </View>
                   ))}
-
-                  {/* MC */}
-                  {/* {item.mcgrm && (
-                    <View style={styles.itemRow}>
-                      <Text style={[styles.text, styles.colDesc]}>MC PER GRAM:</Text>
-                      <Text style={[styles.text, styles.colAmount]}>
-                        {item.mcgrm?.toFixed(0)}
-                      </Text>
-                    </View>
-                  )}
-                  {item.mcharge && (
-                    <View style={styles.itemRow}>
-                      <Text style={[styles.text, styles.colDesc]}>MC TOTAL:</Text>
-                      <Text style={[styles.text, styles.colAmount]}>
-                        {item.mcharge?.toFixed(0)}
-                      </Text>
-                    </View>
-                  )} */}
 
                   {/* Subitem Names */}
                   {stones.map((stone, stoneIdx) =>
@@ -533,6 +533,9 @@ const EstimationPreviewModal = ({
                         <Text style={[styles.text, styles.colDesc]}>
                           {item.subitemname?.toUpperCase() || ""}
                         </Text>
+                        <Text style={[styles.text, styles.colWeight]}></Text>
+                        <Text style={[styles.text, styles.colVA]}></Text>
+                        <Text style={[styles.text, styles.colAmount]}></Text>
                       </View>
                     ) : null
                   )}
@@ -551,6 +554,7 @@ const EstimationPreviewModal = ({
                 <Text style={[styles.boldText, styles.colWeight]}>
                   {totalGrossWeight.toFixed(3)}
                 </Text>
+                <Text style={[styles.text, styles.colVA]}></Text>
                 <Text style={[styles.boldText, styles.colAmount]}>
                   {baseAmount.toFixed(0)}
                 </Text>
@@ -561,6 +565,8 @@ const EstimationPreviewModal = ({
                   <Text style={[styles.text, styles.colDesc]}>
                     Offer ({offerWeight.toFixed(3)} * {offerBoardRate})
                   </Text>
+                  <Text style={[styles.text, styles.colWeight]}></Text>
+                  <Text style={[styles.text, styles.colVA]}></Text>
                   <Text style={[styles.text, styles.colAmount]}>
                     {offerDiscount.toFixed(1)}
                   </Text>
@@ -569,6 +575,8 @@ const EstimationPreviewModal = ({
 
               <View style={styles.row}>
                 <Text style={[styles.text, styles.colDesc]}>CGST (1.5%)</Text>
+                <Text style={[styles.text, styles.colWeight]}></Text>
+                <Text style={[styles.text, styles.colVA]}></Text>
                 <Text style={[styles.text, styles.colAmount]}>
                   {cgstAmount.toFixed(0)}
                 </Text>
@@ -576,6 +584,8 @@ const EstimationPreviewModal = ({
 
               <View style={styles.row}>
                 <Text style={[styles.text, styles.colDesc]}>SGST (1.5%)</Text>
+                <Text style={[styles.text, styles.colWeight]}></Text>
+                <Text style={[styles.text, styles.colVA]}></Text>
                 <Text style={[styles.text, styles.colAmount]}>
                   {sgstAmount.toFixed(0)}
                 </Text>
@@ -587,6 +597,8 @@ const EstimationPreviewModal = ({
                 <Text style={[styles.grandTotalText, styles.colDesc]}>
                   Sales TOTAL:
                 </Text>
+                <Text style={[styles.text, styles.colWeight]}></Text>
+                <Text style={[styles.text, styles.colVA]}></Text>
                 <Text style={[styles.grandTotalText, styles.colAmount]}>
                   {grandTotal.toFixed(0)}
                 </Text>

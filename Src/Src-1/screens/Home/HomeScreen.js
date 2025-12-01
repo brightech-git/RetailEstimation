@@ -85,12 +85,24 @@ const HomeScreen = () => {
 
   // Utility functions
   const parseValue = (value) => {
-    if (!value || value === "null") return 0;
-    const parsed = parseFloat(value);
+    if (!value || value === "null" || value === "undefined") return 0;
+
+    // Handle string numbers with quotes
+    const stringValue = String(value).replace(/"/g, "").trim();
+
+    const parsed = parseFloat(stringValue);
     return isNaN(parsed) ? 0 : parsed;
   };
+  // Replace your calculation functions with these:
 
   const calculateGrossAmount = (row) => {
+    // Use the pre-calculated GrossAmount from API if available
+    const grossFromApi = parseValue(row.GrossAmount);
+    if (grossFromApi > 0) {
+      return grossFromApi;
+    }
+
+    // Fallback to calculation if API doesn't provide GrossAmount
     const netWt = parseValue(row.NETWT);
     const wastage = parseValue(row.Wastage);
     const rate = parseValue(row.Rate);
@@ -101,6 +113,13 @@ const HomeScreen = () => {
   };
 
   const calculateGST = (row) => {
+    // Use the pre-calculated GSTAmount from API if available
+    const gstFromApi = parseValue(row.GSTAmount);
+    if (gstFromApi > 0) {
+      return gstFromApi;
+    }
+
+    // Fallback to calculation if API doesn't provide GSTAmount
     const gross = calculateGrossAmount(row);
     let gstPer = parseFloat(row.GSTPer);
     if (isNaN(gstPer)) gstPer = 0;
@@ -108,6 +127,13 @@ const HomeScreen = () => {
   };
 
   const calculateGrandTotal = (row) => {
+    // Use the pre-calculated GrandTotal from API if available
+    const grandTotalFromApi = parseValue(row.GrandTotal);
+    if (grandTotalFromApi > 0) {
+      return grandTotalFromApi;
+    }
+
+    // Fallback to calculation if API doesn't provide GrandTotal
     return calculateGrossAmount(row) + calculateGST(row);
   };
 
@@ -182,6 +208,7 @@ const HomeScreen = () => {
       });
 
       const data = response.data;
+      console.log("Estimation Total Data:", data);
       if (!Array.isArray(data) || data.length === 0) {
         Alert.alert("No data found.");
         return;
@@ -202,11 +229,14 @@ const HomeScreen = () => {
         EMPID: emp,
         EMP: emp,
         METALID: d.METALID || 0,
-        COSTID: costId, // Add COSTID from API response
-        COMPANYID: companyId, // Add COMPANYID from API response
-        // Store the MC values from API response for later use
+        COSTID: costId,
+        COMPANYID: companyId,
         MAXMCGRM: d.MAXMCGRM || 0,
         MC_FROM_API: d.MC || 0,
+        // Include the pre-calculated amounts from API
+        GrossAmount: d.GrossAmount || "0",
+        GSTAmount: d.GSTAmount || "0",
+        GrandTotal: d.GrandTotal || "0",
       }));
 
       setTableData((prev) => [...prev, ...newData]);
@@ -362,7 +392,7 @@ const HomeScreen = () => {
             // Use MC from API response for MCHARGE field
             MCHARGE: parseFloat(item.MC_FROM_API) || tagDetails?.mcharge || 0,
             AMOUNT: parseFloat(calculateGrossAmount(item).toFixed(2)) || 0,
-            RATE: parseFloat(item.Rate) || 0,
+            RATE: parseFloat(item.RATE) || 0,
             BOARDRATE: parseFloat(item.Rate) || 0,
             COSTID: item.COSTID || costId,
             COMPANYID: item.COMPANYID || companyId,
