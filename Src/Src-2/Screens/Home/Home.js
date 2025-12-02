@@ -207,14 +207,6 @@ const HomeScreen = () => {
     }
   };
 
-  const handleSubmitAndPrint = async () => {
-  await handleSubmit();   // let submission finish
-  setTimeout(() => {
-    
-  }, 1000);
-  handlePrint();          // then print
-};
-
   const renderItemCard = (item, index) => {
     const grossAmount = parseFloat(item.GrossAmount) || 0;
     const gstAmount = parseFloat(item.GSTAmount) || 0;
@@ -319,15 +311,6 @@ const HomeScreen = () => {
                   {loadingApiData ? "Fetching..." : "Fetch"}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.fetchButton}
-                onPress={handleSubmitAndPrint}
-                disabled={loadingApiData}
-              >
-                <Text style={styles.fetchButtonText}>
-                  {loadingApiData ? "Submitting..." : "Submit & Print"}
-                </Text>
-              </TouchableOpacity>
             </View>
 
             {/* Validation Error Message */}
@@ -361,6 +344,39 @@ const HomeScreen = () => {
               </View>
             </View>
           )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                (isSubmitting || estimation.loading || displayData.length === 0) && styles.disabledButton,
+              ]}
+              onPress={handleSubmit}
+              
+              disabled={isSubmitting || estimation.loading || displayData.length === 0}
+            >
+              {isSubmitting || estimation.loading ? (
+                <ActivityIndicator size="small" color={theme.COLORS.white} />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isSubmitting || estimation.loading ? "Submitting..." : "Submit"}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                styles.printButton,
+                !estimation.estBatchNo && styles.disabledButton,
+              ]}
+              onPress={handlePrint}
+              disabled={!estimation.estBatchNo}
+            >
+              <Text style={styles.submitButtonText}>Print Slip</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Scanner Modal */}
           <BarcodeScannerModal
