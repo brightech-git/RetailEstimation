@@ -1,269 +1,413 @@
-import { StyleSheet } from 'react-native';
-import { scale, verticalScale, moderateScale } from "../../../Utills/Scalling";
+import { StyleSheet } from "react-native";
+import { moderateScale } from "../../../Utills/Scalling";
 
-export const createHomeScreenStyles = (theme) => {
+export const createHomeStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
-  
+
   return StyleSheet.create({
+    scrollView: {
+      backgroundColor: COLORS.background,
+    },
     container: {
+      flex: 1,
       padding: SIZES.padding,
       backgroundColor: COLORS.background,
-      flexGrow: 1,
-      minHeight: "100%",
     },
     inputRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginVertical: SIZES.margin / 3,
-      gap: moderateScale(10),
+      alignItems: "center",
+      marginBottom: moderateScale(14),
     },
-    column: {
-      flex: 2,
-      marginHorizontal: moderateScale(1),
-    },
-    buttonsColumn: {
-      flex: 1,
-      marginHorizontal: moderateScale(1),
-    },
-    label: {
-      fontSize: moderateScale(SIZES.font),
-      marginBottom: moderateScale(5),
-      color: COLORS.title,
-      ...FONTS.text,
-      alignSelf: "flex-start",
-      paddingLeft: moderateScale(25),
-    },
-    inputWithIcon: {
+    inputWrapper: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: moderateScale(15),
-      width: scale(200),
-    },
-    itemName: {
-      fontSize: moderateScale(SIZES.h5),
-      fontWeight: "bold",
-      color: COLORS.primary,
-      textAlign: "center",
-      marginBottom: moderateScale(SIZES.margin - 5),
-      ...FONTS.h5,
+      flex: 1,
+      marginHorizontal: moderateScale(4),
+      height: moderateScale(50),
     },
     input: {
       flex: 1,
-      backgroundColor: COLORS.input,
-      paddingHorizontal: moderateScale(14),
-      paddingVertical: moderateScale(5),
-      borderRadius: SIZES.radius_sm,
       borderWidth: 1,
       borderColor: COLORS.borderColor,
+      borderRadius: SIZES.radius_sm,
+      backgroundColor: COLORS.input,
+      paddingHorizontal: SIZES.padding,
+      paddingVertical: moderateScale(6),
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
       ...FONTS.font,
-      minHeight: moderateScale(40),
     },
-    inputError: {
-      borderColor: COLORS.danger,
-      borderWidth: 2,
+    scanButton: {
+      paddingLeft: moderateScale(6),
     },
-    errorMessage: {
-      fontSize: moderateScale(SIZES.font - 2),
-      color: COLORS.danger,
-      marginTop: moderateScale(4),
-      paddingLeft: moderateScale(10),
-      ...FONTS.text,
+    scanIcon: {
+      fontSize: moderateScale(15),
+      color: COLORS.iconPrimary,
     },
-    iconButton: {
-      marginLeft: moderateScale(8),
-      padding: moderateScale(8),
+    dropdown: {
+      backgroundColor: COLORS.surface,
+      borderColor: COLORS.borderColor,
+      borderWidth: 1,
       borderRadius: SIZES.radius_sm,
-      width: moderateScale(40),
-      height: moderateScale(40),
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: COLORS.primary,
+      maxHeight: moderateScale(140),
+      marginTop: moderateScale(2),
+      marginBottom: moderateScale(10),
+      zIndex: 10,
+      elevation: 5,
       shadowColor: COLORS.shadow,
-      shadowOffset: { width: 0, height: moderateScale(2) },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
-      shadowRadius: moderateScale(4),
-      elevation: 3,
+      shadowRadius: 4,
     },
-    buttonsWrapper: {
-      flexDirection: "row",
-      gap: moderateScale(3),
-      height: moderateScale(40),
-      justifyContent: "center",
-      marginLeft: scale(-45),
-      paddingRight: scale(5),
+    dropdownItem: {
+      padding: SIZES.padding,
+      borderBottomColor: COLORS.borderColor,
+      borderBottomWidth: 1,
     },
-    actionButton: {
-      paddingVertical: moderateScale(3),
-      paddingHorizontal: moderateScale(6),
-      borderRadius: SIZES.radius_sm,
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100%",
-      flex: 1,
-      width: moderateScale(60),
-      shadowColor: COLORS.shadow,
-      shadowOffset: { width: 0, height: moderateScale(2) },
-      shadowOpacity: 1,
-      shadowRadius: moderateScale(4),
-      elevation: 3,
+    dropdownText: {
+      color: COLORS.text,
+      ...FONTS.font,
     },
-    submitButton: {
-      backgroundColor: COLORS.success,
-    },
-    refreshButton: {
-      backgroundColor: COLORS.warning,
-    },
-    buttonText: {
-      color: COLORS.buttonText,
-      fontSize: moderateScale(SIZES.font - 3),
-      ...FONTS.text,
-      textAlign: "center",
-      fontWeight: "bold",
-    },
-    card: {
-      marginTop: SIZES.margin,
+    totalsContainer: {
+      backgroundColor: COLORS.outline,
       borderRadius: SIZES.radius,
       padding: SIZES.padding,
-      backgroundColor: COLORS.surface,
-      shadowColor: COLORS.shadow,
-      shadowOpacity: 0.1,
-      shadowRadius: moderateScale(6),
-      elevation: 4,
+      marginBottom: moderateScale(10),
       borderWidth: 1,
       borderColor: COLORS.borderColor,
     },
-    imageContainer: { 
-      alignItems: "center", 
-      marginBottom: SIZES.margin 
-    },
-    itemImage: {
-      width: moderateScale(150),
-      height: moderateScale(150),
-      borderRadius: SIZES.radius,
-      borderWidth: 1,
-      borderColor: COLORS.borderColor,
-    },
-    detailsContainer: { 
-      marginTop: moderateScale(10) 
-    },
-    detailRow: {
+    totalsRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
-      marginBottom: SIZES.margin / 2,
+      justifyContent: "space-around",
+    },
+    totalItem: {
       alignItems: "center",
     },
-    detailLabel: {
-      color: COLORS.text,
-      flex: 1,
+    totalLabel: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.label,
       ...FONTS.subheading,
-      fontSize: moderateScale(SIZES.h5),
     },
-    detailValue: {
+    totalValue: {
+      fontSize: moderateScale(SIZES.font),
+      fontWeight: "600",
       color: COLORS.text,
-      flex: 1,
-      textAlign: "left",
       ...FONTS.text,
-      fontSize: moderateScale(SIZES.h6),
     },
-    grandTotalRow: {
-      marginTop: SIZES.margin,
-      paddingTop: SIZES.padding / 2,
-      borderTopWidth: 1,
-      borderTopColor: COLORS.borderColor,
-    },
-    grandTotalValue: { 
-      color: COLORS.primary, 
-      fontSize: moderateScale(SIZES.h4),
-      fontWeight: 'bold',
-      ...FONTS.h4,
-    },
-    gstValue: { 
-      color: COLORS.text, 
-      fontSize: moderateScale(SIZES.h6 - 3) 
-    },
-    subItemValue: { 
-      color: COLORS.text, 
-      fontSize: moderateScale(SIZES.h6 - 3) 
-    },
-    itemValue: { 
-      color: COLORS.text, 
-      fontSize: moderateScale(SIZES.h6 - 3) 
-    },
-    center: {
-      marginTop: SIZES.margin,
-      alignItems: "center",
-      paddingVertical: SIZES.padding * 2,
-    },
-    loadingText: {
-      marginTop: moderateScale(10),
-      ...FONTS.font,
-      color: COLORS.text,
-    },
-    errorText: {
-      marginTop: SIZES.margin,
-      textAlign: "center",
-      ...FONTS.font,
-      color: COLORS.danger,
+    grandTotal: {
       fontWeight: "bold",
-      marginBottom: SIZES.margin,
+      color: COLORS.primary,
     },
-    retryButton: {
-      marginTop: moderateScale(10),
-      paddingVertical: moderateScale(12),
-      paddingHorizontal: moderateScale(24),
-      backgroundColor: COLORS.primary,
+    loader: {
+      marginVertical: moderateScale(20),
+    },
+    trannoContainer: {
+      marginTop: moderateScale(12),
+      alignItems: "center",
+      padding: moderateScale(10),
+      backgroundColor: COLORS.surfaceVariant,
       borderRadius: SIZES.radius_sm,
+    },
+    trannoText: {
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.primary,
+      ...FONTS.text,
+    },
+    actionButtonsContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: moderateScale(20),
+    },
+    submitButton: {
+      backgroundColor: COLORS.primary,
+      paddingVertical: SIZES.padding,
+      borderRadius: SIZES.radius,
+      alignItems: "center",
+      width: "48%",
+      height: moderateScale(50),
       shadowColor: COLORS.shadow,
-      shadowOffset: { width: 0, height: moderateScale(2) },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
-      shadowRadius: moderateScale(4),
+      shadowRadius: 4,
       elevation: 3,
     },
-    retryButtonText: {
+    printButton: {
+      backgroundColor: COLORS.secondary,
+    },
+    submitButtonText: {
       color: COLORS.buttonText,
-      ...FONTS.text,
       fontSize: moderateScale(SIZES.font),
-    },
-    placeholderText: {
-      marginTop: SIZES.margin * 2,
-      color: COLORS.textLight,
-      textAlign: "center",
-      ...FONTS.font,
-      fontSize: moderateScale(SIZES.h5),
-    },
-    footer: { 
-      position: "absolute", 
-      bottom: 0, 
-      left: 0, 
-      right: 0 
-    },
-    floatingButton: {
-      position: 'absolute',
-      bottom: moderateScale(80),
-      right: moderateScale(20),
-      width: moderateScale(60),
-      height: moderateScale(60),
-      borderRadius: moderateScale(30),
-      backgroundColor: COLORS.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: COLORS.shadow,
-      shadowOffset: { width: 0, height: moderateScale(4) },
-      shadowOpacity: 0.3,
-      shadowRadius: moderateScale(4),
-      elevation: 8,
-      zIndex: 100,
+      ...FONTS.text,
     },
     disabledButton: {
+      backgroundColor: COLORS.placeholder,
       opacity: 0.6,
     },
-    disabledIconButton: {
-      backgroundColor: COLORS.placeholder,
+
+    // ===== NEW CARD STYLES (MATCHING THE IMAGE) =====
+    itemsContainer: {
+      marginTop: moderateScale(20),
+      marginBottom: moderateScale(20),
+      width: moderateScale(700),
+    alignContent:"center"
     },
+
+    itemsTitle: {
+      fontSize: moderateScale(18),
+      fontWeight: "bold",
+      color: COLORS.text,
+      marginBottom: moderateScale(15),
+      textAlign: "center",
+      ...FONTS.heading,
+    },
+
+    cardsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      paddingHorizontal: moderateScale(5),
+    },
+
+    itemCard: {
+      width: "48%", // Two cards per row
+      backgroundColor: "#FFFFFF",
+      borderRadius: moderateScale(12),
+      borderWidth: 1,
+      borderColor: "#E0E0E0",
+      marginBottom: moderateScale(15),
+      overflow: "hidden",
+      elevation: 3,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+
+    cardImageContainer: {
+      backgroundColor: "#F5F5F5",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: moderateScale(20),
+      borderBottomWidth: 1,
+      borderBottomColor: "#E0E0E0",
+    },
+
+    imagePlaceholder: {
+      width: moderateScale(100),
+      height: moderateScale(100),
+      backgroundColor: "#FFFFFF",
+      borderRadius: moderateScale(8),
+      borderWidth: 2,
+      borderColor: "#E0E0E0",
+      borderStyle: "dashed",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    imagePlaceholderIcon: {
+      fontSize: moderateScale(40),
+    },
+
+    cardTagSection: {
+      paddingVertical: moderateScale(12),
+      alignItems: "center",
+      backgroundColor: "#FAFAFA",
+    },
+
+    cardTagNumber: {
+      fontSize: moderateScale(18),
+      fontWeight: "bold",
+      color: "#333333",
+      ...FONTS.heading,
+    },
+
+    cardDivider: {
+      height: 1,
+      backgroundColor: "#E0E0E0",
+    },
+
+    cardDetailsSection: {
+      padding: moderateScale(12),
+    },
+
+    cardDetailRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      paddingVertical: moderateScale(6),
+    },
+
+    cardDetailLabel: {
+      fontSize: moderateScale(12),
+      color: "#666666",
+      flex: 1,
+      ...FONTS.text,
+    },
+
+    cardDetailValue: {
+      fontSize: moderateScale(12),
+      color: "#333333",
+      fontWeight: "500",
+      flex: 1,
+      textAlign: "right",
+      ...FONTS.text,
+    },
+
+    cardGrandTotalRow: {
+      paddingTop: moderateScale(10),
+      paddingBottom: moderateScale(4),
+    },
+
+    cardGrandTotalLabel: {
+      fontSize: moderateScale(14),
+      fontWeight: "bold",
+      color: "#333333",
+      flex: 1,
+      ...FONTS.heading,
+    },
+
+    cardGrandTotalValue: {
+      fontSize: moderateScale(16),
+      fontWeight: "bold",
+      color: "#000000",
+      flex: 1,
+      textAlign: "right",
+      ...FONTS.heading,
+    },
+
+    // ===== MODAL STYLES (Keep existing ones) =====
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+
+    modalContent: {
+      backgroundColor: COLORS.cardBackground,
+      borderRadius: 15,
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '80%',
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: COLORS.border,
+    },
+
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.border,
+      backgroundColor: COLORS.primary,
+    },
+
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+    },
+
+    closeButton: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    closeButtonText: {
+      fontSize: 20,
+      color: '#FFFFFF',
+      fontWeight: 'bold',
+    },
+     // Employee ID display
+  employeeIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  employeeIdLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.COLORS.text,
+    marginRight: 8,
+  },
+  employeeIdValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.COLORS.primary,
+  },
+
+  // Combined input container
+  combinedInputContainer: {
+    marginBottom: 20,
+  },
+  combinedInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  combinedInput: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: theme.COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: theme.COLORS.text,
+    backgroundColor: theme.COLORS.cardBackground,
+  },
+  scannerButton: {
+    height: 50,
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+    backgroundColor: theme.COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: theme.COLORS.border,
+    borderRadius: 8,
+  },
+
+  // Error and helper text
+  errorText: {
+    color: theme.COLORS.error,
+    fontSize: 14,
+    marginLeft: 10,
+    marginBottom: 5,
+  },
+  helperText: {
+    color: theme.COLORS.placeholder,
+    fontSize: 12,
+    marginLeft: 10,
+    fontStyle: 'italic',
+  },
+  fetchButton: {
+  backgroundColor: theme.COLORS.primary,
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 10,
+  marginLeft: 8,
+  justifyContent: 'center',
+  alignItems: 'center',
+  height:moderateScale(50),
+  width:moderateScale(80),
+},
+fetchButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  textAlign:"center"
+},
+
   });
 };
 
-export default createHomeScreenStyles;
+export default createHomeStyles;

@@ -9,10 +9,10 @@ export const formatDate = (dateString) => {
   if (isNaN(date)) return dateString;
 
   const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
 
-  return `${day}-${month}-${year}`; // DD-MM-YYYY
+  return `${day}-${month}-${year}`;
 };
 
 export const getCurrentTime = () => {
@@ -68,10 +68,7 @@ const formatStyledLine = (
   const left = leftText || "";
   const right = rightText || "";
 
-  // Apply 20 characters left padding
   const paddedLeft = " ".repeat(2) + left;
-
-  // Apply alignment first
   let line = align + style + paddedLeft;
 
   if (right) {
@@ -80,7 +77,6 @@ const formatStyledLine = (
     line += spaces + right;
   }
 
-  // For left-aligned text without right content
   if (!right && align === FONTS.ALIGN_LEFT) {
     line = align + style + paddedLeft;
   }
@@ -88,49 +84,17 @@ const formatStyledLine = (
   return line + FONTS.NORMAL + FONTS.ALIGN_LEFT + "\n";
 };
 
-// Fixed-width column formatter
-const col = (text, width, align = "left") => {
-  text = text?.toString() ?? "";
-  if (text.length > width) {
-    return text.substring(0, width); // truncate if too long
-  }
-  if (align === "right") {
-    return text.padStart(width, " ");
-  }
-  return text.padEnd(width, " ");
-};
-
-// Table row formatter (matches your printed image layout)
-const formatRow = (desc, weight = "", va = "", amt = "") => {
-  return (
-    col(desc, 24) + // Description column
-    col(weight, 10, "right") +
-    col(va, 8, "right") +
-    col(amt, 10, "right") +
-    "\n"
-  );
-};
-
-// BEST WORKING QR CODE FOR ALL THERMAL PRINTERS (2025 Updated)
+// BEST WORKING QR CODE FOR ALL THERMAL PRINTERS
 const printQRCode = (estimationNo) => {
   if (!estimationNo) estimationNo = "NO_EST";
 
   const data = estimationNo.toString();
   let qr = "";
 
-  // DO NOT reset printer here — it breaks alignment
-  // qr += "\x1B\x40";  <-- removed
-
-  // 1. QR Model 2
   qr += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
-
-  // 2. Module Size = 5
   qr += "\x1D\x28\x6B\x03\x00\x31\x43\x05";
-
-  // 3. Error Correction Level M
   qr += "\x1D\x28\x6B\x03\x00\x31\x45\x49";
 
-  // 4. Store QR Data
   const len = data.length + 3;
   const pL = len % 256;
   const pH = Math.floor(len / 256);
@@ -142,63 +106,82 @@ const printQRCode = (estimationNo) => {
     "\x31\x50\x30" +
     data;
 
-  // 5. Print QR Code
   qr += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-
-  // ❌ REMOVED: extra bottom space
-  // qr += "\x1B\x64\x03";
 
   return qr;
 };
 
-// Create a standalone printer service instance
-const createPrinterService = (baseUrl) => {
+// ✅ FIXED: Create a simple function, not an object with methods
+export const createPrinterService = (baseUrl) => {
   const API_URL = `${baseUrl}/printers`;
-
+  
+  // ✅ Return a simple object with functions, not a "service" that can be mistaken for a class
   return {
     // Get Printer By ID
     getPrinterById: async (id) => {
-      const response = await axios.get(`${API_URL}/get`, { params: { id } });
-      return response.data;
+      try {
+        const response = await axios.get(`${API_URL}/get`, { params: { id } });
+        return response.data;
+      } catch (error) {
+        console.error("❌ Error getting printer by ID:", error);
+        throw error;
+      }
     },
 
     // Get Printers By Employee ID
     getPrintersByEmployee: async (empId) => {
-      const response = await axios.get(`${API_URL}/by-emp`, {
-        params: { empId },
-      });
-      console.log("📦 Printers for employee:", empId, response.data);
-      return response.data;
+      try {
+        const response = await axios.get(`${API_URL}/by-emp`, {
+          params: { empId },
+        });
+        console.log("📦 Printers for employee:", empId, response.data);
+        return response.data;
+      } catch (error) {
+        console.error("❌ Error getting printers by employee:", error);
+        throw error;
+      }
     },
 
     // Create Printer
     createPrinter: async (printerData) => {
-      const response = await axios.post(`${API_URL}/create`, printerData);
-      return response.data;
+      try {
+        const response = await axios.post(`${API_URL}/create`, printerData);
+        return response.data;
+      } catch (error) {
+        console.error("❌ Error creating printer:", error);
+        throw error;
+      }
     },
 
     // Update Printer
     updatePrinter: async (printerData) => {
-      const response = await axios.put(`${API_URL}/update`, printerData);
-      return response.data;
+      try {
+        const response = await axios.put(`${API_URL}/update`, printerData);
+        return response.data;
+      } catch (error) {
+        console.error("❌ Error updating printer:", error);
+        throw error;
+      }
     },
 
     // Delete Printer
     deletePrinter: async (id) => {
-      const response = await axios.delete(`${API_URL}/delete`, {
-        params: { id },
-      });
-      return response.data;
+      try {
+        const response = await axios.delete(`${API_URL}/delete`, {
+          params: { id },
+        });
+        return response.data;
+      } catch (error) {
+        console.error("❌ Error deleting printer:", error);
+        throw error;
+      }
     },
   };
 };
 
-// Fetch estimation data - UPDATED TO USE ONLY FIRST ITEM'S GST
+// Fetch estimation data
 export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
-  console.log("🔍 fetchEstimationData called with:", {
-    estBatchNo,
-    apiBaseUrl,
-  });
+  console.log("🔍 fetchEstimationData called with:", { estBatchNo, apiBaseUrl });
 
   if (!estBatchNo) {
     Alert.alert("Error", "No Estimation No found for printing.");
@@ -216,11 +199,7 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
       timeout: 30000,
     });
 
-    console.log(
-      "📡 Making API call to:",
-      `${apiBaseUrl}/printDetails/${estBatchNo}`
-    );
-
+    console.log("📡 Making API call to:", `${apiBaseUrl}/printDetails/${estBatchNo}`);
     const response = await api.get(`/printDetails/${estBatchNo}`);
     console.log("✅ API Response received:", response.status);
 
@@ -236,7 +215,7 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
     const sample = items[0];
     console.log("📋 Sample item:", sample);
 
-    // Fetch offer via POST
+    // Fetch offer
     let offer = { discount: 0, netwt: 0, board_rate: 0 };
     try {
       console.log("📡 Fetching offer data...");
@@ -271,12 +250,11 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
     const totalWastage = items.reduce((sum, i) => sum + (i.wastage || 0), 0);
     const totalMcharge = items.reduce((sum, i) => sum + (i.mcharge || 0), 0);
 
-    // Get GST values from FIRST ITEM only - UPDATED LOGIC
+    // Get GST values from FIRST ITEM only
     let cgstAmount = 0;
     let sgstAmount = 0;
     let totalTaxAmount = 0;
 
-    // Use only the first item's taxes
     if (items.length > 0 && items[0].taxes) {
       items[0].taxes.forEach((tax) => {
         const taxAmount = tax.tax_amount || 0;
@@ -288,14 +266,12 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
         } else if (taxId === "SG") {
           sgstAmount += taxAmount;
         } else {
-          // If tax_id is not specified, split equally between CGST and SGST
           cgstAmount += taxAmount / 2;
           sgstAmount += taxAmount / 2;
         }
       });
     }
 
-    // Calculate grand total including all taxes
     const grandTotal = baseAmount + totalTaxAmount;
 
     console.log("💰 Totals:", {
@@ -310,12 +286,6 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
       grandTotal,
     });
 
-    console.log("📊 Using GST from first item only:", {
-      firstItemTaxes: items[0]?.taxes,
-      calculatedCGST: cgstAmount,
-      calculatedSGST: sgstAmount,
-    });
-
     // Fetch stones for each item
     const fetchStonesForItem = async (itemid, tagno) => {
       try {
@@ -328,10 +298,7 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
         console.log(`✅ Found ${stones.length} stones for item`);
         return stones;
       } catch (err) {
-        console.warn(
-          `Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`,
-          err
-        );
+        console.warn(`Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`, err);
         return [];
       }
     };
@@ -375,10 +342,8 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
     });
 
     let errorMessage = "Failed to fetch estimation data.";
-
     if (error.code === "NETWORK_ERROR") {
-      errorMessage =
-        "Network error: Please check your internet connection and try again.";
+      errorMessage = "Network error: Please check your internet connection and try again.";
     } else if (error.response) {
       errorMessage = `Server error: ${error.response.status} - ${error.response.statusText}`;
     } else if (error.request) {
@@ -390,7 +355,7 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
   }
 };
 
-// Function to get active printer from API - ENHANCED VERSION
+// Function to get active printer from API
 export const getActivePrinter = async (employeeId, apiBaseUrl) => {
   try {
     console.log("🖨️ Fetching printers for employee:", employeeId);
@@ -399,6 +364,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
       throw new Error("API base URL is required to fetch printers");
     }
 
+    // ✅ FIXED: Properly call createPrinterService (no extra parentheses)
     const printerService = createPrinterService(apiBaseUrl);
     const printers = await printerService.getPrintersByEmployee(employeeId);
 
@@ -406,7 +372,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
 
     if (!printers || printers.length === 0) {
       console.log("❌ No printers found for employee:", employeeId);
-      return null; // Return null instead of throwing error
+      return null;
     }
 
     // Find active printer
@@ -417,8 +383,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
         activeValue === "true" ||
         activeValue === 1 ||
         activeValue === "1" ||
-        (typeof activeValue === "string" &&
-          activeValue.toLowerCase() === "true") ||
+        (typeof activeValue === "string" && activeValue.toLowerCase() === "true") ||
         activeValue === "Y" ||
         activeValue === "y";
 
@@ -442,11 +407,11 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
       return activePrinter;
     } else {
       console.log("ℹ️ No active printer found. User needs to set one.");
-      return null; // Return null instead of throwing error
+      return null;
     }
   } catch (error) {
     console.error("❌ Error in getActivePrinter:", error);
-    return null; // Return null on error instead of throwing
+    return null;
   }
 };
 
@@ -462,10 +427,7 @@ export const checkPrinterConnection = async (
     let activePrinter = printer;
 
     if (!activePrinter && employeeId && apiBaseUrl) {
-      console.log(
-        "🔄 No printer provided, fetching active printer for employee:",
-        employeeId
-      );
+      console.log("🔄 No printer provided, fetching active printer for employee:", employeeId);
       activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
     }
 
@@ -484,9 +446,7 @@ export const checkPrinterConnection = async (
       timeout: 5000,
     };
 
-    console.log(
-      `🔍 Checking printer connection: ${activePrinter.ip_address}:${activePrinter.port}`
-    );
+    console.log(`🔍 Checking printer connection: ${activePrinter.ip_address}:${activePrinter.port}`);
 
     return new Promise((resolve) => {
       console.log("🔄 Creating TCP connection for printer check...");
@@ -521,7 +481,6 @@ export const checkPrinterConnection = async (
         });
       });
 
-      // Set a fallback timeout
       setTimeout(() => {
         if (client && client.writable) {
           console.log("⏰ Fallback timeout reached for printer check");
@@ -543,7 +502,7 @@ export const checkPrinterConnection = async (
   }
 };
 
-// Print estimation to printer - UPDATED WITH FIRST ITEM GST
+// Print estimation to printer
 export const printEstimationToPrinter = async (
   slipData,
   currentPrinter = null,
@@ -553,18 +512,14 @@ export const printEstimationToPrinter = async (
   try {
     console.log("🖨️ Starting print process...");
 
-    // Get active printer - either from parameter or from API
+    // Get active printer
     let activePrinter = currentPrinter;
 
     if (!activePrinter && employeeId && apiBaseUrl) {
-      console.log(
-        "🔄 No printer provided, fetching active printer for employee:",
-        employeeId
-      );
+      console.log("🔄 No printer provided, fetching active printer for employee:", employeeId);
       activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
     }
 
-    // Check if we have an active printer
     if (!activePrinter) {
       console.log("❌ No active printer selected - stopping print process");
       throw new Error(
@@ -572,21 +527,14 @@ export const printEstimationToPrinter = async (
       );
     }
 
-    // Additional check: verify the printer is actually marked as active
-    if (
-      !(
-        activePrinter.active === true ||
-        activePrinter.active === "true" ||
-        activePrinter.active === 1
-      )
-    ) {
+    if (!(activePrinter.active === true || activePrinter.active === "true" || activePrinter.active === 1)) {
       console.log("❌ Printer is not marked as active:", activePrinter);
       throw new Error(
         "Selected printer is not active. Please set a current printer in Printer Settings."
       );
     }
 
-    // Check printer connectivity before printing
+    // Check printer connectivity
     console.log("🔍 Checking printer connectivity before printing...");
     const connectivityStatus = await checkPrinterConnection(activePrinter);
 
@@ -604,9 +552,7 @@ export const printEstimationToPrinter = async (
       timeout: 10000,
     };
 
-    console.log(
-      `🖨️ Printing to: ${activePrinter.ip_address}:${activePrinter.port}`
-    );
+    console.log(`🖨️ Printing to: ${activePrinter.ip_address}:${activePrinter.port}`);
 
     const {
       items,
@@ -637,13 +583,10 @@ export const printEstimationToPrinter = async (
             ? sample.trandate
             : formatDate(sample?.trandate);
 
-        // Build the print content with styling
         let printContent = FONTS.ALIGN_CENTER;
-
-        // Initialize printer
         printContent += PRINTER_COMMANDS.INIT;
 
-        // Header Section with styling
+        // Header Section
         printContent += FONTS.ALIGN_CENTER;
         printContent += FONTS.BOLD_ON + FONTS.DOUBLE_HEIGHT;
         printContent += "ESTIMATION SLIP\n";
@@ -679,7 +622,7 @@ export const printEstimationToPrinter = async (
         );
         printContent += "-----------------------------------------\n";
 
-        // Table Header with bold
+        // Table Header
         printContent += formatStyledLine(
           "Description",
           "Weight    V.A    Amount",
@@ -687,14 +630,13 @@ export const printEstimationToPrinter = async (
         );
         printContent += "-----------------------------------------\n";
 
-        // Items List - formatted to match preview
+        // Items List
         itemsWithStones.forEach((item, idx) => {
           const itemName = (item.itemname || "").toUpperCase();
           const itemNumber = idx + 1;
           const stones = item.stones || [];
 
-          // Main item row with bold
-          const indent = "    "; // 4 spaces, tweak as needed
+          const indent = "    ";
 
           printContent += formatStyledLine(
             `${indent}${itemNumber} ${itemName} (${item.pcs} Pcs) [${item.itemid}-${item.tagno}]`,
@@ -715,7 +657,6 @@ export const printEstimationToPrinter = async (
             }    ${(item.amount || 0).toFixed(0)}`
           );
 
-          // Net weight if different
           if (item.grswt !== item.netwt) {
             printContent += formatStyledLine(
               "Netwt:",
@@ -723,17 +664,13 @@ export const printEstimationToPrinter = async (
             );
           }
 
-          // Stones
           stones.forEach((stone) => {
             printContent += formatStyledLine(
               "STUDDED",
-              `${stone.stnwt?.toFixed(3) || "0.000"}${
-                stone.stoneunit || ""
-              }        ${stone.stnamt?.toFixed(0) || "0"}`
+              `${stone.stnwt?.toFixed(3) || "0.000"}${stone.stoneunit || ""}        ${stone.stnamt?.toFixed(0) || "0"}`
             );
           });
 
-          // Subitem names
           stones.forEach((stone) => {
             if (item.subitemname) {
               printContent += formatStyledLine(
@@ -744,7 +681,7 @@ export const printEstimationToPrinter = async (
           });
         });
 
-        // Totals Section with FIRST ITEM GST
+        // Totals Section
         printContent += "-----------------------------------------\n";
         printContent += formatStyledLine(
           `Tot.Pcs: ${totalpcs}`,
@@ -759,42 +696,25 @@ export const printEstimationToPrinter = async (
           );
         }
 
-        // Show GST from FIRST ITEM only
-        printContent += formatStyledLine(
-          "CGST (1.5%)",
-          `${cgstAmount.toFixed(2)}`
-        );
-        printContent += formatStyledLine(
-          "SGST (1.5%)",
-          `${sgstAmount.toFixed(2)}`
-        );
-
-        // // Show total tax amount (from first item only)
-        // printContent += formatStyledLine(
-        //   "Total Tax",
-        //   `${(cgstAmount + sgstAmount).toFixed(0)}`
-        // );
+        printContent += formatStyledLine("CGST (1.5%)", `${cgstAmount.toFixed(2)}`);
+        printContent += formatStyledLine("SGST (1.5%)", `${sgstAmount.toFixed(2)}`);
 
         printContent += "-----------------------------------------\n";
 
-        // Grand Total with large font
+        // Grand Total
         printContent += FONTS.BOLD_ON + FONTS.DOUBLE_HEIGHT;
-        printContent += formatStyledLine(
-          "Sales TOTAL:",
-          `${grandTotal.toFixed(0)}`
-        );
+        printContent += formatStyledLine("Sales TOTAL:", `${grandTotal.toFixed(0)}`);
         printContent += FONTS.NORMAL;
 
         printContent += "-----------------------------------------\n";
 
-        // QR CODE SECTION
-        printContent += "\n"; // small top gap
-        printContent += FONTS.ALIGN_CENTER; // ensure QR is centered
+        // QR CODE
+        printContent += "\n";
+        printContent += FONTS.ALIGN_CENTER;
 
         const estNo = sample?.tranno || "NA";
         console.log("Printing QR Code for Estimation No:", estNo);
 
-        // QR (centered)
         printContent += `Est.No: ${estNo}\n`;
         printContent += printQRCode(estNo);
 
@@ -802,9 +722,7 @@ export const printEstimationToPrinter = async (
         printContent += PRINTER_COMMANDS.CUT;
 
         console.log("📝 Sending print data to printer...");
-        console.log("📄 Print content length:", printContent.length);
 
-        // Write data with error handling
         try {
           client.write(printContent, "binary", (error) => {
             if (error) {
@@ -814,7 +732,6 @@ export const printEstimationToPrinter = async (
             }
 
             console.log("✅ Print data sent successfully");
-            // Wait a bit before closing to ensure data is sent
             setTimeout(() => {
               client.destroy();
               console.log("✅ Print completed successfully");
@@ -844,7 +761,6 @@ export const printEstimationToPrinter = async (
         reject(new Error("Connection timeout"));
       });
 
-      // Set a global timeout for the entire print operation
       setTimeout(() => {
         if (client && client.writable) {
           console.log("⏰ Overall print operation timeout");

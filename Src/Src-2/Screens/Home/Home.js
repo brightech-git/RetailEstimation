@@ -1,631 +1,384 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
   ScrollView,
-  Image,
+  ActivityIndicator,
   Alert,
-  Keyboard,
-  BackHandler,
+  TouchableOpacity,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../../Context/ThemeContext"; // Adjust path as needed
-import Header from "../../Components/Header/Header";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import MainHeader from "../../Components/Header/Header";
 import Footer from "../../Components/Footer/Footer";
-import BarcodeScannerModal from "../../Components/Scanner/Scanner";
-import useEstimationData from "../../Services/TagDetailsService";
-import { createHomeScreenStyles } from "./HomeStyles"; // Adjust path as needed
-import { scale } from "../../Utills/Scalling";
-import { useNavigation } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import BarcodeScannerModal from "../../../Src-1/Components/BarCodeScanner/BarcodeScannerModal";
+import {
+  printEstimationSlip,
+  useEstimationPreview,
+} from "../../../Src-1/Components/PrintReceipt/PrintSlip";
+import { useApiBaseUrl } from "../../../Config/Config";
+import { useTheme } from "../../../Context/ThemeContext";
+import { createHomeStyles } from "./HomeStyles";
+import { useEstimation } from "../../../Src-1/Hook/UseEstimation";
+import { LoginContext } from "../../../Context/LoginContext";
 
-// Constants
-const FALLBACK_IMAGE = require("../../Assets/Images/fallback.jpeg");
-const SCANNING_FIELDS = Object.freeze({
-  ITEM_ID: "itemId",
-  ITEM_TAG: "itemTag",
-});
+const HomeScreen = () => {
+  const { theme } = useTheme();
+  const styles = createHomeStyles(theme);
+  const API_BASE_URL = useApiBaseUrl();
+  const { username } = useContext(LoginContext);
 
-const INPUT_VALIDATION = {
-  MIN_LENGTH: 1,
-  MAX_LENGTH: 50,
-  PATTERN: /^.*$/,
+  const estimationPreview = useEstimationPreview();
+  const EstimationPreviewComponent =
+    estimationPreview?.EstimationPreviewComponent || null;
+
+  const estimation = useEstimation(API_BASE_URL);
+
+  // Local state to store only current display data
+  const [displayData, setDisplayData] = useState([]);
+  const [loadingApiData, setLoadingApiData] = useState(false);
+  const [employeeId, setEmployeeId] = useState("");
+  const [combinedInput, setCombinedInput] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Ref to store displayData for submission
+  const displayDataRef = useRef([]);
+
+  // Update ref whenever displayData changes
+  useEffect(() => {
+    displayDataRef.current = displayData;
+  }, [displayData]);
+
+  // Get employee ID from AsyncStorage on component mount
+  useEffect(() => {
+    const getEmployeeId = async () => {
+      try {
+        const empId = await AsyncStorage.getItem("EMPLOYEE_ID");
+        if (empId) {
+          setEmployeeId(empId);
+          estimation.setEmp(empId); // Set in estimation hook too
+        }
+      } catch (error) {
+        console.error("Error fetching employee ID:", error);
+      }
+    };
+
+    getEmployeeId();
+  }, []);
+
+  const handlePrint = async () => {
+    if (!estimation.estBatchNo) {
+      Alert.alert(
+        "No slip available",
+        "Please submit first to generate a slip"
+      );
+      return;
+    }
+    try {
+      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL);
+    } catch (err) {
+      Alert.alert("Print Failed", err.message || "Unable to generate slip");
+    }
+  };
+
+  // Function to parse combined input (ITEMID-TAGNO)
+  const parseCombinedInput = (input) => {
+    const trimmedInput = input.trim();
+
+    // Check if input contains a hyphen
+    if (!trimmedInput.includes("-")) {
+      setValidationError("Please enter in format: ITEMID-TAGNO");
+      return null;
+    }
+
+    const parts = trimmedInput.split("-");
+
+    if (parts.length !== 2) {
+      setValidationError("Invalid format. Use: ITEMID-TAGNO");
+      return null;
+    }
+
+    const itemId = parts[0].trim();
+    const tagNo = parts[1].trim();
+
+    if (!itemId || !tagNo) {
+      setValidationError("Both ITEMID and TAGNO are required");
+      return null;
+    }
+
+    setValidationError("");
+    return { itemId, tagNo };
+  };
+
+  // Fetch API data based on combined input
+  const fetchApiData = async () => {
+    if (!combinedInput) {
+      Alert.alert("Validation", "Please enter ITEMID-TAGNO");
+      return;
+    }
+
+    // Parse the combined input
+    const parsed = parseCombinedInput(combinedInput);
+    if (!parsed) {
+      return;
+    }
+
+    const { itemId, tagNo } = parsed;
+
+    setLoadingApiData(true);
+    setDisplayData([]); // Clear previous data locally
+
+    try {
+      const response = await fetch(
+        `https://est.bmgjewellers.com/api/v1/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}`
+      );
+      const data = await response.json();
+      setDisplayData(data || []);
+
+      // Also update the estimation hook values
+      estimation.setITEMID(itemId);
+      estimation.setTAGNO(tagNo);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Unable to fetch data from API");
+    } finally {
+      setLoadingApiData(false);
+    }
+  };
+
+  // Handle barcode scanning
+  const handleBarcodeScan = () => {
+    estimation.setScannerVisible(true);
+    estimation.setScanningField("combined");
+  };
+
+  // Handle scanned barcode data
+  const handleScannedData = (data) => {
+    setCombinedInput(data);
+    estimation.setScannerVisible(false);
+
+    // Auto-fetch data after scanning
+    setTimeout(() => {
+      fetchApiData();
+    }, 500);
+  };
+
+  // Handle submit button press
+  const handleSubmit = async () => {
+    // Get current data from ref (most up-to-date)
+    const currentData = displayDataRef.current;
+    
+    if (!currentData || currentData.length === 0) {
+      Alert.alert("No data", "Please fetch data before submitting");
+      return;
+    }
+
+    console.log("Submitting data from home:", currentData);
+    setIsSubmitting(true);
+
+    try {
+      // Set data to estimation hook before submitting
+     const batchNo = await estimation.submitData(currentData);
+
+      
+      if (batchNo) {
+        console.log("Submission successful. Batch No:", batchNo);
+        estimation.setEstBatchNo(batchNo);
+        
+        // Clear local data after successful submission
+        setDisplayData([]);
+        setCombinedInput("");
+        
+        Alert.alert(
+          "Success",
+          `Data submitted successfully! Batch No: ${batchNo}`,
+          [{ text: "OK" }]
+        );
+      } else {
+        // Alert.alert("Submission Failed", "No batch number returned");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      Alert.alert("Submission Failed", error.message || "Unable to submit data");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitAndPrint = async () => {
+  await handleSubmit();   // let submission finish
+  setTimeout(() => {
+    
+  }, 1000);
+  handlePrint();          // then print
 };
 
-const DEBOUNCE_DELAY = 300;
+  const renderItemCard = (item, index) => {
+    const grossAmount = parseFloat(item.GrossAmount) || 0;
+    const gstAmount = parseFloat(item.GSTAmount) || 0;
+    const grandTotal = parseFloat(item.GrandTotal) || 0;
 
-export default function Homescreen1() {
-  const { theme } = useTheme();
-  const styles = createHomeScreenStyles(theme);
-  
-  const itemIdRef = useRef(null);
-  const itemTagRef = useRef(null);
-  const debounceTimerRef = useRef(null);
-  const isMountedRef = useRef(true);
-  const navigation = useNavigation();
-
-  const [itemId, setItemId] = useState("");
-  const [itemTag, setItemTag] = useState("");
-  const [scannerVisible, setScannerVisible] = useState(false);
-  const [scanningField, setScanningField] = useState(null);
-  const [isScannedData, setIsScannedData] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [fetchTrigger, setFetchTrigger] = useState({ id: "", tag: "" });
-  const [inputErrors, setInputErrors] = useState({ itemId: "", itemTag: "" });
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const { estimationData, loading, error } = useEstimationData(
-    fetchTrigger.id,
-    fetchTrigger.tag
-  );
-
-  const handleFloatingButtonPress = useCallback(() => {
-    navigation.navigate('Home');
-  }, [navigation]);
-
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      () => {
-        if (scannerVisible) {
-          setScannerVisible(false);
-          return true;
-        }
-        return false;
-      }
-    );
-    return () => backHandler.remove();
-  }, [scannerVisible]);
-
-  const dynamicStyles = useMemo(
-    () => ({
-      submitButton: {
-        backgroundColor: theme.COLORS.success,
-        opacity: (itemId.trim() || itemTag.trim()) && !isProcessing ? 1 : 0.6,
-      },
-      refreshButton: {
-        backgroundColor: theme.COLORS.warning,
-        opacity:
-          (itemId.trim() || itemTag.trim() || hasSubmitted) && !isProcessing
-            ? 1
-            : 0.6,
-      },
-      iconButton: {
-        backgroundColor: theme.COLORS.primary,
-        opacity: !isProcessing ? 1 : 0.6,
-      },
-    }),
-    [itemId, itemTag, isProcessing, hasSubmitted, theme]
-  );
-
-  const validateInput = useCallback(
-    (value, field) => {
-      const errors = { ...inputErrors };
-      if (!value.trim()) {
-        errors[field] = "";
-      } else if (value.length < INPUT_VALIDATION.MIN_LENGTH) {
-        errors[field] = "Input too short";
-      } else if (value.length > INPUT_VALIDATION.MAX_LENGTH) {
-        errors[field] = "Input too long";
-      } else if (!INPUT_VALIDATION.PATTERN.test(value)) {
-        errors[field] = "Invalid characters";
-      } else {
-        errors[field] = "";
-      }
-      setInputErrors(errors);
-      return !errors[field];
-    },
-    [inputErrors]
-  );
-
-  const debouncedValidation = useCallback(
-    (value, field) => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = setTimeout(() => {
-        if (isMountedRef.current) validateInput(value, field);
-      }, DEBOUNCE_DELAY);
-    },
-    [validateInput]
-  );
-
-  const handleManualInput = useCallback(
-    (value, field) => {
-      setIsScannedData(false);
-      const trimmedValue = value.trim();
-      if (field === SCANNING_FIELDS.ITEM_ID) setItemId(trimmedValue);
-      else if (field === SCANNING_FIELDS.ITEM_TAG) setItemTag(trimmedValue);
-
-      debouncedValidation(
-        trimmedValue,
-        field === SCANNING_FIELDS.ITEM_ID ? "itemId" : "itemTag"
-      );
-    },
-    [debouncedValidation]
-  );
-
-  const parseInputData = useCallback((input) => {
-    if (!input?.includes("-")) return { id: input || "", tag: "" };
-    const parts = input.split("-");
-    return { id: parts[0]?.trim() || "", tag: parts[1]?.trim() || "" };
-  }, []);
-
-  const handleSubmit = useCallback(() => {
-    if (isProcessing) return;
-
-    Keyboard.dismiss();
-
-    const trimmedId = itemId.trim();
-    const trimmedTag = itemTag.trim();
-
-    if (!trimmedId && !trimmedTag) {
-      Alert.alert("Input Required", "Please enter Item ID or Item Tag");
-      return;
-    }
-    if (inputErrors.itemId || inputErrors.itemTag) {
-      Alert.alert(
-        "Validation Error",
-        "Please fix input errors before submitting"
-      );
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      let finalId = trimmedId;
-      let finalTag = trimmedTag;
-
-      if (trimmedId.includes("-")) {
-        const parsed = parseInputData(trimmedId);
-        finalId = parsed.id;
-        finalTag = parsed.tag;
-      } else if (trimmedTag.includes("-")) {
-        const parsed = parseInputData(trimmedTag);
-        finalId = parsed.id;
-        finalTag = parsed.tag;
-      }
-
-      setItemId(finalId);
-      setItemTag(finalTag);
-      setFetchTrigger({ id: finalId, tag: finalTag });
-      setHasSubmitted(true);
-      setItemId("");
-      setItemTag("");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Submit Error", "Failed to process your request");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [itemId, itemTag, parseInputData, inputErrors, isProcessing]);
-
-  const handleRefresh = useCallback(() => {
-    setItemId("");
-    setItemTag("");
-    setFetchTrigger({ id: "", tag: "" });
-    setIsScannedData(false);
-    setHasSubmitted(false);
-    setInputErrors({ itemId: "", itemTag: "" });
-    setIsProcessing(false);
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-  }, []);
-
-  const handleScanned = useCallback((field, data) => {
-    setIsScannedData(true);
-    Keyboard.dismiss();
-
-    if (data.includes("-")) {
-      const [id, tag] = data.split("-");
-      const newId = id?.trim() || "";
-      const newTag = tag?.trim() || "";
-
-      setItemId(newId);
-      setItemTag(newTag);
-      setFetchTrigger({ id: newId, tag: newTag });
-      setHasSubmitted(true);
-      setItemId("");
-      setItemTag("");
-    } else {
-      const trimmedData = data.trim();
-      if (field === SCANNING_FIELDS.ITEM_ID) {
-        setItemId(trimmedData);
-      }
-      if (field === SCANNING_FIELDS.ITEM_TAG) {
-        setItemTag(trimmedData);
-      }
-    }
-  }, []);
-
-  const openScanner = useCallback(
-    (field) => {
-      if (!scannerVisible) setScannerVisible(true);
-      setScanningField(field);
-    },
-    [scannerVisible]
-  );
-
-  const closeScanner = useCallback(() => {
-    setScannerVisible(false);
-    setScanningField(null);
-  }, []);
-
-  const isSubmitDisabled = useMemo(() => {
     return (
-      (!itemId.trim() && !itemTag.trim()) ||
-      inputErrors.itemId ||
-      inputErrors.itemTag ||
-      loading ||
-      isProcessing
-    );
-  }, [itemId, itemTag, inputErrors, loading, isProcessing]);
-
-  const isRefreshDisabled = useMemo(() => {
-    return (
-      isProcessing ||
-      loading ||
-      (!itemId.trim() && !itemTag.trim() && !hasSubmitted)
-    );
-  }, [itemId, itemTag, hasSubmitted, isProcessing, loading]);
-
-  const detailItems = useMemo(() => {
-    if (!estimationData) return [];
-
-    try {
-      if (estimationData.status === "issued") {
-        return [
-          {
-            label: "Status",
-            value: estimationData.status || "",
-            testID: "status",
-          },
-          {
-            label: "Bill No",
-            value: estimationData.ISSUE_TRANNO || "",
-            testID: "issue-tranno",
-          },
-          {
-            label: "Bill Date",
-            value: estimationData.ISSUE_TRANSDATE
-              ? estimationData.ISSUE_TRANSDATE.split(" ")[0]
-              : "",
-            testID: "issue-trandate",
-          },
-        ].filter(Boolean);
-      }
-
-      return [
-        estimationData.ITEMNAME
-          ? {
-              label: "Item Name",
-              value: estimationData.ITEMNAME,
-              testID: "item-name",
-              isItem: true,
-            }
-          : null,
-
-        estimationData.SUBITEMNAME
-          ? {
-              label: "Sub Item Name",
-              value: estimationData.SUBITEMNAME,
-              testID: "sub-item-name",
-              isSubItem: true,
-            }
-          : null,
-
-        estimationData.PCS
-          ? { label: "Pieces", value: estimationData.PCS, testID: "pieces" }
-          : null,
-
-        estimationData.NETWT && Number(estimationData.NETWT) > 0
-          ? {
-              label: "Net Weight",
-              value: `${estimationData.NETWT} grams`,
-              testID: "net-weight",
-            }
-          : null,
-
-        estimationData.GrossAmount
-          ? {
-              label: "Gross Amount",
-              value: `₹ ${estimationData.GrossAmount.toLocaleString("en-IN")}`,
-              isGross: true,
-              testID: "gross-amount",
-            }
-          : null,
-
-        estimationData.GSTAmount
-          ? {
-              label: "GST Amount",
-              value: `₹ ${estimationData.GSTAmount.toLocaleString("en-IN")}`,
-              isGST: true,
-              testID: "gst-amount",
-            }
-          : null,
-
-        estimationData.GrandTotal
-          ? {
-              label: "Grand Total",
-              value: `₹ ${Math.round(
-                Number(estimationData.GrandTotal)
-              ).toLocaleString("en-IN")}`,
-              isGrandTotal: true,
-              testID: "grand-total",
-            }
-          : null,
-      ].filter(Boolean);
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
-  }, [estimationData]);
-
-  const renderInputField = useCallback(
-    (label, value, field) => (
-      <View style={styles.column}>
-        <Text style={styles.label}>{label}</Text>
-        <View style={styles.inputWithIcon}>
-          <TextInput
-            ref={field === SCANNING_FIELDS.ITEM_ID ? itemIdRef : itemTagRef}
-            style={[
-              styles.input,
-              inputErrors[
-                field === SCANNING_FIELDS.ITEM_ID ? "itemId" : "itemTag"
-              ] && styles.inputError,
-            ]}
-            placeholder={"Enter Tagkey"}
-            placeholderTextColor={theme.COLORS.placeholder}
-            value={value}
-            onChangeText={(text) => handleManualInput(text, field)}
-            returnKeyType="done"
-            onSubmitEditing={handleSubmit}
-            maxLength={INPUT_VALIDATION.MAX_LENGTH}
-            accessibilityLabel={`${label} input field`}
-            testID={`input-${field}`}
-            keyboardType="default"
-          />
-          <TouchableOpacity
-            style={[
-              styles.iconButton, 
-              dynamicStyles.iconButton,
-              isProcessing && styles.disabledIconButton
-            ]}
-            onPress={() => openScanner(field)}
-            disabled={isProcessing}
-            testID={`scan-button-${field}`}
-          >
-            <Ionicons
-              name="camera-outline"
-              size={theme.SIZES.h6}
-              color={theme.COLORS.buttonText}
-            />
-          </TouchableOpacity>
-        </View>
-        {inputErrors[
-          field === SCANNING_FIELDS.ITEM_ID ? "itemId" : "itemTag"
-        ] ? (
-          <Text style={styles.errorMessage}>
-            {
-              inputErrors[
-                field === SCANNING_FIELDS.ITEM_ID ? "itemId" : "itemTag"
-              ]
-            }
-          </Text>
-        ) : null}
-      </View>
-    ),
-    [inputErrors, handleManualInput, handleSubmit, openScanner, dynamicStyles, isProcessing, theme]
-  );
-
-  const renderActionButtons = useCallback(
-    () => (
-      <View style={styles.buttonsColumn}>
-        <Text style={styles.label}></Text>
-        <View style={styles.buttonsWrapper}>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              styles.submitButton,
-              dynamicStyles.submitButton,
-              isSubmitDisabled && styles.disabledButton,
-            ]}
-            onPress={handleSubmit}
-            disabled={isSubmitDisabled}
-            testID="submit-button"
-          >
-            <Text style={styles.buttonText}>
-              {loading || isProcessing ? (
-                <ActivityIndicator size="small" color={theme.COLORS.buttonText} />
-              ) : (
-                "Submit"
-              )}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              styles.refreshButton,
-              dynamicStyles.refreshButton,
-              isRefreshDisabled && styles.disabledButton,
-            ]}
-            onPress={handleRefresh}
-            disabled={isRefreshDisabled}
-            testID="refresh-button"
-          >
-            <Text style={styles.buttonText}>
-              {isProcessing ? (
-                <ActivityIndicator size="small" color={theme.COLORS.buttonText} />
-              ) : (
-                "Refresh"
-              )}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    ),
-    [
-      dynamicStyles,
-      handleSubmit,
-      handleRefresh,
-      isSubmitDisabled,
-      isRefreshDisabled,
-      loading,
-      isProcessing,
-      theme
-    ]
-  );
-
-  const renderDetailItem = useCallback((item, index) => {
-    const valueStyle = [
-      styles.detailValue,
-      item.isGrandTotal && styles.grandTotalValue,
-      item.isGST && styles.gstValue,
-      item.isSubItem && styles.subItemValue,
-      item.isItem && styles.itemValue,
-    ];
-    return (
-      <View
-        key={`detail-${index}`}
-        style={[styles.detailRow, item.isGrandTotal && styles.grandTotalRow]}
-        testID={item.testID}
-      >
-        <Text style={styles.detailLabel}>{item.label}</Text>
-        <Text style={valueStyle}>{item.value}</Text>
-      </View>
-    );
-  }, []);
-
-  const renderContent = useCallback(() => {
-    if (loading || isProcessing) {
-      return (
-        <View style={styles.center} testID="loading-container">
-          <ActivityIndicator size="large" color={theme.COLORS.primary} />
-          <Text style={styles.loadingText}>Loading estimation...</Text>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.center} testID="error-container">
-          <Text style={styles.errorText}>❌ {error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    if (!hasSubmitted) {
-      return (
-        <Text style={styles.placeholderText} testID="placeholder-text">
-          Enter Item ID and Tag to view estimation.
-        </Text>
-      );
-    }
-
-    if (estimationData && estimationData.message === "No record found") {
-      return (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>
-            ❌ No records found for this Tag Key
-          </Text>
-        </View>
-      );
-    }
-
-    if (estimationData) {
-      return (
-        <View style={styles.card} testID="estimation-card">
-          <View style={styles.imageContainer}>
-            <Image
-              source={
-                estimationData.ItemImage
-                  ? { uri: estimationData.ItemImage }
-                  : FALLBACK_IMAGE
-              }
-              style={styles.itemImage}
-              resizeMode="cover"
-              defaultSource={FALLBACK_IMAGE}
-              onError={() => console.warn("Failed to load item image")}
-              testID="item-image"
-            />
-          </View>
-          <Text style={styles.itemName}>
-            {estimationData.ITEMID || "RINGS"}-{estimationData.TAGNO || "RINGS"}
-          </Text>
-          <View style={styles.detailsContainer}>
-            {detailItems.map(renderDetailItem)}
+      <View key={`item-${index}`} style={styles.itemCard}>
+        <View style={styles.cardImageContainer}>
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.imagePlaceholderIcon}>💎</Text>
           </View>
         </View>
-      );
-    }
 
-    return (
-      <Text style={styles.placeholderText} testID="placeholder-text">
-        Enter Item ID and Tag to view estimation.
-      </Text>
+        <View style={styles.cardTagSection}>
+          <Text style={styles.cardTagNumber}>{item.TAGNO || "N/A"}</Text>
+        </View>
+
+        <View style={styles.cardDivider} />
+
+        <View style={styles.cardDetailsSection}>
+          <View style={styles.cardDetailRow}>
+            <Text style={styles.cardDetailLabel}>Item Name</Text>
+            <Text style={styles.cardDetailValue}>{item.ITEMNAME || "N/A"}</Text>
+          </View>
+
+          {item.SUBITEMNAME && (
+            <View style={styles.cardDetailRow}>
+              <Text style={styles.cardDetailLabel}>Sub Item Name</Text>
+              <Text style={styles.cardDetailValue}>{item.SUBITEMNAME}</Text>
+            </View>
+          )}
+
+          <View style={styles.cardDetailRow}>
+            <Text style={styles.cardDetailLabel}>Pieces</Text>
+            <Text style={styles.cardDetailValue}>{item.PCS || "0"}</Text>
+          </View>
+
+          <View style={styles.cardDetailRow}>
+            <Text style={styles.cardDetailLabel}>Gross Amount</Text>
+            <Text style={styles.cardDetailValue}>
+              ₹ {grossAmount.toFixed(2)}
+            </Text>
+          </View>
+
+          <View style={styles.cardDetailRow}>
+            <Text style={styles.cardDetailLabel}>GST Amount</Text>
+            <Text style={styles.cardDetailValue}>₹ {gstAmount.toFixed(2)}</Text>
+          </View>
+
+          <View style={styles.cardDivider} />
+          <View style={[styles.cardDetailRow, styles.cardGrandTotalRow]}>
+            <Text style={styles.cardGrandTotalLabel}>Grand Total</Text>
+            <Text style={styles.cardGrandTotalValue}>
+              ₹{" "}
+              {grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
+            </Text>
+          </View>
+        </View>
+      </View>
     );
-  }, [
-    loading,
-    isProcessing,
-    error,
-    hasSubmitted,
-    estimationData,
-    detailItems,
-    renderDetailItem,
-    handleRefresh,
-    theme
-  ]);
+  };
 
   return (
     <>
-      <Header />
+      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+        <MainHeader />
+        <View style={styles.container}>
+          {/* Combined Input Field with Camera and Fetch Buttons */}
+          <View style={styles.combinedInputContainer}>
+            <View style={styles.combinedInputWrapper}>
+              <TextInput
+                style={styles.combinedInput}
+                placeholder="(e.g., ABC123-456)"
+                placeholderTextColor={theme.COLORS.placeholder}
+                value={combinedInput}
+                onChangeText={(text) => {
+                  setCombinedInput(text);
+                  setValidationError("");
+                  // Only clear display data when input changes significantly
+                  if (text === "" || !text.includes('-')) {
+                    setDisplayData([]);
+                  }
+                }}
+                returnKeyType="done"
+              />
 
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.inputRow}>
-          {renderInputField("Tag Key", itemId, SCANNING_FIELDS.ITEM_ID)}
-          {renderActionButtons()}
+              {/* Camera Icon for Barcode Scanner */}
+              <TouchableOpacity
+                style={styles.scannerButton}
+                onPress={handleBarcodeScan}
+              >
+                <Icon name="camera" size={24} color={theme.COLORS.primary} />
+              </TouchableOpacity>
+
+              {/* Fetch Button */}
+              <TouchableOpacity
+                style={styles.fetchButton}
+                onPress={fetchApiData}
+                disabled={loadingApiData}
+              >
+                <Text style={styles.fetchButtonText}>
+                  {loadingApiData ? "Fetching..." : "Fetch"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.fetchButton}
+                onPress={handleSubmitAndPrint}
+                disabled={loadingApiData}
+              >
+                <Text style={styles.fetchButtonText}>
+                  {loadingApiData ? "Submitting..." : "Submit & Print"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Validation Error Message */}
+            {validationError ? (
+              <Text style={styles.errorText}>{validationError}</Text>
+            ) : null}
+
+            {/* Helper Text */}
+            <Text style={styles.helperText}>
+              Format: ITEMID-TAGNO (separated by hyphen)
+            </Text>
+          </View>
+
+          {/* Loading Indicator for API fetch */}
+          {loadingApiData && (
+            <ActivityIndicator
+              size="large"
+              color={theme.COLORS.primary}
+              style={styles.loader}
+            />
+          )}
+
+          {/* Display API Data */}
+          {displayData.length > 0 && (
+            <View style={styles.itemsContainer}>
+              <Text style={styles.itemsCount}>
+                {displayData.length} item{displayData.length > 1 ? 's' : ''} found
+              </Text>
+              <View style={styles.cardsGrid}>
+                {displayData.map((item, index) => renderItemCard(item, index))}
+              </View>
+            </View>
+          )}
+
+          {/* Scanner Modal */}
+          <BarcodeScannerModal
+            visible={estimation.scannerVisible}
+            onClose={() => estimation.setScannerVisible(false)}
+            scanningField={estimation.scanningField}
+            onScanned={handleScannedData}
+          />
+
+          {/* Print Preview Component */}
+          {EstimationPreviewComponent &&
+            React.isValidElement(EstimationPreviewComponent) &&
+            EstimationPreviewComponent}
         </View>
-        {renderContent()}
       </ScrollView>
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={handleFloatingButtonPress}
-        testID="floating-action-button"
-      >
-        <Ionicons name="home" size={24} color={theme.COLORS.buttonText} />
-      </TouchableOpacity>
-
-      <Footer style={styles.footer} />
-
-      <BarcodeScannerModal
-        visible={scannerVisible}
-        onClose={closeScanner}
-        scanningField={scanningField}
-        onScanned={handleScanned}
-      />
+      <Footer />
     </>
   );
-}
+};
+
+export default HomeScreen;
