@@ -6,9 +6,8 @@ export const createHomeStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
   
   return StyleSheet.create({
-
     scrollView: {
-          backgroundColor: COLORS.background,
+      backgroundColor: COLORS.background,
     },
     container: {
       flex: 1,
@@ -20,12 +19,22 @@ export const createHomeStyles = (theme) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: moderateScale(14),
+      gap: moderateScale(8), // Add gap between inputs
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      flex: 1,
-      marginHorizontal: moderateScale(4),
+      marginHorizontal: moderateScale(0), // Remove horizontal margin since we have gap
+    },
+    // Specific widths for each input wrapper
+    itemIdWrapper: {
+      flex: 0.45, // 45% width for Item ID
+    },
+    tagNoWrapper: {
+      flex: 0.45, // 45% width for Tag No
+    },
+    empIdWrapper: {
+      flex: 0.25, // 25% width for Emp ID
     },
     input: {
       flex: 1,
@@ -40,7 +49,9 @@ export const createHomeStyles = (theme) => {
       ...FONTS.font,
     },
     scanButton: {
-      paddingLeft: moderateScale(6),
+      position: 'absolute',
+      right: moderateScale(10),
+      zIndex: 1,
     },
     scanIcon: {
       fontSize: moderateScale(15),
@@ -145,7 +156,6 @@ export const createHomeStyles = (theme) => {
     },
     trannoText: {
       fontSize: moderateScale(SIZES.font),
-      // fontWeight: 'bold',
       color: COLORS.primary,
       ...FONTS.text,
     },
@@ -153,13 +163,14 @@ export const createHomeStyles = (theme) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginTop: moderateScale(20),
+      gap: moderateScale(8),
     },
     submitButton: {
       backgroundColor: COLORS.primary,
       paddingVertical: SIZES.padding,
       borderRadius: SIZES.radius,
       alignItems: 'center',
-      width: '48%',
+      flex: 1,
       height: moderateScale(50),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
@@ -172,7 +183,6 @@ export const createHomeStyles = (theme) => {
     },
     submitButtonText: {
       color: COLORS.buttonText,
-      // fontWeight: '700',
       fontSize: moderateScale(SIZES.font),
       ...FONTS.text,
     },
@@ -181,31 +191,31 @@ export const createHomeStyles = (theme) => {
       opacity: 0.6,
     },
     printButtonsContainer: {
-    flexDirection: 'column',
-    gap: 10,
-},
-quickPrintButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-},
-quickButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-},
-thermalButton: {
-    backgroundColor: '#007AFF',
-},
-htmlButton: {
-    backgroundColor: '#34C759',
-},
-quickButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-},
+      flexDirection: 'column',
+      gap: moderateScale(10),
+    },
+    quickPrintButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: moderateScale(10),
+    },
+    quickButton: {
+      flex: 1,
+      padding: moderateScale(12),
+      borderRadius: moderateScale(8),
+      alignItems: 'center',
+    },
+    thermalButton: {
+      backgroundColor: '#007AFF',
+    },
+    htmlButton: {
+      backgroundColor: '#34C759',
+    },
+    quickButtonText: {
+      color: '#FFFFFF',
+      fontSize: moderateScale(14),
+      fontWeight: 'bold',
+    },
   });
 };
 

@@ -248,6 +248,20 @@ const MainHeader = () => {
                 />
                 <Text style={styles.drawerText}>Print</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() => {
+                  closeDrawer();
+                  navigation.navigate("BMGJewellers");
+                }}
+              >
+                <MaterialIcons
+                  name="diamond"
+                  size={26}
+                  color={theme.COLORS.iconPrimary}
+                />
+                <Text style={styles.drawerText}>Stock Check</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.drawerItem}

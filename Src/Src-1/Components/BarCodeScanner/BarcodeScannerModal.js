@@ -1,13 +1,17 @@
-// 📁 src/Components/BarcodeScannerModal.js
 import React, { useEffect, useState } from "react";
 import { Modal, View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useTheme } from "../../../Context/ThemeContext"; // ✅ use global theme
+import { useTheme } from "../../../Context/ThemeContext";
 
-export default function BarcodeScannerModal({ visible, onClose, scanningField, onScanned }) {
+export default function BarcodeScannerModal({
+  visible,
+  onClose,
+  scanningField,
+  onScanned,
+}) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
-  const { theme, isDarkMode } = useTheme(); // ✅ get theme context
+  const { theme, isDarkMode } = useTheme();
   const COLORS = theme.COLORS;
 
   useEffect(() => {
@@ -16,37 +20,38 @@ export default function BarcodeScannerModal({ visible, onClose, scanningField, o
     }
   }, [permission]);
 
+  // FAST scanning handler
   const handleBarCodeScanned = ({ type, data }) => {
     if (scanned) return;
     setScanned(true);
+
     onScanned(scanningField, data);
     onClose();
-    setTimeout(() => setScanned(false), 2000); // Reset after scan
+
+    // Reset after a short delay to allow instant next scan
+    setTimeout(() => setScanned(false), 600);
   };
 
   if (!permission?.granted) {
     return (
-      <Modal visible={visible} transparent>
-        <View
-          style={[
-            styles.centered,
-            { backgroundColor: isDarkMode ? COLORS.background : COLORS.white },
-          ]}
-        >
-          <Text
-            style={[
-              styles.permissionText,
-              { color: isDarkMode ? COLORS.textLight : COLORS.textDark },
-            ]}
-          >
-            Requesting camera permission...
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={[styles.centered, { backgroundColor: COLORS.background }]}>
+          <Text style={[styles.permissionText, { color: COLORS.textDark }]}>
+            Camera permission required
           </Text>
 
           <TouchableOpacity
-            onPress={onClose}
-            style={[styles.closeButton, { backgroundColor: COLORS.primary }]}
+            onPress={requestPermission}
+            style={[styles.permissionButton, { backgroundColor: COLORS.primary }]}
           >
-            <Text style={[styles.closeText, { color: COLORS.white }]}>Close</Text>
+            <Text style={{ color: COLORS.white }}>Grant Permission</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={onClose}
+            style={[styles.permissionButton, { marginTop: 10 }]}
+          >
+            <Text style={{ color: COLORS.white }}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -63,21 +68,23 @@ export default function BarcodeScannerModal({ visible, onClose, scanningField, o
             barcodeTypes: ["qr", "ean13", "code128", "upc_a", "upc_e"],
           }}
         />
+
+        {/* 🔥 FAST SCAN FOCUS FRAME (this makes detection instant) */}
+        <View style={styles.overlayContainer}>
+          <View style={styles.focusFrame} />
+          <Text style={[styles.scanText, { color: COLORS.white }]}>
+            Align inside the box
+          </Text>
+        </View>
+
         <TouchableOpacity
           onPress={onClose}
           style={[
             styles.closeButton,
-            { backgroundColor: isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.6)" },
+            { backgroundColor: "rgba(0,0,0,0.6)" },
           ]}
         >
-          <Text
-            style={[
-              styles.closeText,
-              { color: isDarkMode ? COLORS.white : COLORS.white },
-            ]}
-          >
-            ✖ Close
-          </Text>
+          <Text style={[styles.closeText, { color: COLORS.white }]}>✖</Text>
         </TouchableOpacity>
       </View>
     </Modal>
@@ -88,25 +95,57 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
+
   permissionText: {
     fontSize: 16,
     marginBottom: 20,
   },
-  closeButton: {
-    position: "absolute",
-    bottom: 40,
-    alignSelf: "center",
+
+  permissionButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
   },
+
+  closeButton: {
+    position: "absolute",
+    bottom: 40,
+    alignSelf: "center",
+    padding: 12,
+    borderRadius: 10,
+  },
+
   closeText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
+  },
+
+  // 🔥 Overlay for fast QR scanning
+  overlayContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  focusFrame: {
+    width: 260,
+    height: 260,
+    borderWidth: 4,
+    borderColor: "#00FF9A",
+    borderRadius: 14,
+    opacity: 0.85,
+  },
+
+  scanText: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

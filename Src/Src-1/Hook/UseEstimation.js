@@ -32,6 +32,8 @@ export const useEstimation = (apiBaseUrl) => {
   const tagInputRef = useRef(null);
   const empInputRef = useRef(null);
 
+  
+
   useEffect(() => {
     itemIdInputRef.current?.focus();
   }, []);
@@ -94,6 +96,7 @@ export const useEstimation = (apiBaseUrl) => {
       // Check if tag already exists
       const tagDetails = await service.checkTagExists(ITEMID, TAGNO);
       if (tagDetails && tagDetails.trandate) {
+        console.log("Tag already issued on:", tagDetails, "Trn No:", tagDetails.tranno);
         Alert.alert(
           "Tag Already Issued",
           `Issued on ${tagDetails.trandate}, Trn No: ${tagDetails.tranno}`

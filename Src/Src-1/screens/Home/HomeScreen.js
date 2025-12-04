@@ -27,11 +27,12 @@ const HomeScreen = () => {
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
   const { username } = useContext(LoginContext);
-  
+
   // Check if EstimationPreviewComponent is a valid React element
   const estimationPreview = useEstimationPreview();
-  const EstimationPreviewComponent = estimationPreview?.EstimationPreviewComponent || null;
-  
+  const EstimationPreviewComponent =
+    estimationPreview?.EstimationPreviewComponent || null;
+
   const estimation = useEstimation(API_BASE_URL);
 
   const handlePrint = async () => {
@@ -109,7 +110,9 @@ const HomeScreen = () => {
 
                 <View style={styles.totalItem}>
                   <Text style={styles.totalLabel}>GST Amount</Text>
-                  <Text style={styles.totalValue}>₹{estimation.totalGST.toFixed(2)}</Text>
+                  <Text style={styles.totalValue}>
+                    ₹{estimation.totalGST.toFixed(2)}
+                  </Text>
                 </View>
 
                 <View style={styles.totalItem}>
@@ -123,8 +126,9 @@ const HomeScreen = () => {
           )}
 
           {/* Input Fields */}
+          {/* Input Fields */}
           <View style={styles.inputRow}>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, styles.itemIdWrapper]}>
               <TextInput
                 ref={estimation.itemIdInputRef}
                 style={styles.input}
@@ -136,7 +140,8 @@ const HomeScreen = () => {
                   estimation.setShowList(false);
                 }}
                 onSubmitEditing={() => {
-                  if (estimation.ITEMID.trim() === "") estimation.fetchItemList();
+                  if (estimation.ITEMID.trim() === "")
+                    estimation.fetchItemList();
                   else estimation.tagInputRef.current?.focus();
                 }}
                 returnKeyType="next"
@@ -152,7 +157,7 @@ const HomeScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, styles.tagNoWrapper]}>
               <TextInput
                 ref={estimation.tagInputRef}
                 style={styles.input}
@@ -174,11 +179,11 @@ const HomeScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, styles.empIdWrapper]}>
               <TextInput
                 ref={estimation.empInputRef}
                 style={styles.input}
-                placeholder="Emp ID"
+                placeholder="ID"
                 placeholderTextColor={theme.COLORS.placeholder}
                 value={estimation.emp}
                 onChangeText={estimation.setEmp}
@@ -269,7 +274,10 @@ const HomeScreen = () => {
           {/* Action Buttons */}
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
-              style={[styles.submitButton, estimation.loading && styles.disabledButton]}
+              style={[
+                styles.submitButton,
+                estimation.loading && styles.disabledButton,
+              ]}
               onPress={async () => {
                 const batchNo = await estimation.submitData();
                 if (batchNo) {
@@ -306,9 +314,9 @@ const HomeScreen = () => {
           />
 
           {/* Print Preview Component - Only render if valid */}
-          {EstimationPreviewComponent && React.isValidElement(EstimationPreviewComponent) && (
-            EstimationPreviewComponent
-          )}
+          {EstimationPreviewComponent &&
+            React.isValidElement(EstimationPreviewComponent) &&
+            EstimationPreviewComponent}
         </View>
       </ScrollView>
       <Footer />

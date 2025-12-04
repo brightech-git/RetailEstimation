@@ -32,14 +32,14 @@ export const createHeaderStyles = (theme) => {
       marginTop: scale(-25),
     },
     companyLogo: {
-      width: scale(40),
+      width: scale(70),
       height: scale(40),
       marginRight: scale(8),
-      borderRadius: moderateScale(20),
+      // borderRadius: moderateScale(20),
       marginTop: verticalScale(5),
-      borderWidth: 1,
-      borderColor: COLORS.borderColor,
-      backgroundColor: 'rgba(255,255,255,0.1)', // Semi-transparent background for better visibility
+      // borderWidth: 1,
+      // borderColor: COLORS.borderColor,
+      // backgroundColor: 'rgba(255,255,255,0.1)', // Semi-transparent background for better visibility
     },
     companyName: {
       color: COLORS.buttonText,

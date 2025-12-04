@@ -670,15 +670,6 @@ export const printEstimationToPrinter = async (
               `${stone.stnwt?.toFixed(3) || "0.000"}${stone.stoneunit || ""}        ${stone.stnamt?.toFixed(0) || "0"}`
             );
           });
-
-          stones.forEach((stone) => {
-            if (item.subitemname) {
-              printContent += formatStyledLine(
-                item.subitemname?.toUpperCase() || "",
-                ""
-              );
-            }
-          });
         });
 
         // Totals Section

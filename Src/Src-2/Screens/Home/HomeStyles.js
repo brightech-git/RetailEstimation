@@ -118,13 +118,14 @@ export const createHomeStyles = (theme) => {
       flexDirection: "row",
       justifyContent: "center",
       marginTop: moderateScale(20),
+      gap: moderateScale(10),
     },
     submitButton: {
       backgroundColor: COLORS.primary,
       paddingVertical: SIZES.padding,
       borderRadius: SIZES.radius,
       alignItems: "center",
-      width: "48%",
+      width: "40%",
       height: moderateScale(50),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
@@ -149,8 +150,6 @@ export const createHomeStyles = (theme) => {
     itemsContainer: {
       marginTop: moderateScale(20),
       marginBottom: moderateScale(20),
-      width: moderateScale(700),
-    alignContent:"center"
     },
 
     itemsTitle: {

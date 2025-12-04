@@ -12,6 +12,7 @@ import HomeScreen from "../Src-1/screens/Home/HomeScreen";
 import PrintScreen from "../Src-1/screens/AddPrinter/PrintMain";
 import WebViewPrintScreen from '../Src-1/screens/WebViewPrint/WebViewPrintScreen'
 import Homescreen1 from "../Src-2/Screens/Home/Home";
+import BMGJewellersScreen from "../Src-3/Screens/Home/Home";
 
 // Context
 import { LoginProvider, LoginContext } from "../Context/LoginContext";
@@ -57,6 +58,11 @@ function AppStack() {
         <Stack.Screen
           name="WebViewPrint"
           component={WebViewPrintScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="BMGJewellers"
+          component={BMGJewellersScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTheme } from '../../../Context/ThemeContext';
-import { createBarcodeScannerModalStyles } from './ScannerStyles';
+import { createBarcodeScannerModalStyles } from './ScannerStyles3';
 
 export default function BarcodeScannerModal({ 
   visible, 
