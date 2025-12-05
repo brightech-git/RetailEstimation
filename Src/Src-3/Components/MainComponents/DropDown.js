@@ -7,9 +7,12 @@ import {
   ScrollView, 
   StyleSheet, 
   Modal,
-  TouchableWithoutFeedback 
+  TouchableWithoutFeedback,
+  Dimensions 
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+
+const { width, height } = Dimensions.get("window");
 
 const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -39,17 +42,20 @@ const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
       <Modal
         visible={modalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
         <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
           <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Select {label}</Text>
                   <TouchableOpacity 
-                    onPress={() => setModalVisible(false)}
+                    onPress={() => {
+                      setModalVisible(false);
+                      setSearchText("");
+                    }}
                     style={styles.closeButton}
                   >
                     <Ionicons name="close" size={24} color="#666" />
@@ -66,9 +72,17 @@ const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
                     onChangeText={setSearchText}
                     autoFocus
                   />
+                  {searchText.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchText("")}>
+                      <Ionicons name="close-circle" size={20} color="#ccc" />
+                    </TouchableOpacity>
+                  )}
                 </View>
                 
-                <ScrollView style={styles.optionsList}>
+                <ScrollView 
+                  style={styles.optionsList}
+                  showsVerticalScrollIndicator={true}
+                >
                   {filteredOptions.length > 0 ? (
                     filteredOptions.map(opt => (
                       <TouchableOpacity
@@ -98,9 +112,29 @@ const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
                     <View style={styles.noResults}>
                       <Ionicons name="search-outline" size={40} color="#ccc" />
                       <Text style={styles.noResultsText}>No results found</Text>
+                      {searchText.length > 0 && (
+                        <TouchableOpacity 
+                          style={styles.clearSearchButton}
+                          onPress={() => setSearchText("")}
+                        >
+                          <Text style={styles.clearSearchText}>Clear search</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   )}
                 </ScrollView>
+                
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity 
+                    style={styles.cancelButton}
+                    onPress={() => {
+                      setModalVisible(false);
+                      setSearchText("");
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -141,13 +175,23 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
   modalContent: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "70%",
+    borderRadius: 16,
+    width: width * 0.9,
+    maxHeight: height * 0.7,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalHeader: {
     flexDirection: "row",
@@ -169,6 +213,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     margin: 16,
+    marginTop: 8,
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
@@ -215,6 +260,33 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: "#999",
     fontSize: 16,
+  },
+  clearSearchButton: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+  },
+  clearSearchText: {
+    color: "#666",
+    fontSize: 14,
+  },
+  modalFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });
 

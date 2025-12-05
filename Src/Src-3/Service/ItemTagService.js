@@ -8,6 +8,37 @@ class ItemTagService {
 
   // ===================== SERVICE METHODS =====================
 
+    // ===================== STATS ONLY METHOD =====================
+
+  async fetchStats(filters = {}) {
+    try {
+      const url = new URL(`${this.API_BASE_URL}/itemtag/filter`);
+
+      // Add filter parameters
+      if (filters.itemId) url.searchParams.append("itemId", filters.itemId);
+      if (filters.metalId) url.searchParams.append("metalId", filters.metalId);
+      if (filters.subItemId) url.searchParams.append("subItemId", filters.subItemId);
+      if (filters.itemCtrId) url.searchParams.append("itemCtrId", filters.itemCtrId);
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      return {
+        totalCount: data.totalCount || 0,
+        totalChecked: data.totalChecked || 0,
+        totalUnchecked: data.totalUnchecked || 0
+      };
+
+    } catch (err) {
+      console.log("Fetch stats error:", err);
+      return {
+        totalCount: 0,
+        totalChecked: 0,
+        totalUnchecked: 0
+      };
+    }
+  }
+
   // Fetch item tags with filters and pagination
   async fetchItemTags(filters = {}, page = 0, pageSize = 20) {
     try {

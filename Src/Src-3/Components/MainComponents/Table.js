@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { 
   View, 
   Text, 
@@ -6,7 +6,8 @@ import {
   FlatList, 
   StyleSheet, 
   Dimensions,
-  TouchableOpacity 
+  TouchableOpacity,
+  Modal
 } from "react-native";
 
 const { width } = Dimensions.get('window');
@@ -16,8 +17,26 @@ const TableComponent = ({
   onLoadMore, 
   loadingMore, 
   hasMore,
-  totalCount = 0  // Add default value
+  totalCount = 0
 }) => {
+  const [filter, setFilter] = useState("all"); // "all", "checked", "unchecked"
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  
+  // Filter items based on selected filter
+  const filteredItems = itemTags.filter(item => {
+    if (filter === "all") return true;
+    if (filter === "checked") return item.isChecked === true;
+    if (filter === "unchecked") return !item.isChecked || item.isChecked === false;
+    return true;
+  });
+  
+  // Separate checked and unchecked items from filtered items
+  const checkedItems = filteredItems.filter(item => item.isChecked === true);
+  const uncheckedItems = filteredItems.filter(item => !item.isChecked || item.isChecked === false);
+  
+  // Combine with checked items first for display
+  const sortedItems = [...checkedItems, ...uncheckedItems];
+
   const columnWidths = {
     itemId: 60,
     tagNo: 90,
@@ -32,10 +51,118 @@ const TableComponent = ({
   };
 
   const totalWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0);
+  
+  const filterOptions = [
+    { label: "All Items", value: "all" },
+    { label: "Checked Only", value: "checked" },
+    { label: "Unchecked Only", value: "unchecked" }
+  ];
+
+  // Render a table row with conditional styling
+  const renderTableRow = ({ item, index }) => {
+    const isChecked = item.isChecked === true;
+    
+    return (
+      <View style={[
+        styles.tableRow,
+        index % 2 === 0 ? styles.evenRow : styles.oddRow,
+        isChecked && styles.checkedRow
+      ]}>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.itemId },
+          isChecked && styles.checkedText
+        ]} numberOfLines={1}>
+          {item.ITEMID}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.tagNo },
+          isChecked && styles.checkedText
+        ]} numberOfLines={1}>
+          {item.TAGNO}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.pcs },
+          isChecked && styles.checkedText
+        ]} numberOfLines={1}>
+          {item.PCS}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.grswt },
+          isChecked && styles.checkedText
+        ]} numberOfLines={1}>
+          {item.GRSWT}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.netwt },
+          isChecked && styles.checkedText
+        ]} numberOfLines={1}>
+          {item.NETWT}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.recdate },
+          isChecked && styles.checkedText
+        ]} numberOfLines={1}>
+          {item.RECDATE?.split(" ")[0] || '-'}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.itemname },
+          isChecked && styles.checkedText
+        ]} numberOfLines={2}>
+          {item.ITEMNAME || '-'}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.subitemname },
+          isChecked && styles.checkedText
+        ]} numberOfLines={2}>
+          {item.SUBITEMNAME || '-'}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.itemctrname },
+          isChecked && styles.checkedText
+        ]} numberOfLines={2}>
+          {item.ITEMCTRNAME || '-'}
+        </Text>
+        <Text style={[
+          styles.rowCell, 
+          { width: columnWidths.itemtypename },
+          isChecked && styles.checkedText
+        ]} numberOfLines={2}>
+          {item.ITEMTYPENAME || '-'}
+        </Text>
+      </View>
+    );
+  };
+  
+  const getFilterLabel = (value) => {
+    const option = filterOptions.find(opt => opt.value === value);
+    return option ? option.label : "Filter";
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.formTitle}>Items List</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.formTitle}>ITEM LIST</Text>
+        
+        {/* Filter Dropdown */}
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowFilterDropdown(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.filterButtonText}>{getFilterLabel(filter)}</Text>
+          <Text style={styles.filterArrow}>▼</Text>
+        </TouchableOpacity>
+      </View>
+      
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={true}
@@ -44,73 +171,83 @@ const TableComponent = ({
         <View>
           {/* Table Header */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.headerCell, { width: columnWidths.itemId }]}>ItemID</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.tagNo }]}>Tag No</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemId }]}>ITEMID</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.tagNo }]}>TAG NO</Text>
             <Text style={[styles.headerCell, { width: columnWidths.pcs }]}>PCS</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.grswt }]}>Gross Wt</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.netwt }]}>Net Wt</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.recdate }]}>Rec Date</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.itemname }]}>Item Name</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.subitemname }]}>SubItem</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.itemctrname }]}>Counter</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.grswt }]}>GROSS WT</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.netwt }]}>NET WT</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.recdate }]}>REC DATE</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemname }]}>ITEM NAME</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.subitemname }]}>SUBITEM</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemctrname }]}>COUNTER</Text>
             <Text style={[styles.headerCell, { width: columnWidths.itemtypename }]}>ITEM TYPE</Text>
           </View>
 
-          {/* Table Body - Using FlatList only for rendering, no onEndReached */}
+          {/* Table Body */}
           <FlatList
-            data={itemTags}
-            keyExtractor={(item, index) => `${item.TAGNO}-${item.ITEMID}-${index}`}
-            renderItem={({ item, index }) => (
-              <View style={[
-                styles.tableRow,
-                index % 2 === 0 ? styles.evenRow : styles.oddRow
-              ]}>
-                <Text style={[styles.rowCell, { width: columnWidths.itemId }]} numberOfLines={1}>
-                  {item.ITEMID}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.tagNo }]} numberOfLines={1}>
-                  {item.TAGNO}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.pcs }]} numberOfLines={1}>
-                  {item.PCS}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.grswt }]} numberOfLines={1}>
-                  {item.GRSWT}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.netwt }]} numberOfLines={1}>
-                  {item.NETWT}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.recdate }]} numberOfLines={1}>
-                  {item.RECDATE?.split(" ")[0] || '-'}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.itemname }]} numberOfLines={2}>
-                  {item.ITEMNAME || '-'}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.subitemname }]} numberOfLines={2}>
-                  {item.SUBITEMNAME || '-'}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.itemctrname }]} numberOfLines={2}>
-                  {item.ITEMCTRNAME || '-'}
-                </Text>
-                <Text style={[styles.rowCell, { width: columnWidths.itemtypename }]} numberOfLines={2}>
-                  {item.ITEMTYPENAME || '-'}
-                </Text>
-              </View>
-            )}
+            data={sortedItems}
+            keyExtractor={(item, index) => `${item.TAGNO}-${item.ITEMID}-${index}-${item.isChecked}`}
+            renderItem={renderTableRow}
             ListEmptyComponent={
               itemTags.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>No items found</Text>
                 </View>
-              ) : null
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    No {filter !== "all" ? filter : ""} items found
+                  </Text>
+                </View>
+              )
             }
             showsVerticalScrollIndicator={true}
           />
         </View>
       </ScrollView>
       
-      {/* Load More Button - Only shown when there are more items to load */}
-      {itemTags.length > 0 && hasMore && (
+      {/* Filter Dropdown Modal */}
+      <Modal
+        transparent={true}
+        visible={showFilterDropdown}
+        animationType="fade"
+        onRequestClose={() => setShowFilterDropdown(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowFilterDropdown(false)}
+        >
+          <View style={styles.dropdownContainer}>
+            {filterOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.dropdownItem,
+                  filter === option.value && styles.dropdownItemSelected
+                ]}
+                onPress={() => {
+                  setFilter(option.value);
+                  setShowFilterDropdown(false);
+                }}
+              >
+                <Text style={[
+                  styles.dropdownItemText,
+                  filter === option.value && styles.dropdownItemTextSelected
+                ]}>
+                  {option.label}
+                </Text>
+                {filter === option.value && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      
+      {/* Load More Button */}
+      {sortedItems.length > 0 && hasMore && (
         <TouchableOpacity 
           style={[styles.loadMoreButton, loadingMore && styles.loadMoreButtonDisabled]}
           onPress={onLoadMore}
@@ -123,17 +260,17 @@ const TableComponent = ({
             </View>
           ) : (
             <Text style={styles.loadMoreText}>
-              Load More Items ({itemTags.length} of {totalCount > 0 ? totalCount : '?'} shown)
+              Load More Items ({sortedItems.length} of {totalCount > 0 ? totalCount : '?'} shown)
             </Text>
           )}
         </TouchableOpacity>
       )}
       
       {/* Show message when all items are loaded */}
-      {itemTags.length > 0 && !hasMore && (
+      {sortedItems.length > 0 && !hasMore && (
         <View style={styles.allLoadedContainer}>
           <Text style={styles.allLoadedText}>
-            All {itemTags.length} items loaded
+            All {sortedItems.length} items loaded ({checkedItems.length} checked, {uncheckedItems.length} unchecked)
           </Text>
         </View>
       )}
@@ -148,11 +285,45 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#eee",
   },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
   formTitle: {
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 16,
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  filterButtonText: {
+    fontSize: 14,
+    color: "#333",
+    marginRight: 8,
+  },
+  filterArrow: {
+    fontSize: 10,
+    color: "#666",
+  },
+  filterInfoContainer: {
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  filterInfoText: {
+    fontSize: 12,
+    color: "#666",
+    fontStyle: "italic",
   },
   tableHeader: {
     flexDirection: "row",
@@ -165,7 +336,7 @@ const styles = StyleSheet.create({
   headerCell: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: 14,
     textAlign: "center",
     paddingHorizontal: 4,
   },
@@ -182,11 +353,18 @@ const styles = StyleSheet.create({
   oddRow: {
     backgroundColor: "#f9f9f9",
   },
+  checkedRow: {
+    backgroundColor: "#e3f2fd",
+  },
   rowCell: {
-    fontSize: 12,
+    fontSize: 14,
     textAlign: "center",
     paddingHorizontal: 4,
     color: "#333",
+  },
+  checkedText: {
+    color: "#1565c0",
+    fontWeight: "500",
   },
   emptyContainer: {
     padding: 40,
@@ -198,6 +376,49 @@ const styles = StyleSheet.create({
   emptyText: {
     color: "#999",
     fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dropdownContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    width: width * 0.7,
+    maxWidth: 300,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    overflow: "hidden",
+  },
+  dropdownItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  dropdownItemSelected: {
+    backgroundColor: "#e3f2fd",
+  },
+  dropdownItemText: {
+    fontSize: 15,
+    color: "#333",
+  },
+  dropdownItemTextSelected: {
+    color: "#1C467C",
+    fontWeight: "600",
+  },
+  checkmark: {
+    color: "#1C467C",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   loadMoreButton: {
     backgroundColor: "#1C467C",
