@@ -2,7 +2,14 @@ import React, { useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const ScanUpdateComponent = ({ mode, formData, setFormData, submitManualData, setScannerVisible }) => {
+const ScanUpdateComponent = ({ 
+  mode, 
+  formData, 
+  setFormData, 
+  submitManualData, 
+  setScannerVisible,
+  disabled = false 
+}) => {
   const tagNoRef = useRef(null);
 
   return (
@@ -11,14 +18,20 @@ const ScanUpdateComponent = ({ mode, formData, setFormData, submitManualData, se
       {mode === "automatic" && (
         <View style={styles.automaticContainer}>
           <TouchableOpacity 
-            onPress={() => setScannerVisible(true)} 
-            style={styles.scanButton}
+            onPress={() => !disabled && setScannerVisible(true)} 
+            style={[styles.scanButton, disabled && styles.disabledButton]}
             activeOpacity={0.8}
+            disabled={disabled}
           >
-            <Ionicons name="scan" size={34} color="#fff" />
+            <Ionicons name="scan" size={34} color={disabled ? "#999" : "#fff"} />
           </TouchableOpacity>
-          <Text style={styles.scanText}>Scan Now</Text>
-          <Text style={styles.scanDescription}>Scan QR code to automatically update item</Text>
+          <Text style={[styles.scanText, disabled && styles.disabledText]}>Scan Now</Text>
+          <Text style={styles.scanDescription}>
+            {disabled 
+              ? "Please set Sub Item, Metal, and Counter filters first" 
+              : "Scan QR code to automatically update item"
+            }
+          </Text>
         </View>
       )}
 
@@ -38,6 +51,7 @@ const ScanUpdateComponent = ({ mode, formData, setFormData, submitManualData, se
                 returnKeyType="next"
                 onSubmitEditing={() => tagNoRef.current?.focus()}
                 keyboardType="numeric"
+                editable={!disabled}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -50,29 +64,24 @@ const ScanUpdateComponent = ({ mode, formData, setFormData, submitManualData, se
                 placeholder="Enter Tag No"
                 placeholderTextColor="#999"
                 returnKeyType="done"
-                onSubmitEditing={submitManualData}
+                onSubmitEditing={!disabled ? submitManualData : null}
                 keyboardType="numeric"
+                editable={!disabled}
               />
             </View>
           </View>
           
           {/* Submit Button for Manual Mode */}
           <TouchableOpacity 
-            style={styles.submitButton} 
-            onPress={submitManualData}
+            style={[styles.submitButton, disabled && styles.submitButtonDisabled]} 
+            onPress={!disabled ? submitManualData : null}
             activeOpacity={0.8}
-            disabled={!formData.itemId || !formData.tagNo}
+            disabled={disabled || !formData.itemId || !formData.tagNo}
           >
-            <Text style={styles.submitButtonText}>UPDATE ITEM</Text>
+            <Text style={styles.submitButtonText}>
+              {disabled ? "SET FILTERS FIRST" : "UPDATE ITEM"}
+            </Text>
           </TouchableOpacity>  
-          {/* <TouchableOpacity 
-            style={styles.scanAlternativeButton} 
-            onPress={() => setScannerVisible(true)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="scan-outline" size={18} color="#1C467C" style={styles.scanIcon} />
-            <Text style={styles.scanAlternativeText}>Or scan QR code instead</Text>
-          </TouchableOpacity> */}
         </View>
       )}
     </View>
@@ -98,11 +107,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
   scanText: {
     marginTop: 12,
     color: "#1C467C",
     fontWeight: "600",
     fontSize: 16,
+  },
+  disabledText: {
+    color: "#999",
   },
   scanDescription: {
     marginTop: 6,
@@ -148,11 +163,9 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: "#1C467C",
     paddingVertical: 12,
-    // paddingHorizontal: 40,
     borderRadius: 8,
     alignItems: "center",
     elevation: 2,
-    
   },
   submitButtonDisabled: {
     backgroundColor: "#ccc",

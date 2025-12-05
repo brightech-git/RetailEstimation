@@ -8,7 +8,7 @@ class ItemTagService {
 
   // ===================== SERVICE METHODS =====================
 
-    // ===================== STATS ONLY METHOD =====================
+  // ===================== STATS ONLY METHOD =====================
 
   async fetchStats(filters = {}) {
     try {
@@ -19,9 +19,12 @@ class ItemTagService {
       if (filters.metalId) url.searchParams.append("metalId", filters.metalId);
       if (filters.subItemId) url.searchParams.append("subItemId", filters.subItemId);
       if (filters.itemCtrId) url.searchParams.append("itemCtrId", filters.itemCtrId);
+      if (filters.checked) url.searchParams.append("checked", filters.checked);
 
       const res = await fetch(url.toString());
       const data = await res.json();
+      console.log("Filter API", url.toString());
+      console.log("Filter API Response", data);
 
       return {
         totalCount: data.totalCount || 0,
@@ -83,12 +86,77 @@ class ItemTagService {
     }
   }
 
-  // Update item check status
-  async updateItemCheck(itemId, tagNo) {
+  // Update item check status - UPDATED TO MATCH YOUR API
+  async updateItemCheck(itemId, tagNo, subItemId, metalId, itemCtrId) {
     try {
-      const url = `${this.API_BASE_URL}/itemtag/updateCheck?itemId=${itemId}&tagNo=${tagNo}`;
-      const res = await fetch(url, { method: "PUT" });
+      // Get metal name from metalId (assuming you have a way to map this)
+      // For now, I'll pass metalId directly as metalName if needed
+      const metalName = metalId; // You may need to fetch metal name from dropdownData
+      
+      // Build URL with all required parameters
+      const url = new URL(`${this.API_BASE_URL}/itemtag/updateCheck`);
+      
+      // Add all required query parameters
+      url.searchParams.append("itemId", itemId);
+      url.searchParams.append("tagNo", tagNo);
+      url.searchParams.append("subItemId", subItemId);
+      url.searchParams.append("metalName", metalId); // Using metalId as metalName
+      url.searchParams.append("itemCtrId", itemCtrId);
+      
+      console.log("Update API URL:", url.toString());
+      
+      const res = await fetch(url, { 
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
       const result = await res.json();
+      console.log("Update response:", result);
+      return result;
+    } catch (err) {
+      console.log("Update item check error:", err);
+      return { status: "failed", message: "Something went wrong" };
+    }
+  }
+
+  // Alternative version if you need to map metalId to metalName
+  async updateItemCheckWithMetalMapping(itemId, tagNo, subItemId, metalId, itemCtrId, dropdownData = null) {
+    try {
+      let metalName = metalId;
+      
+      // If dropdownData is provided, try to find metal name
+      if (dropdownData && dropdownData.metals && Array.isArray(dropdownData.metals)) {
+        const metal = dropdownData.metals.find(m => 
+          m.id === parseInt(metalId) || m.value === metalId || m.id?.toString() === metalId
+        );
+        if (metal) {
+          metalName = metal.name || metal.label || metal.value || metalId;
+        }
+      }
+      
+      // Build URL with all required parameters
+      const url = new URL(`${this.API_BASE_URL}/itemtag/updateCheck`);
+      
+      // Add all required query parameters
+      url.searchParams.append("itemId", itemId);
+      url.searchParams.append("tagNo", tagNo);
+      url.searchParams.append("subItemId", subItemId);
+      url.searchParams.append("metalName", metalName);
+      url.searchParams.append("itemCtrId", itemCtrId);
+      
+      console.log("Update API URL with metal mapping:", url.toString());
+      
+      const res = await fetch(url, { 
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const result = await res.json();
+      console.log("Update response:", result);
       return result;
     } catch (err) {
       console.log("Update item check error:", err);
