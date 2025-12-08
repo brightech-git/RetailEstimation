@@ -201,7 +201,7 @@ drawerLogo: {
   height: scale(80),
   borderRadius: moderateScale(14),
   marginBottom: verticalScale(8),
-  backgroundColor: COLORS.surfaceVariant,
+  // backgroundColor: COLORS.surfaceVariant,
 },
 
 drawerCompanyName: {

@@ -20,6 +20,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { useTheme } from "../../../Context/ThemeContext";
 import getStyles from "./HeaderStyles";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,10 +31,9 @@ const MainHeader = () => {
   const [error, setError] = useState(false);
   const [rateUpdated, setRateUpdated] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  
-  // 🔒 Admin Authentication States
+
+  // 🔒 Admin Authentication States (Password only)
   const [showAdminAuth, setShowAdminAuth] = useState(false);
-  const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminAuthError, setAdminAuthError] = useState(false);
@@ -62,8 +62,21 @@ const MainHeader = () => {
     : null;
 
   const handleLogout = async () => {
-    await logout();
-    navigation.replace("Login"); // 👈 Ensures navigation resets
+    try {
+      // Clear ALL async storage data
+      await AsyncStorage.clear();
+      console.log("AsyncStorage cleared");
+
+      // Call your existing logout (clears context/login state)
+      await logout();
+
+      // Reset navigation
+      navigation.replace("Login");
+      console.log("Navigation reset to Login screen");
+    } catch (error) {
+      console.error("Error clearing data:", error);
+      Alert.alert("Error", "Something went wrong while logging out.");
+    }
   };
 
   const [currentDateTime] = useState(new Date());
@@ -111,20 +124,18 @@ const MainHeader = () => {
     }).start(() => setDrawerVisible(false));
   };
 
-  // 🔒 Admin Authentication Functions
+  // 🔒 Admin Authentication Functions (Password only)
   const handleAdminAuthentication = () => {
-    // Hardcoded admin credentials (in production, consider more secure methods)
-    const HARDCODED_USERNAME = "admin";
+    // Hardcoded admin password only
     const HARDCODED_PASSWORD = "admin@123";
 
-    if (adminUsername === HARDCODED_USERNAME && adminPassword === HARDCODED_PASSWORD) {
+    if (adminPassword === HARDCODED_PASSWORD) {
       setIsAdminAuthenticated(true);
       setAdminAuthError(false);
       setShowAdminAuth(false);
-      // Clear credentials after successful login
-      setAdminUsername("");
+      // Clear password after successful login
       setAdminPassword("");
-      
+
       // Navigate to Stock Check after authentication
       closeDrawer();
       navigation.navigate("BMGJewellers");
@@ -132,18 +143,22 @@ const MainHeader = () => {
       setAdminAuthError(true);
       Alert.alert(
         "Authentication Failed",
-        "Invalid username or password. Please try again.",
-        [{ text: "OK", onPress: () => {
-          setAdminUsername("");
-          setAdminPassword("");
-        }}]
+        "Invalid password. Please try again.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setAdminPassword("");
+            },
+          },
+        ]
       );
     }
   };
 
   const handleStockCheckPress = () => {
     closeDrawer();
-    
+
     if (isAdminAuthenticated) {
       // If already authenticated, navigate directly
       navigation.navigate("BMGJewellers");
@@ -305,7 +320,7 @@ const MainHeader = () => {
                 />
                 <Text style={styles.drawerText}>Print</Text>
               </TouchableOpacity>
-              
+
               {/* 🔒 Stock Check with Admin Authentication */}
               <TouchableOpacity
                 style={styles.drawerItem}
@@ -316,21 +331,31 @@ const MainHeader = () => {
                   size={26}
                   color={theme.COLORS.iconPrimary}
                 />
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    flex: 1,
+                  }}
+                >
                   <Text style={styles.drawerText}>Stock Check</Text>
                   {isAdminAuthenticated && (
-                    <View style={{
-                      backgroundColor: theme.COLORS.success,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                      borderRadius: 10,
-                      marginLeft: 8,
-                    }}>
-                      <Text style={{
-                        color: theme.COLORS.white,
-                        fontSize: 10,
-                        fontWeight: 'bold',
-                      }}>
+                    <View
+                      style={{
+                        backgroundColor: theme.COLORS.success,
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 10,
+                        marginLeft: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: theme.COLORS.white,
+                          fontSize: 10,
+                          fontWeight: "bold",
+                        }}
+                      >
                         Admin
                       </Text>
                     </View>
@@ -364,7 +389,9 @@ const MainHeader = () => {
                     size={26}
                     color={theme.COLORS.warning}
                   />
-                  <Text style={[styles.drawerText, { color: theme.COLORS.warning }]}>
+                  <Text
+                    style={[styles.drawerText, { color: theme.COLORS.warning }]}
+                  >
                     Logout Admin
                   </Text>
                 </TouchableOpacity>
@@ -392,7 +419,7 @@ const MainHeader = () => {
         </>
       )}
 
-      {/* 🔒 Admin Authentication Modal */}
+      {/* 🔒 Admin Authentication Modal (Password only) */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -402,46 +429,29 @@ const MainHeader = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🔒 Admin Authentication</Text>
+              <Text style={styles.modalTitle}>🔒 Admin Access Required</Text>
               <Text style={styles.modalSubtitle}>
-                Enter admin credentials to access Stock Check
+                Enter admin password to access Stock Check
               </Text>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Username</Text>
+              <Text style={styles.inputLabel}>Admin Password</Text>
               <TextInput
-                style={[
-                  styles.textInput,
-                  adminAuthError && styles.inputError
-                ]}
-                placeholder="Enter admin username"
-                value={adminUsername}
-                onChangeText={setAdminUsername}
-                autoCapitalize="none"
-                placeholderTextColor={theme.COLORS.gray}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  adminAuthError && styles.inputError
-                ]}
+                style={[styles.textInput, adminAuthError && styles.inputError]}
                 placeholder="Enter admin password"
                 value={adminPassword}
                 onChangeText={setAdminPassword}
                 secureTextEntry
                 autoCapitalize="none"
                 placeholderTextColor={theme.COLORS.gray}
+                onSubmitEditing={handleAdminAuthentication}
               />
             </View>
 
             {adminAuthError && (
               <Text style={styles.errorText}>
-                ❌ Invalid credentials. Please try again.
+                ❌ Invalid password. Please try again.
               </Text>
             )}
 
@@ -450,7 +460,6 @@ const MainHeader = () => {
                 style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => {
                   setShowAdminAuth(false);
-                  setAdminUsername("");
                   setAdminPassword("");
                   setAdminAuthError(false);
                 }}
@@ -466,11 +475,9 @@ const MainHeader = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Hardcoded credentials hint (remove in production) */}
+            {/* Hardcoded password hint (remove in production) */}
             <View style={styles.credentialsHint}>
-              <Text style={styles.hintText}>
-                💡 Demo Credentials: admin / admin@123
-              </Text>
+              <Text style={styles.hintText}>💡 Demo Password: admin@123</Text>
             </View>
           </View>
         </View>
