@@ -1,13 +1,7 @@
 import TcpSocket from "react-native-tcp-socket";
-import { Alert, Dimensions } from "react-native";
+import { Alert } from "react-native";
 import axios from "axios";
-import { FONTS, PRINTER_COMMANDS, COLORS, SIZES } from "../Utills/Themedata";
-
-const { width } = Dimensions.get("screen");
-
-// Calculate optimal receipt width based on device
-const RECEIPT_WIDTH = Math.min(width * 0.9, 384); // Max 384px for thermal printer
-const CHARS_PER_LINE = 32; // Standard thermal printer characters per line
+import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -63,310 +57,31 @@ export const mergeItems = (items) => {
   return Array.from(map.values());
 };
 
-// ENHANCED: Helper function with better styling options
+// Helper function to format text with styling
 const formatStyledLine = (
   leftText,
   rightText,
   style = FONTS.NORMAL,
-  align = FONTS.ALIGN_LEFT,
-  width = CHARS_PER_LINE
+  align = FONTS.ALIGN_CENTER,
+  totalWidth = 40
 ) => {
   const left = leftText || "";
   const right = rightText || "";
-  
-  let line = style + align;
-  
-  if (align === FONTS.ALIGN_CENTER) {
-    const totalLength = left.length + (right ? right.length : 0);
-    const padding = Math.max(0, width - totalLength);
-    const leftPadding = Math.floor(padding / 2);
-    const rightPadding = padding - leftPadding;
-    
-    line += " ".repeat(leftPadding) + left;
-    if (right) {
-      line += right + " ".repeat(rightPadding);
-    }
-  } else if (align === FONTS.ALIGN_RIGHT) {
-    const totalLength = left.length + (right ? right.length : 0);
-    const padding = Math.max(0, width - totalLength);
-    line += " ".repeat(padding) + left + (right || "");
-  } else {
-    // LEFT ALIGN (default)
-    if (right) {
-      const spacesNeeded = width - left.length - right.length;
-      const spaces = spacesNeeded > 0 ? " ".repeat(spacesNeeded) : " ";
-      line += left + spaces + right;
-    } else {
-      line += left;
-    }
+
+  const paddedLeft = " ".repeat(2) + left;
+  let line = align + style + paddedLeft;
+
+  if (right) {
+    const spacesNeeded = totalWidth - paddedLeft.length - right.length;
+    const spaces = spacesNeeded > 0 ? " ".repeat(spacesNeeded) : " ";
+    line += spaces + right;
   }
-  
+
+  if (!right && align === FONTS.ALIGN_LEFT) {
+    line = align + style + paddedLeft;
+  }
+
   return line + FONTS.NORMAL + FONTS.ALIGN_LEFT + "\n";
-};
-
-// ENHANCED: Create decorative line
-const createDivider = (type = "dashed", length = CHARS_PER_LINE) => {
-  const characters = {
-    dashed: "-",
-    solid: "=",
-    star: "*",
-    dot: ".",
-    line: "─",
-  };
-  
-  const char = characters[type] || "-";
-  return char.repeat(length) + "\n";
-};
-
-// ENHANCED: Create header section
-const createHeaderSection = () => {
-  let header = "";
-  
-  // Company Logo/Name with enhanced styling
-  header += FONTS.ALIGN_CENTER + FONTS.DOUBLE_HEIGHT + FONTS.BOLD_ON;
-  header += "GOLD JEWELLERS\n";
-  header += FONTS.NORMAL + FONTS.BOLD_ON;
-  header += FONTS.ALIGN_CENTER + "Premium Jewellery\n";
-  header += FONTS.NORMAL;
-  
-  // Address info
-  header += FONTS.ALIGN_CENTER;
-  header += "123 Main Street, City\n";
-  header += "Phone: +91 9876543210\n";
-  header += "GSTIN: 27AAAAA0000A1Z5\n";
-  
-  // Divider
-  header += createDivider("star");
-  
-  return header;
-};
-
-// ENHANCED: Create estimation info section
-const createEstimationInfo = (sample, goldRate, silverRate, trandate) => {
-  let info = "";
-  
-  // Title
-  info += FONTS.ALIGN_CENTER + FONTS.DOUBLE_HEIGHT + FONTS.BOLD_ON;
-  info += "ESTIMATION SLIP\n";
-  info += FONTS.NORMAL;
-  info += createDivider("dashed");
-  
-  // Estimation details
-  info += formatStyledLine(
-    `Est. No: ${sample?.tranno || ""} - BMG`,
-    `Date: ${trandate}`,
-    FONTS.BOLD_ON
-  );
-  
-  info += formatStyledLine(
-    `Tag No: ${sample?.tagno || ""}`,
-    `Time: ${getCurrentTime()}`,
-    FONTS.NORMAL
-  );
-  
-  info += formatStyledLine(
-    `Gold: ₹${goldRate.toFixed(0)}/gm`,
-    `Silver: ₹${silverRate.toFixed(2)}/gm`,
-    FONTS.BOLD_ON
-  );
-  
-  info += createDivider("dashed");
-  
-  return info;
-};
-
-// ENHANCED: Create customer details section
-const createCustomerDetails = () => {
-  let details = "";
-  
-  details += FONTS.BOLD_ON + "CUSTOMER DETAILS\n" + FONTS.NORMAL;
-  details += formatStyledLine("Name:", "________________________", FONTS.BOLD_ON);
-  details += formatStyledLine("Mobile:", "________________________", FONTS.BOLD_ON);
-  details += formatStyledLine("Address:", "________________________", FONTS.BOLD_ON);
-  
-  details += createDivider("solid");
-  
-  return details;
-};
-
-// ENHANCED: Create items table
-const createItemsTable = (itemsWithStones) => {
-  let table = "";
-  
-  // Table header
-  table += FONTS.BOLD_ON + FONTS.UNDERLINE_ON;
-  table += formatStyledLine("ITEM DESCRIPTION", "WEIGHT    AMOUNT", FONTS.BOLD_ON, FONTS.ALIGN_LEFT);
-  table += FONTS.UNDERLINE_OFF;
-  table += createDivider("dashed");
-  
-  // Items
-  itemsWithStones.forEach((item, idx) => {
-    const itemName = `${idx + 1}. ${(item.itemname || "").toUpperCase()}`;
-    const pcsInfo = `(${item.pcs} Pcs)`;
-    const itemId = `[${item.itemid}-${item.tagno}]`;
-    
-    // Main item line
-    table += FONTS.BOLD_ON + itemName + " " + pcsInfo + FONTS.NORMAL + "\n";
-    table += FONTS.SMALL + "  " + itemId + FONTS.NORMAL + "\n";
-    
-    // Weight and amount
-    const weight = (item.netwt || 0).toFixed(3) + " gm";
-    const amount = "₹" + (item.amount || 0).toFixed(0);
-    table += formatStyledLine(
-      `  Net Weight: ${weight}`,
-      `Amount: ${amount}`,
-      FONTS.NORMAL
-    );
-    
-    // If gross weight differs
-    if (item.grswt !== item.netwt) {
-      table += formatStyledLine(
-        `  Gross Weight: ${(item.grswt || 0).toFixed(3)} gm`,
-        "",
-        FONTS.SMALL
-      );
-    }
-    
-    // Wastage if any
-    if (item.wastper && item.wastper > 0) {
-      table += formatStyledLine(
-        `  Wastage: ${item.wastper.toFixed(1)}%`,
-        `Charge: ₹${(item.wastage || 0).toFixed(0)}`,
-        FONTS.SMALL
-      );
-    }
-    
-    // Stones if any
-    if (item.stones && item.stones.length > 0) {
-      table += FONTS.SMALL + "  ✨ STUDDED STONES:\n" + FONTS.NORMAL;
-      item.stones.forEach((stone, stoneIdx) => {
-        const stoneName = stone.stnname || `Stone ${stoneIdx + 1}`;
-        const stoneWeight = `${(stone.stnwt || 0).toFixed(3)}${stone.stoneunit || ""}`;
-        const stoneAmount = `₹${(stone.stnamt || 0).toFixed(0)}`;
-        
-        table += formatStyledLine(
-          `    ${stoneName}: ${stoneWeight}`,
-          stoneAmount,
-          FONTS.SMALL
-        );
-      });
-    }
-    
-    table += "\n";
-  });
-  
-  table += createDivider("solid");
-  
-  return table;
-};
-
-// ENHANCED: Create totals section
-const createTotalsSection = (totals, offer) => {
-  let totalsSection = "";
-  
-  totalsSection += FONTS.BOLD_ON + "TOTAL SUMMARY\n" + FONTS.NORMAL;
-  totalsSection += createDivider("dashed");
-  
-  // Basic totals
-  totalsSection += formatStyledLine(
-    "Total Pieces:",
-    totals.totalpcs.toString(),
-    FONTS.BOLD_ON
-  );
-  
-  totalsSection += formatStyledLine(
-    "Gross Weight:",
-    `${totals.totalGrossWeight.toFixed(3)} gm`,
-    FONTS.BOLD_ON
-  );
-  
-  totalsSection += formatStyledLine(
-    "Base Amount:",
-    `₹${totals.baseAmount.toFixed(0)}`,
-    FONTS.BOLD_ON
-  );
-  
-  // Offer if any
-  if (offer && offer.netwt && offer.board_rate) {
-    const offerDiscount = offer.netwt * offer.board_rate;
-    totalsSection += formatStyledLine(
-      "Offer Discount:",
-      `-₹${offerDiscount.toFixed(0)}`,
-      FONTS.SMALL
-    );
-  }
-  
-  // Taxes
-  totalsSection += formatStyledLine(
-    "CGST @1.5%:",
-    `₹${totals.cgstAmount.toFixed(2)}`,
-    FONTS.NORMAL
-  );
-  
-  totalsSection += formatStyledLine(
-    "SGST @1.5%:",
-    `₹${totals.sgstAmount.toFixed(2)}`,
-    FONTS.NORMAL
-  );
-  
-  totalsSection += createDivider("double");
-  
-  return totalsSection;
-};
-
-// ENHANCED: Create grand total section
-const createGrandTotal = (grandTotal) => {
-  let grandTotalSection = "";
-  
-  grandTotalSection += FONTS.ALIGN_CENTER + FONTS.DOUBLE_HEIGHT + FONTS.BOLD_ON;
-  grandTotalSection += "GRAND TOTAL\n";
-  grandTotalSection += FONTS.NORMAL;
-  
-  grandTotalSection += FONTS.ALIGN_CENTER + FONTS.DOUBLE_HEIGHT + FONTS.BOLD_ON;
-  grandTotalSection += `₹${grandTotal.toFixed(0)}\n`;
-  grandTotalSection += FONTS.NORMAL;
-  
-  grandTotalSection += createDivider("star");
-  
-  return grandTotalSection;
-};
-
-// ENHANCED: Create footer section
-const createFooter = (estimationNo) => {
-  let footer = "";
-  
-  footer += FONTS.ALIGN_CENTER + FONTS.SMALL;
-  footer += "Thank you for your business!\n";
-  footer += "We value your trust\n";
-  footer += createDivider("dot");
-  
-  footer += FONTS.ALIGN_CENTER;
-  footer += "Terms & Conditions:\n";
-  footer += FONTS.SMALL;
-  footer += "• Valid for 30 days\n";
-  footer += "• Prices subject to change\n";
-  footer += "• GST included\n";
-  footer += FONTS.NORMAL;
-  
-  footer += createDivider("star");
-  
-  // QR Code
-  footer += FONTS.ALIGN_CENTER;
-  footer += "Scan for digital copy\n";
-  
-  const estNo = estimationNo || "NA";
-  footer += printQRCode(estNo);
-  
-  footer += FONTS.ALIGN_CENTER + FONTS.SMALL;
-  footer += `Est.No: ${estNo}\n`;
-  footer += createDivider("star");
-  
-  // Final footer
-  footer += FONTS.ALIGN_CENTER;
-  footer += "Visit us again!\n";
-  footer += "www.goldjewellers.com\n\n\n";
-  
-  return footer;
 };
 
 // BEST WORKING QR CODE FOR ALL THERMAL PRINTERS
@@ -400,6 +115,7 @@ const printQRCode = (estimationNo) => {
 export const createPrinterService = (baseUrl) => {
   const API_URL = `${baseUrl}/printers`;
   
+  // ✅ Return a simple object with functions, not a "service" that can be mistaken for a class
   return {
     // Get Printer By ID
     getPrinterById: async (id) => {
@@ -648,6 +364,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
       throw new Error("API base URL is required to fetch printers");
     }
 
+    // ✅ FIXED: Properly call createPrinterService (no extra parentheses)
     const printerService = createPrinterService(apiBaseUrl);
     const printers = await printerService.getPrintersByEmployee(employeeId);
 
@@ -669,6 +386,12 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
         (typeof activeValue === "string" && activeValue.toLowerCase() === "true") ||
         activeValue === "Y" ||
         activeValue === "y";
+
+      console.log(`🔍 Checking printer "${printer.name}":`, {
+        active: activeValue,
+        type: typeof activeValue,
+        isActive: isActive,
+      });
 
       return isActive;
     });
@@ -779,16 +502,15 @@ export const checkPrinterConnection = async (
   }
 };
 
-// ENHANCED: Print estimation with custom fonts and styles
+// Print estimation to printer
 export const printEstimationToPrinter = async (
   slipData,
   currentPrinter = null,
   employeeId = null,
-  apiBaseUrl = null,
-  useEnhancedStyle = true // New parameter for enhanced styling
+  apiBaseUrl = null
 ) => {
   try {
-    console.log("🖨️ Starting print process with enhanced styling...");
+    console.log("🖨️ Starting print process...");
 
     // Get active printer
     let activePrinter = currentPrinter;
@@ -853,53 +575,140 @@ export const printEstimationToPrinter = async (
       const client = TcpSocket.createConnection(options, () => {
         console.log("✅ Connected to printer:", activePrinter.ip_address);
 
-        const trandate = sample?.trandate && sample.trandate.includes("-")
-          ? sample.trandate
-          : formatDate(sample?.trandate);
+        const offerWeight = offer.netwt || 0;
+        const offerBoardRate = offer.board_rate || 0;
+        const offerDiscount = offerWeight * offerBoardRate;
+        const trandate =
+          sample?.trandate && sample.trandate.includes("-")
+            ? sample.trandate
+            : formatDate(sample?.trandate);
 
-        let printContent = PRINTER_COMMANDS.INIT;
-        
-        if (useEnhancedStyle) {
-          // ENHANCED STYLING
-          printContent += createHeaderSection();
-          printContent += createEstimationInfo(sample, goldRate, silverRate, trandate);
-          printContent += createCustomerDetails();
-          printContent += createItemsTable(itemsWithStones);
-          printContent += createTotalsSection({
-            totalpcs,
-            totalGrossWeight,
-            baseAmount,
-            cgstAmount,
-            sgstAmount,
-            grandTotal,
-          }, offer);
-          printContent += createGrandTotal(grandTotal);
-          printContent += createFooter(sample?.tranno);
-        } else {
-          // ORIGINAL STYLING (for backward compatibility)
-          printContent += FONTS.ALIGN_CENTER;
-          printContent += FONTS.BOLD_ON + FONTS.DOUBLE_HEIGHT;
-          printContent += "ESTIMATION SLIP\n";
-          printContent += FONTS.BOLD_OFF + FONTS.NORMAL;
+        let printContent = FONTS.ALIGN_CENTER;
+        printContent += PRINTER_COMMANDS.INIT;
+
+        // Header Section
+        printContent += FONTS.ALIGN_CENTER;
+        printContent += FONTS.BOLD_ON + FONTS.DOUBLE_HEIGHT;
+        printContent += "ESTIMATION SLIP\n";
+        printContent += FONTS.BOLD_OFF + FONTS.NORMAL;
+
+        printContent += formatStyledLine(
+          "NAME :",
+          "_____________________________",
+          FONTS.BOLD_ON
+        );
+        printContent += "\n";
+        printContent += formatStyledLine(
+          "MOBILE :",
+          "_____________________________",
+          FONTS.BOLD_ON
+        );
+        printContent += "\n";
+        printContent += "-----------------------------------------\n";
+
+        // Estimation Info
+        printContent += formatStyledLine(
+          "ESTIMATION SLIP",
+          `Est.No: ${sample?.tranno || ""} - ${"BMG"}`,
+          FONTS.BOLD_ON
+        );
+        printContent += formatStyledLine(
+          `Date: ${trandate}`,
+          `Gold: ${goldRate.toFixed(0)}/Gm`
+        );
+        printContent += formatStyledLine(
+          `Time: ${getCurrentTime()}`,
+          `Silver: ${silverRate.toFixed(2)}/Gm`
+        );
+        printContent += "-----------------------------------------\n";
+
+        // Table Header
+        printContent += formatStyledLine(
+          "Description",
+          "Weight    V.A    Amount",
+          FONTS.BOLD_ON
+        );
+        printContent += "-----------------------------------------\n";
+
+        // Items List
+        itemsWithStones.forEach((item, idx) => {
+          const itemName = (item.itemname || "").toUpperCase();
+          const itemNumber = idx + 1;
+          const stones = item.stones || [];
+
+          const indent = "    ";
 
           printContent += formatStyledLine(
-            "NAME :",
-            "_____________________________",
-            FONTS.BOLD_ON
+            `${indent}${itemNumber} ${itemName} (${item.pcs} Pcs) [${item.itemid}-${item.tagno}]`,
+            "",
+            FONTS.BOLD_ON,
+            FONTS.ALIGN_LEFT
           );
-          printContent += "\n";
-          printContent += formatStyledLine(
-            "MOBILE :",
-            "_____________________________",
-            FONTS.BOLD_ON
-          );
-          printContent += "\n";
-          printContent += "-----------------------------------------\n";
 
-          // ... rest of original formatting
+          const rateValue =
+            item.salemode === "R"
+              ? (item.amount || 0).toFixed(0)
+              : (parseFloat(item.boardrate) || 0).toFixed(0);
+
+          printContent += formatStyledLine(
+            `Rate:${rateValue} `,
+            `${(item.grswt || 0).toFixed(3)}    ${
+              item.wastper && item.wastper > 0 ? item.wastper.toFixed(1) : ""
+            }    ${(item.amount || 0).toFixed(0)}`
+          );
+
+          if (item.grswt !== item.netwt) {
+            printContent += formatStyledLine(
+              "Netwt:",
+              `${(item.netwt || 0).toFixed(3)}`
+            );
+          }
+
+          stones.forEach((stone) => {
+            printContent += formatStyledLine(
+              "STUDDED",
+              `${stone.stnwt?.toFixed(3) || "0.000"}${stone.stoneunit || ""}        ${stone.stnamt?.toFixed(0) || "0"}`
+            );
+          });
+        });
+
+        // Totals Section
+        printContent += "-----------------------------------------\n";
+        printContent += formatStyledLine(
+          `Tot.Pcs: ${totalpcs}`,
+          `${totalGrossWeight.toFixed(3)}        ${baseAmount.toFixed(0)}`,
+          FONTS.BOLD_ON
+        );
+
+        if (offerDiscount > 0) {
+          printContent += formatStyledLine(
+            `Offer (${offerWeight.toFixed(3)} * ${offerBoardRate})`,
+            `${offerDiscount.toFixed(1)}`
+          );
         }
 
-        // Feed and cut
+        printContent += formatStyledLine("CGST (1.5%)", `${cgstAmount.toFixed(2)}`);
+        printContent += formatStyledLine("SGST (1.5%)", `${sgstAmount.toFixed(2)}`);
+
+        printContent += "-----------------------------------------\n";
+
+        // Grand Total
+        printContent += FONTS.BOLD_ON + FONTS.DOUBLE_HEIGHT;
+        printContent += formatStyledLine("Sales TOTAL:", `${grandTotal.toFixed(0)}`);
+        printContent += FONTS.NORMAL;
+
+        printContent += "-----------------------------------------\n";
+
+        // QR CODE
+        printContent += "\n";
+        printContent += FONTS.ALIGN_CENTER;
+
+        const estNo = sample?.tranno || "NA";
+        console.log("Printing QR Code for Estimation No:", estNo);
+
+        printContent += `Est.No: ${estNo}\n`;
+        printContent += printQRCode(estNo);
+
         printContent += PRINTER_COMMANDS.FEED_LINES(3);
         printContent += PRINTER_COMMANDS.CUT;
 
@@ -957,35 +766,6 @@ export const printEstimationToPrinter = async (
   }
 };
 
-// NEW: Function to preview receipt styling
-export const previewReceiptStyling = (slipData) => {
-  if (!slipData) return null;
-  
-  const { sample, goldRate, silverRate, itemsWithStones, totalpcs, totalGrossWeight, 
-          baseAmount, cgstAmount, sgstAmount, grandTotal, offer } = slipData;
-  
-  const trandate = sample?.trandate && sample.trandate.includes("-")
-    ? sample.trandate
-    : formatDate(sample?.trandate);
-  
-  return {
-    header: createHeaderSection(),
-    estimationInfo: createEstimationInfo(sample, goldRate, silverRate, trandate),
-    customerDetails: createCustomerDetails(),
-    itemsTable: createItemsTable(itemsWithStones),
-    totals: createTotalsSection({
-      totalpcs,
-      totalGrossWeight,
-      baseAmount,
-      cgstAmount,
-      sgstAmount,
-      grandTotal,
-    }, offer),
-    grandTotal: createGrandTotal(grandTotal),
-    footer: createFooter(sample?.tranno),
-  };
-};
-
 // Export all functions
 export default {
   formatDate,
@@ -996,5 +776,4 @@ export default {
   getActivePrinter,
   checkPrinterConnection,
   createPrinterService,
-  previewReceiptStyling, // NEW
 };
