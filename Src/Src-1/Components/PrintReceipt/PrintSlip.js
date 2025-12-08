@@ -286,9 +286,9 @@ const loadActivePrinter = useCallback(async () => {
     setPreviewVisible(false);
   }, []);
 
-const executePrint = useCallback(async () => {
+const executePrint = useCallback(async (printCount = 1) => {
   try {
-    console.log("🖨️ Execute print called, current printer:", currentPrinter?.name);
+    console.log(`🖨️ Execute print called for ${printCount} copies, current printer:`, currentPrinter?.name);
 
     if (!currentPrinter) {
       console.log("ℹ️ No current printer selected for printing");
@@ -327,7 +327,7 @@ const executePrint = useCallback(async () => {
             text: "Retry",
             onPress: () => {
               console.log("🔄 Retrying print after connectivity failure");
-              executePrint();
+              executePrint(printCount);
             },
           },
           {
@@ -343,17 +343,50 @@ const executePrint = useCallback(async () => {
       return;
     }
 
-    console.log("✅ Printer is connected, proceeding with print...");
+    console.log(`✅ Printer is connected, proceeding with ${printCount} copies...`);
     setPreviewVisible(false);
 
     if (slipData) {
-      console.log("📄 Printing slip data with printer:", currentPrinter.name);
+      console.log(`📄 Printing ${printCount} copies with printer:`, currentPrinter.name);
       
       const currentEmployeeId = await loadEmployeeId();
-      await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL);
-      console.log("✅ Print job completed successfully",slipData);
       
-      Alert.alert("Success", "Estimation slip printed successfully!");
+      // Print multiple copies
+      for (let i = 0; i < printCount; i++) {
+        console.log(`🖨️ Printing copy ${i + 1} of ${printCount}`);
+        
+        try {
+       await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, printCount);
+          console.log(`✅ Copy ${i + 1} printed successfully`);
+          
+          // Add a small delay between prints to avoid printer buffer overflow
+          if (i < printCount - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+          }
+        } catch (copyError) {
+          console.error(`❌ Error printing copy ${i + 1}:`, copyError);
+          
+          // If first copy fails, show error
+          if (i === 0) {
+            throw copyError;
+          }
+          
+          // For subsequent copies, show partial success
+          Alert.alert(
+            "Partial Success",
+            `Printed ${i} of ${printCount} copies successfully.\n\nError on copy ${i + 1}: ${copyError.message}`
+          );
+          return;
+        }
+      }
+      
+      console.log(`✅ All ${printCount} copies printed successfully`);
+      
+      if (printCount > 1) {
+        Alert.alert("Success", `${printCount} copies printed successfully!`);
+      } else {
+        Alert.alert("Success", "Estimation slip printed successfully!");
+      }
     } else {
       console.log("❌ No slip data available for printing");
       Alert.alert("Error", "No data available for printing");

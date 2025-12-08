@@ -766,6 +766,7 @@ export const printEstimationToPrinter = async (
   }
 };
 
+
 // Export all functions
 export default {
   formatDate,
