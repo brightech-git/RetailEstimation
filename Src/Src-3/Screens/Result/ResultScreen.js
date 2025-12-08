@@ -79,12 +79,16 @@ const ResultsScreen = ({ route, navigation }) => {
 
         const item = items.find((item) => {
           if (item.id && item.id.toString() === value.toString()) return item;
-          if (item.value && item.value.toString() === value.toString()) return item;
+          if (item.value && item.value.toString() === value.toString())
+            return item;
           return false;
         });
 
         return item
-          ? { name: item.name || item.label || value, id: item.id || item.value || value }
+          ? {
+              name: item.name || item.label || value,
+              id: item.id || item.value || value,
+            }
           : { name: value, id: value };
       };
 
@@ -129,7 +133,7 @@ const ResultsScreen = ({ route, navigation }) => {
     () => (totalCount > 0 ? (totalChecked / totalCount) * 100 : 0),
     [totalCount, totalChecked]
   );
-  
+
   const uncheckedPercentage = 100 - checkedPercentage;
 
   // Data loading
@@ -197,20 +201,32 @@ const ResultsScreen = ({ route, navigation }) => {
   }, [refreshStatsOnly]);
 
   // Get metal name from metalId using dropdown data
-  const getMetalName = useCallback((metalId) => {
-    if (!metalId || !dropdownData.metals || !Array.isArray(dropdownData.metals)) {
-      return metalId || "";
-    }
-    
-    const metal = dropdownData.metals.find(m => 
-      m.id?.toString() === metalId.toString() || 
-      m.value?.toString() === metalId.toString()
-    );
-    
-    return metal ? (metal.name || metal.label || metal.value || metalId) : metalId;
-  }, [dropdownData.metals]);
+  const getMetalName = useCallback(
+    (metalId) => {
+      if (
+        !metalId ||
+        !dropdownData.metals ||
+        !Array.isArray(dropdownData.metals)
+      ) {
+        return metalId || "";
+      }
+
+      const metal = dropdownData.metals.find(
+        (m) =>
+          m.id?.toString() === metalId.toString() ||
+          m.value?.toString() === metalId.toString()
+      );
+
+      return metal
+        ? metal.name || metal.label || metal.value || metalId
+        : metalId;
+    },
+    [dropdownData.metals]
+  );
 
   // Item update
+  // In ResultsScreen.js, update the handleItemUpdate function:
+
   const handleItemUpdate = useCallback(
     async (itemId, tagNo, isManual = false) => {
       if (!itemId?.trim() || !tagNo?.trim()) {
@@ -221,14 +237,17 @@ const ResultsScreen = ({ route, navigation }) => {
         return;
       }
 
-      // Check if required filters are set
-      if (!filters.subItemId || !filters.metalId || !filters.itemCtrId) {
-        showTopToast(
-          "Please set Sub Item, Metal, and Counter filters before updating",
-          "red"
-        );
-        return;
-      }
+      // Check if required filters are set - make them optional
+      // Remove the validation that blocks the update
+      /*
+    if (!filters.subItemId || !filters.metalId || !filters.itemCtrId) {
+      showTopToast(
+        "Please set Sub Item, Metal, and Counter filters before updating",
+        "red"
+      );
+      return;
+    }
+    */
 
       try {
         showTopToast(
@@ -236,16 +255,18 @@ const ResultsScreen = ({ route, navigation }) => {
           "blue"
         );
 
-        // Get metal name from metalId
-        const metalName = getMetalName(filters.metalId);
+        // Get filter values (use empty string if not set)
+        const subItemId = filters.subItemId || "";
+        const metalName = getMetalName(filters.metalId) || "";
+        const itemCtrId = filters.itemCtrId || "";
 
-        // Call service with all required parameters
+        // Call service with all parameters (some may be empty strings)
         const result = await service.updateItemCheck(
           itemId.trim(),
           tagNo.trim(),
-          filters.subItemId,
+          subItemId,
           metalName,
-          filters.itemCtrId
+          itemCtrId
         );
 
         if (result) {
@@ -253,7 +274,10 @@ const ResultsScreen = ({ route, navigation }) => {
             showTopToast(result.message || "Update failed", "red");
             setRecentlyUpdatedItem(null);
           } else {
-            showTopToast(result.message || "Item updated successfully!", "green");
+            showTopToast(
+              result.message || "Item updated successfully!",
+              "green"
+            );
             setRecentlyUpdatedItem(result.data);
           }
         } else {
@@ -271,7 +295,6 @@ const ResultsScreen = ({ route, navigation }) => {
     },
     [filters, getMetalName, loadData, service, showTopToast]
   );
-
   const submitManualData = useCallback(() => {
     handleItemUpdate(formData.itemId, formData.tagNo, true);
   }, [formData, handleItemUpdate]);
@@ -329,8 +352,9 @@ const ResultsScreen = ({ route, navigation }) => {
             <View key={index} style={styles.filterRow}>
               <Text style={styles.filterRowLabel}>{filter.label}:</Text>
               <Text style={styles.filterRowValue}>
-                {filter.label === "METAL" ? getDisplayMetalName() : filter.value}
-                <Text style={styles.filterTagId}> (ID: {filter.id})</Text>
+                {filter.label === "METAL"
+                  ? getDisplayMetalName()
+                  : filter.value} - {filter.id}
               </Text>
             </View>
           ))}
@@ -368,7 +392,8 @@ const ResultsScreen = ({ route, navigation }) => {
       <View style={styles.recentUpdateContainer}>
         <View style={styles.recentUpdateHeader}>
           <Text style={styles.recentUpdateTitle}>
-            <Ionicons name="checkmark-circle" size={16} color="#28a745" /> Recently Updated
+            <Ionicons name="checkmark-circle" size={16} color="#28a745" />{" "}
+            Recently Updated
           </Text>
           <TouchableOpacity onPress={() => setRecentlyUpdatedItem(null)}>
             <Ionicons name="close-circle" size={22} color="#666" />
@@ -378,7 +403,10 @@ const ResultsScreen = ({ route, navigation }) => {
           <View>
             <View style={styles.tableHeader}>
               {columns.map((col) => (
-                <Text key={col.key} style={[styles.headerCell, { width: col.width }]}>
+                <Text
+                  key={col.key}
+                  style={[styles.headerCell, { width: col.width }]}
+                >
                   {col.label}
                 </Text>
               ))}
@@ -391,7 +419,11 @@ const ResultsScreen = ({ route, navigation }) => {
                 return (
                   <Text
                     key={col.key}
-                    style={[styles.cell, { width: col.width }, col.color && { color: col.color }]}
+                    style={[
+                      styles.cell,
+                      { width: col.width },
+                      col.color && { color: col.color },
+                    ]}
                   >
                     {value}
                   </Text>
@@ -412,16 +444,26 @@ const ResultsScreen = ({ route, navigation }) => {
           {["automatic", "manual"].map((modeOption) => (
             <TouchableOpacity
               key={modeOption}
-              style={[styles.modeOption, mode === modeOption && styles.activeMode]}
+              style={[
+                styles.modeOption,
+                mode === modeOption && styles.activeMode,
+              ]}
               onPress={() => setMode(modeOption)}
               activeOpacity={0.7}
             >
               <Ionicons
-                name={mode === modeOption ? "radio-button-on" : "radio-button-off"}
+                name={
+                  mode === modeOption ? "radio-button-on" : "radio-button-off"
+                }
                 size={20}
                 color="#1C467C"
               />
-              <Text style={[styles.modeText, mode === modeOption && styles.activeModeText]}>
+              <Text
+                style={[
+                  styles.modeText,
+                  mode === modeOption && styles.activeModeText,
+                ]}
+              >
                 {modeOption.charAt(0).toUpperCase() + modeOption.slice(1)}
               </Text>
             </TouchableOpacity>
@@ -440,44 +482,43 @@ const ResultsScreen = ({ route, navigation }) => {
           <Text style={styles.statsTotal}>TOTAL: {totalCount}</Text>
         </View>
         <View style={styles.progressBarContainer}>
-          <View style={[styles.progressChecked, { width: `${checkedPercentage}%` }]} />
-          <View style={[styles.progressUnchecked, { width: `${uncheckedPercentage}%` }]} />
+          <View
+            style={[styles.progressChecked, { width: `${checkedPercentage}%` }]}
+          />
+          <View
+            style={[
+              styles.progressUnchecked,
+              { width: `${uncheckedPercentage}%` },
+            ]}
+          />
         </View>
         <View style={styles.statsDetails}>
           <View style={styles.statItem}>
             <View style={[styles.statDot, styles.checkedDot]} />
             <Text style={styles.statLabel}>Checked</Text>
-            <Text style={[styles.statValue, styles.checkedValue]}>{totalChecked}</Text>
+            <Text style={[styles.statValue, styles.checkedValue]}>
+              {totalChecked}
+            </Text>
           </View>
           <View style={styles.statItem}>
             <View style={[styles.statDot, styles.uncheckedDot]} />
             <Text style={styles.statLabel}>Unchecked</Text>
-            <Text style={[styles.statValue, styles.uncheckedValue]}>{totalUnchecked}</Text>
+            <Text style={[styles.statValue, styles.uncheckedValue]}>
+              {totalUnchecked}
+            </Text>
           </View>
         </View>
       </View>
     ),
-    [totalCount, checkedPercentage, uncheckedPercentage, totalChecked, totalUnchecked]
+    [
+      totalCount,
+      checkedPercentage,
+      uncheckedPercentage,
+      totalChecked,
+      totalUnchecked,
+    ]
   );
 
-  // Show warning if required filters are not set
-  const FilterWarningComponent = useMemo(() => {
-    const missingFilters = [];
-    if (!filters.subItemId) missingFilters.push("Sub Item");
-    if (!filters.metalId) missingFilters.push("Metal");
-    if (!filters.itemCtrId) missingFilters.push("Counter");
-
-    if (missingFilters.length === 0) return null;
-
-    return (
-      <View style={styles.warningContainer}>
-        <Ionicons name="warning" size={20} color="#ff9800" />
-        <Text style={styles.warningText}>
-          Please set {missingFilters.join(", ")} filter{missingFilters.length > 1 ? 's' : ''} to update items
-        </Text>
-      </View>
-    );
-  }, [filters]);
 
   return (
     <View style={styles.container}>
@@ -505,16 +546,14 @@ const ResultsScreen = ({ route, navigation }) => {
         <View style={styles.formCard}>
           {StatsComponent}
           {FilterSummaryComponent}
-          {FilterWarningComponent}
           {ModeToggle}
-          
+
           <ScanUpdateComponent
             mode={mode}
             formData={formData}
             setFormData={setFormData}
             submitManualData={submitManualData}
             setScannerVisible={setScannerVisible}
-            disabled={!filters.subItemId || !filters.metalId || !filters.itemCtrId}
           />
 
           {RecentlyUpdatedItem}

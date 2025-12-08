@@ -123,7 +123,12 @@ const BMGJewellersScreen = ({ navigation }) => {
         {...toast}
         onHide={() => setToast((t) => ({ ...t, visible: false }))}
       />
-      <CommonHeader title="Stock Checker" titleColor="#000" />
+      <CommonHeader 
+      title="Stock Checker" 
+      titleColor="#000"
+       onLeftPress={() => navigation.goBack()}
+       leftIcon="arrow-back"
+      />
 
       <ScrollView
         refreshControl={

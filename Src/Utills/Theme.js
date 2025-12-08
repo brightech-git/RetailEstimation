@@ -10,7 +10,7 @@ export const LIGHT_COLORS = {
   /* -------------------------------------------------------------------------- */
   /* 🎨 BASE COLORS                                                            */
   /* -------------------------------------------------------------------------- */
-  background: "#FFFFFF",          // Clean white background
+  background: "#FFFFFF",
   card: "#FFFFFF",
   surface: "#FFFFFF",
   surfaceVariant: "#F5F7FA",
@@ -18,9 +18,9 @@ export const LIGHT_COLORS = {
   /* -------------------------------------------------------------------------- */
   /* 🎨 BRAND COLORS                                                           */
   /* -------------------------------------------------------------------------- */
-  primary: "#1C467C",             // Main brand blue
+  primary: "#1C467C",
   primaryLight: "rgba(28,70,124,0.15)",
-  secondary: "#3A6EA5",           // Complementary blue
+  secondary: "#3A6EA5",
   notification: "#C98900",
   success: "#1B9721",
   danger: "#C62828",
@@ -30,8 +30,8 @@ export const LIGHT_COLORS = {
   /* -------------------------------------------------------------------------- */
   /* 📝 TEXT COLORS                                                            */
   /* -------------------------------------------------------------------------- */
-  title: "#0D1B2A",               // Slightly tinted dark for better contrast
-  text: "#1A1A1A",                // Smooth readable text
+  title: "#0D1B2A",
+  text: "#1A1A1A",
   textLight: "#4A4A4A",
   label: "#666666",
   placeholder: "rgba(0,0,0,0.35)",
@@ -41,7 +41,7 @@ export const LIGHT_COLORS = {
   /* -------------------------------------------------------------------------- */
   borderColor: "#8a8a8aff",
   outline: "#E5E5E5",
-  shadow: "rgba(28,70,124,0.08)",  // Soft shadow tinted with theme color
+  shadow: "rgba(28,70,124,0.08)",
   overlay: "rgba(0,0,0,0.2)",
   input: "#F7F9FC",
   darkInput: "#EFF2F7",
@@ -53,15 +53,14 @@ export const LIGHT_COLORS = {
   iconPrimary: "#1C467C",
   iconSecondary: "#6C757D",
   
-
-  gradientPrimary: ["#1C467C", "#3A6EA5"],  // Brand gradient
+  gradientPrimary: ["#1C467C", "#3A6EA5"],
   gradientSecondary: ["#ffffffff", "#ffffffff"],
   gradientText: ["#ffffffff", "#3A6EA5"],
 };
 
 
 export const DARK_COLORS = {
-  background: "#000000",         // True black
+  background: "#000000",
   card: "#0A0A0A",
   surface: "#0F0F0F",
   surfaceVariant: "#1A1A1A",
@@ -74,7 +73,7 @@ export const DARK_COLORS = {
   warning: "#FFB300",
   info: "#29B6F6",
   title: "#FFFFFF",
-  text: "#EDEDED",               // Soft white text for readability
+  text: "#EDEDED",
   textLight: "#BBBBBB",
   label: "#999999",
   placeholder: "rgba(255,255,255,0.5)",
@@ -185,12 +184,70 @@ export const createFonts = (COLORS) => ({
     lineHeight: DEVICE.isTablet ? 28 : 24,
   },
   heading: { fontFamily: "TrajanProBold", lineHeight: DEVICE.isTablet ? 40 : 35 },
-  subheading: { fontFamily: "DMSerif",  },
+  subheading: { fontFamily: "DMSerif" },
   body: { fontFamily: "DancingScript" },
-  text: { fontFamily: "Domine", },
-  text1: { fontFamily: "TrajanProBold", },
-  text2: { fontFamily: "TrajanPro", },
+  text: { fontFamily: "Domine" },
+  text1: { fontFamily: "TrajanProBold" },
+  text2: { fontFamily: "TrajanPro" },
 });
+
+/* -------------------------------------------------------------------------- */
+/* 🖨️ PRINTER COMMANDS & FONTS (ESC/POS)                                    */
+/* -------------------------------------------------------------------------- */
+export const PRINTER_COMMANDS = {
+  // Initialization
+  INIT: "\x1B\x40",
+  
+  // Paper cut
+  CUT: "\x1D\x56\x41\x00", // Full cut
+  
+  // Line spacing
+  LINE_SPACING_24: "\x1B\x33\x18", // 24/180 inch
+  LINE_SPACING_30: "\x1B\x33\x1E", // 30/180 inch
+  
+  // Paper feed
+  FEED_LINES: (lines) => `\x1B\x64${String.fromCharCode(lines)}`,
+  
+  // Barcode
+  BARCODE_HEIGHT: (height) => `\x1D\x68${String.fromCharCode(height)}`,
+  BARCODE_WIDTH: (width) => `\x1D\x77${String.fromCharCode(width)}`,
+  BARCODE_TEXT_NONE: "\x1D\x48\x00",
+  BARCODE_TEXT_ABOVE: "\x1D\x48\x02",
+  BARCODE_TEXT_BELOW: "\x1D\x48\x01",
+  BARCODE_CODE128: "\x1D\x6B\x49",
+};
+
+// ESC/POS Font Styles
+export const FONTS = {
+  // Alignment
+  ALIGN_LEFT: "\x1B\x61\x00",
+  ALIGN_CENTER: "\x1B\x61\x01",
+  ALIGN_RIGHT: "\x1B\x61\x02",
+  
+  // Font Sizes
+  NORMAL: "\x1B\x21\x00",
+  DOUBLE_HEIGHT: "\x1B\x21\x10",
+  DOUBLE_WIDTH: "\x1B\x21\x20",
+  DOUBLE_BOTH: "\x1B\x21\x30",
+  SMALL: "\x1D\x21\x00",
+  MEDIUM: "\x1D\x21\x01",
+  LARGE: "\x1D\x21\x11",
+  
+  // Font Styles
+  BOLD_ON: "\x1B\x45\x01",
+  BOLD_OFF: "\x1B\x45\x00",
+  UNDERLINE_ON: "\x1B\x2D\x01",
+  UNDERLINE_OFF: "\x1B\x2D\x00",
+  INVERSE_ON: "\x1D\x42\x01",
+  INVERSE_OFF: "\x1D\x42\x00",
+  
+  // Character spacing
+  SET_SPACING: (n) => `\x1B\x20${String.fromCharCode(n)}`,
+  
+  // Printer modes
+  DRAFT_MODE: "\x1B\x78\x00",
+  NLQ_MODE: "\x1B\x78\x01",
+};
 
 /* -------------------------------------------------------------------------- */
 /* 🧠 FUNCTION TO BUILD THEME (LIGHT OR DARK)                                 */
@@ -198,7 +255,7 @@ export const createFonts = (COLORS) => ({
 export const getAppTheme = (isDarkMode = false) => {
   const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
   const FONTS = createFonts(COLORS);
-  return { COLORS, SIZES, FONTS, DEVICE, isDarkMode };
+  return { COLORS, SIZES, FONTS, DEVICE, isDarkMode, PRINTER_COMMANDS };
 };
 
 /* -------------------------------------------------------------------------- */

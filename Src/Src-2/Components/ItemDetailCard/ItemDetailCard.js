@@ -8,6 +8,7 @@ const ItemDetailsCard = ({ item, index, theme }) => {
   const grossAmount = parseFloat(item.GrossAmount) || 0;
   const gstAmount = parseFloat(item.GSTAmount) || 0;
   const grandTotal = parseFloat(item.GrandTotal) || 0;
+  const GRSWT = parseFloat(item.GRSWT) || 0;
 
   // Function to get fallback icon based on item name or type
   const getFallbackIcon = () => {
@@ -85,6 +86,11 @@ const ItemDetailsCard = ({ item, index, theme }) => {
         <View style={styles.cardDetailRow}>
           <Text style={styles.cardDetailLabel}>Pieces</Text>
           <Text style={styles.cardDetailValue}>{item.PCS || "0"}</Text>
+        </View>
+
+        <View style={styles.cardDetailRow}>
+          <Text style={styles.cardDetailLabel}>Gross Weight</Text>
+          <Text style={styles.cardDetailValue}>{GRSWT.toFixed(2)} Grams</Text>
         </View>
 
         <View style={styles.cardDetailRow}>

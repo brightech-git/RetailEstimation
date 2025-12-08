@@ -232,6 +232,114 @@ drawerText: {
   fontWeight: "600",
   fontSize: isTablet ? 18 : 15,
 },
-
+ // 🔒 Admin Authentication Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '90%',
+    backgroundColor: theme.COLORS.card,
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 25,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: theme.COLORS.title,
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: theme.COLORS.text,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.COLORS.text,
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: theme.COLORS.inputBackground || '#f5f5f5',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: theme.COLORS.text,
+    borderWidth: 1,
+    borderColor: theme.COLORS.border,
+  },
+  inputError: {
+    borderColor: theme.COLORS.danger,
+    borderWidth: 2,
+  },
+  errorText: {
+    color: theme.COLORS.danger,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: theme.COLORS.gray + '20',
+    borderWidth: 1,
+    borderColor: theme.COLORS.gray,
+  },
+  cancelButtonText: {
+    color: theme.COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  submitButton: {
+    backgroundColor: theme.COLORS.primary,
+  },
+  submitButtonText: {
+    color: theme.COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  credentialsHint: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: theme.COLORS.warning + '20',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.COLORS.warning,
+  },
+  hintText: {
+    color: theme.COLORS.warning,
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
   });
 }

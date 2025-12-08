@@ -32,7 +32,15 @@ export const useEstimation = (apiBaseUrl) => {
   const tagInputRef = useRef(null);
   const empInputRef = useRef(null);
 
-  
+  const removeRow = (index) => {
+    setTableData((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const clearAll = () => {
+    setTableData([]);
+    setTranno(null);
+    setEstBatchNo(null);
+  };
 
   useEffect(() => {
     itemIdInputRef.current?.focus();
@@ -96,7 +104,12 @@ export const useEstimation = (apiBaseUrl) => {
       // Check if tag already exists
       const tagDetails = await service.checkTagExists(ITEMID, TAGNO);
       if (tagDetails && tagDetails.trandate) {
-        console.log("Tag already issued on:", tagDetails, "Trn No:", tagDetails.tranno);
+        console.log(
+          "Tag already issued on:",
+          tagDetails,
+          "Trn No:",
+          tagDetails.tranno
+        );
         Alert.alert(
           "Tag Already Issued",
           `Issued on ${tagDetails.trandate}, Trn No: ${tagDetails.tranno}`
@@ -160,6 +173,11 @@ export const useEstimation = (apiBaseUrl) => {
     }
   };
 
+  const handleRefresh = () => {
+    fetchData(); // your API calling logic
+    console.log("Refreshed");
+  };
+
   const submitData = async (overrideData) => {
     const data = overrideData || tableData;
     console.log("Submitting data:", data);
@@ -190,9 +208,8 @@ export const useEstimation = (apiBaseUrl) => {
       }
 
       // Enrich items with additional data
-     const enrichedData = await Promise.all(
-  data.map(async (item) => {
-
+      const enrichedData = await Promise.all(
+        data.map(async (item) => {
           console.log(
             `Fetching stone inputs for ITEMID=${item.ITEMID} TAGNO=${item.TAGNO}`
           );
@@ -245,7 +262,10 @@ export const useEstimation = (apiBaseUrl) => {
               0,
             MCHARGE: parseFloat(item.MC_FROM_API) || tagDetails?.mcharge || 0,
             AMOUNT: parseFloat(calculateGrossAmount(item).toFixed(2)) || 0,
-            RATE: parseFloat(item.RATE) || 0,
+            RATE:
+              item.SALEMODE === "R"
+                ? parseFloat(item.RATE) || 0
+                : parseFloat(item.Rate) || 0,
             BOARDRATE: parseFloat(item.Rate) || 0,
             COSTID: item.COSTID || costId,
             COMPANYID: item.COMPANYID || companyId,
@@ -607,7 +627,10 @@ export const useEstimation = (apiBaseUrl) => {
     handleScanned,
     fetchItemList,
     fetchData,
+    handleRefresh,
     submitData,
+    removeRow,
+    clearAll,
 
     // Calculations
     totalGross,

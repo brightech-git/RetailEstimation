@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import MainHeader from "../../Components/Header/Header";
 import Footer from "../../Components/Footer/Footer";
@@ -34,6 +35,51 @@ const HomeScreen = () => {
     estimationPreview?.EstimationPreviewComponent || null;
 
   const estimation = useEstimation(API_BASE_URL);
+
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = async () => {
+    if (!service) return;
+
+    setRefreshing(true);
+
+    try {
+      const updatedTable = await Promise.all(
+        tableData.map(async (row) => {
+          try {
+            const data = await service.fetchEstimationData(
+              row.ITEMID,
+              row.TAGNO
+            );
+            if (!Array.isArray(data) || data.length === 0) return row; // no new data
+
+            const firstItem = data[0];
+            const costId = firstItem.COSTID || "";
+            const companyId = firstItem.COMPANYID || "";
+
+            // Merge new data into the existing row
+            return {
+              ...row,
+              ...data[0],
+              COSTID: costId,
+              COMPANYID: companyId,
+              EMPID: row.EMPID,
+              EMP: row.EMP,
+            };
+          } catch (e) {
+            console.log("Error refreshing row:", row, e);
+            return row; // keep old row if error
+          }
+        })
+      );
+
+      setTableData(updatedTable);
+    } catch (err) {
+      console.log("Refresh error:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handlePrint = async () => {
     console.log("🖨️ Print button clicked, estBatchNo:", estimation.estBatchNo);
@@ -66,6 +112,14 @@ const HomeScreen = () => {
   const renderTableData = () => {
     return estimation.tableData.map((item, rowIdx) => (
       <View key={`row-${rowIdx}`} style={styles.dataRow}>
+        {/* 🗑️ DELETE BUTTON (Before ItemID) */}
+        <TouchableOpacity
+          onPress={() => estimation.removeRow(rowIdx)}
+          style={styles.deleteButton}
+        >
+          <Text style={styles.deleteButtonText}>🗑️</Text>
+        </TouchableOpacity>
+
         <Text style={styles.cell}>{item.ITEMID ?? "N/A"}</Text>
         <Text style={styles.cell}>{item.TAGNO ?? "N/A"}</Text>
         <Text style={styles.cell}>{item.PCS ?? "N/A"}</Text>
@@ -94,7 +148,13 @@ const HomeScreen = () => {
 
   return (
     <>
-      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scrollView}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <MainHeader />
         <View style={styles.container}>
           {/* Totals Display */}
@@ -233,7 +293,9 @@ const HomeScreen = () => {
               style={styles.tableContainer}
             >
               <View>
+                {/* HEADER ROW */}
                 <View style={styles.headerRow}>
+                  {/* OTHER HEADERS */}
                   {[
                     "Item ID",
                     "Tag No",
@@ -252,12 +314,85 @@ const HomeScreen = () => {
                     "CostID",
                     "CompanyID",
                   ].map((label, idx) => (
-                    <Text key={`header-${idx}`} style={styles.headerCell}>
-                      {label}
-                    </Text>
+                    <View key={`header-${idx}`} style={styles.column}>
+                      <Text style={styles.headerCell}>{label}</Text>
+                    </View>
                   ))}
+                  {/* DELETE HEADER */}
+                  <View style={styles.deleteCol}>
+                    <Text style={styles.headerCell}>Delete</Text>
+                  </View>
                 </View>
-                {renderTableData()}
+
+                {/* DATA ROWS */}
+                {estimation.tableData.map((item, rowIdx) => (
+                  <View key={`data-${rowIdx}`} style={styles.dataRow}>
+                    {/* DATA CELLS */}
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.ITEMID}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.TAGNO}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.PCS}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.GRSWT}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.NETWT}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.Rate}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.Wastage}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.MC}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.StoneAmount}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.MiscAmount}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>
+                        {estimation.calculateGrossAmount(item).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>
+                        {estimation.calculateGST(item).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>
+                        {estimation.calculateGrandTotal(item).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.EMP}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.COSTID}</Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>{item.COMPANYID}</Text>
+                    </View>
+                    {/* DELETE BUTTON CELL */}
+                    <View style={styles.deleteCol}>
+                      <TouchableOpacity
+                        onPress={() => estimation.removeRow(rowIdx)}
+                        style={styles.deleteButton}
+                      >
+                        <Text style={styles.deleteButtonText}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
               </View>
             </ScrollView>
           )}
@@ -302,6 +437,13 @@ const HomeScreen = () => {
               disabled={!estimation.estBatchNo}
             >
               <Text style={styles.submitButtonText}>Print Slip</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.submitButton, styles.clearButton]}
+              onPress={estimation.clearAll}
+            >
+              <Text style={styles.submitButtonText}>Clear All</Text>
             </TouchableOpacity>
           </View>
 

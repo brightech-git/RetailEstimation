@@ -216,6 +216,98 @@ export const createHomeStyles = (theme) => {
       fontSize: moderateScale(14),
       fontWeight: 'bold',
     },
+    deleteButton: {
+  backgroundColor: "red",
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 5,
+  marginLeft: 5,
+},
+deleteButtonText: {
+  color: "white",
+  fontWeight: "bold",
+},
+
+clearButton: {
+  backgroundColor: "#444",
+  marginLeft: 10,
+},
+deleteButton: {
+  backgroundColor: "red",
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 5,
+  marginRight: 5,
+},
+deleteButtonText: {
+  color: "white",
+  fontWeight: "bold",
+},
+column: {
+  width: 120,    // adjust as needed
+  justifyContent: "center",
+  alignItems: "center",
+  paddingVertical: 8,
+  borderRightWidth: 1,
+  borderColor: "#ccc",
+},
+deleteCol: {
+  width: 80,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingVertical: 8,
+  borderRightWidth: 1,
+  borderColor: "#ccc",
+},
+deleteCol: {
+  width: 80,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingVertical: 8,
+  borderRightWidth: 1,
+  borderColor: "#ccc",
+},
+
+column: {
+  width: 120,   // you can adjust
+  justifyContent: "center",
+  alignItems: "center",
+  paddingVertical: 8,
+  borderRightWidth: 1,
+  borderColor: "#ccc",
+},
+
+headerRow: {
+  flexDirection: "row",
+  backgroundColor: "#e8e8e8",
+},
+
+dataRow: {
+  flexDirection: "row",
+  backgroundColor: "white",
+},
+
+headerCell: {
+  fontWeight: "bold",
+  textAlign: "center",
+},
+
+cell: {
+  textAlign: "center",
+},
+
+deleteButton: {
+  backgroundColor: "red",
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 5,
+},
+
+deleteButtonText: {
+  color: "white",
+  fontWeight: "bold",
+},
+
   });
 };
 

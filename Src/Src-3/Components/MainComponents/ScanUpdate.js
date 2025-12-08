@@ -7,8 +7,7 @@ const ScanUpdateComponent = ({
   formData, 
   setFormData, 
   submitManualData, 
-  setScannerVisible,
-  disabled = false 
+  setScannerVisible 
 }) => {
   const tagNoRef = useRef(null);
 
@@ -18,19 +17,15 @@ const ScanUpdateComponent = ({
       {mode === "automatic" && (
         <View style={styles.automaticContainer}>
           <TouchableOpacity 
-            onPress={() => !disabled && setScannerVisible(true)} 
-            style={[styles.scanButton, disabled && styles.disabledButton]}
+            onPress={() => setScannerVisible(true)} 
+            style={styles.scanButton}
             activeOpacity={0.8}
-            disabled={disabled}
           >
-            <Ionicons name="scan" size={34} color={disabled ? "#999" : "#fff"} />
+            <Ionicons name="scan" size={34} color="#fff" />
           </TouchableOpacity>
-          <Text style={[styles.scanText, disabled && styles.disabledText]}>Scan Now</Text>
+          <Text style={styles.scanText}>Scan Now</Text>
           <Text style={styles.scanDescription}>
-            {disabled 
-              ? "Please set Sub Item, Metal, and Counter filters first" 
-              : "Scan QR code to automatically update item"
-            }
+            Scan QR code to automatically update item
           </Text>
         </View>
       )}
@@ -51,7 +46,6 @@ const ScanUpdateComponent = ({
                 returnKeyType="next"
                 onSubmitEditing={() => tagNoRef.current?.focus()}
                 keyboardType="numeric"
-                editable={!disabled}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -64,22 +58,21 @@ const ScanUpdateComponent = ({
                 placeholder="Enter Tag No"
                 placeholderTextColor="#999"
                 returnKeyType="done"
-                onSubmitEditing={!disabled ? submitManualData : null}
+                onSubmitEditing={submitManualData}
                 keyboardType="numeric"
-                editable={!disabled}
               />
             </View>
           </View>
           
           {/* Submit Button for Manual Mode */}
           <TouchableOpacity 
-            style={[styles.submitButton, disabled && styles.submitButtonDisabled]} 
-            onPress={!disabled ? submitManualData : null}
+            style={[styles.submitButton, (!formData.itemId || !formData.tagNo) && styles.submitButtonDisabled]} 
+            onPress={submitManualData}
             activeOpacity={0.8}
-            disabled={disabled || !formData.itemId || !formData.tagNo}
+            disabled={!formData.itemId || !formData.tagNo}
           >
             <Text style={styles.submitButtonText}>
-              {disabled ? "SET FILTERS FIRST" : "UPDATE ITEM"}
+              UPDATE ITEM
             </Text>
           </TouchableOpacity>  
         </View>
@@ -107,17 +100,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
-  disabledButton: {
-    backgroundColor: "#ccc",
-  },
   scanText: {
     marginTop: 12,
     color: "#1C467C",
     fontWeight: "600",
     fontSize: 16,
-  },
-  disabledText: {
-    color: "#999",
   },
   scanDescription: {
     marginTop: 6,

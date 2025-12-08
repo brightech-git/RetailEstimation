@@ -142,25 +142,11 @@ const TableComponent = ({
     );
   };
   
-  const getFilterLabel = (value) => {
-    const option = filterOptions.find(opt => opt.value === value);
-    return option ? option.label : "Filter";
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.formTitle}>ITEM LIST</Text>
-        
-        {/* Filter Dropdown - Currently commented out */}
-        {/* <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowFilterDropdown(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.filterButtonText}>{getFilterLabel(filter)}</Text>
-          <Text style={styles.filterArrow}>▼</Text>
-        </TouchableOpacity> */}
       </View>
       
       <ScrollView 

@@ -16,7 +16,7 @@ export const createEstimationPreviewModalStyles = (theme) => {
       borderRadius: SIZES.radius,
       padding: SIZES.padding,
       width: "95%",
-      height: "90%",
+      height: "95%",
       borderWidth: 1,
       borderColor: COLORS.borderColor,
     },
@@ -423,6 +423,115 @@ export const createEstimationPreviewModalStyles = (theme) => {
     connectionActions: {
       marginBottom: moderateScale(12),
     },
+    // Add these to your createEstimationPreviewModalStyles function in EstimationPreviewModalStyles.js
+
+printCountContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: 16,
+  paddingVertical: 5,
+  backgroundColor: theme.COLORS.cardBackground,
+  borderBottomWidth: 1,
+  borderBottomColor: theme.COLORS.border,
+  position: 'relative',
+  zIndex: 10,
+},
+
+printCountLabel: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: theme.COLORS.text,
+},
+
+printCountSelector: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  backgroundColor: theme.COLORS.background,
+  borderRadius: 6,
+  borderWidth: 1,
+  borderColor: theme.COLORS.border,
+  minWidth: 80,
+  justifyContent: 'space-between',
+},
+
+printCountText: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: theme.COLORS.primary,
+  marginRight: 4,
+},
+
+printOptionsDropdown: {
+  position: 'absolute',
+  top: 60,
+  right: 16,
+  backgroundColor: "#fff",
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: theme.COLORS.border,
+  elevation: 5,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+  zIndex: 1000,
+  minWidth: 160,
+  maxHeight: 250,
+  overflow: 'hidden',
+},
+
+printOption: {
+  paddingHorizontal: 16,
+  paddingVertical: 7,
+  borderBottomWidth: 1,
+  borderBottomColor: theme.COLORS.borderLight,
+},
+
+printOptionSelected: {
+  backgroundColor: theme.COLORS.primary + '20',
+},
+
+printOptionText: {
+  fontSize: 14,
+  color: theme.COLORS.text,
+},
+
+printOptionTextSelected: {
+  color: theme.COLORS.primary,
+  fontWeight: '600',
+},
+
+customPrintContainer: {
+  flexDirection: 'row',
+  padding: 12,
+  borderTopWidth: 1,
+  borderTopColor: theme.COLORS.borderLight,
+  alignItems: 'center',
+},
+
+customPrintInput: {
+  flex: 1,
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  backgroundColor: theme.COLORS.background,
+  borderRadius: 4,
+  borderWidth: 1,
+  borderColor: theme.COLORS.border,
+  fontSize: 14,
+  color: theme.COLORS.text,
+  marginRight: 8,
+},
+
+customPrintButton: {
+  backgroundColor: theme.COLORS.primary,
+  padding: 8,
+  borderRadius: 4,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
   });
 };
 

@@ -9,6 +9,9 @@ import {
   Animated,
   Dimensions,
   StyleSheet,
+  Modal,
+  TextInput,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -27,6 +30,13 @@ const MainHeader = () => {
   const [error, setError] = useState(false);
   const [rateUpdated, setRateUpdated] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  
+  // 🔒 Admin Authentication States
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
+  const [adminUsername, setAdminUsername] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminAuthError, setAdminAuthError] = useState(false);
 
   const API_BASE_URL = useApiBaseUrl();
   const navigation = useNavigation();
@@ -51,7 +61,7 @@ const MainHeader = () => {
       )}`
     : null;
 
-      const handleLogout = async () => {
+  const handleLogout = async () => {
     await logout();
     navigation.replace("Login"); // 👈 Ensures navigation resets
   };
@@ -99,6 +109,53 @@ const MainHeader = () => {
       duration: 300,
       useNativeDriver: true,
     }).start(() => setDrawerVisible(false));
+  };
+
+  // 🔒 Admin Authentication Functions
+  const handleAdminAuthentication = () => {
+    // Hardcoded admin credentials (in production, consider more secure methods)
+    const HARDCODED_USERNAME = "admin";
+    const HARDCODED_PASSWORD = "admin@123";
+
+    if (adminUsername === HARDCODED_USERNAME && adminPassword === HARDCODED_PASSWORD) {
+      setIsAdminAuthenticated(true);
+      setAdminAuthError(false);
+      setShowAdminAuth(false);
+      // Clear credentials after successful login
+      setAdminUsername("");
+      setAdminPassword("");
+      
+      // Navigate to Stock Check after authentication
+      closeDrawer();
+      navigation.navigate("BMGJewellers");
+    } else {
+      setAdminAuthError(true);
+      Alert.alert(
+        "Authentication Failed",
+        "Invalid username or password. Please try again.",
+        [{ text: "OK", onPress: () => {
+          setAdminUsername("");
+          setAdminPassword("");
+        }}]
+      );
+    }
+  };
+
+  const handleStockCheckPress = () => {
+    closeDrawer();
+    
+    if (isAdminAuthenticated) {
+      // If already authenticated, navigate directly
+      navigation.navigate("BMGJewellers");
+    } else {
+      // Show admin authentication modal
+      setShowAdminAuth(true);
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    Alert.alert("Admin Logout", "You have been logged out from admin access.");
   };
 
   if (contextLoading) {
@@ -204,7 +261,7 @@ const MainHeader = () => {
             onPress={closeDrawer}
           />
 
-          {/* 🔹 Sliding Drawer - NOW TAKES HALF SCREEN VERTICALLY */}
+          {/* 🔹 Sliding Drawer */}
           <Animated.View style={styles.drawerContainer}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <TouchableOpacity
@@ -248,19 +305,37 @@ const MainHeader = () => {
                 />
                 <Text style={styles.drawerText}>Print</Text>
               </TouchableOpacity>
+              
+              {/* 🔒 Stock Check with Admin Authentication */}
               <TouchableOpacity
                 style={styles.drawerItem}
-                onPress={() => {
-                  closeDrawer();
-                  navigation.navigate("BMGJewellers");
-                }}
+                onPress={handleStockCheckPress}
               >
                 <MaterialIcons
                   name="diamond"
                   size={26}
                   color={theme.COLORS.iconPrimary}
                 />
-                <Text style={styles.drawerText}>Stock Check</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Text style={styles.drawerText}>Stock Check</Text>
+                  {isAdminAuthenticated && (
+                    <View style={{
+                      backgroundColor: theme.COLORS.success,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 10,
+                      marginLeft: 8,
+                    }}>
+                      <Text style={{
+                        color: theme.COLORS.white,
+                        fontSize: 10,
+                        fontWeight: 'bold',
+                      }}>
+                        Admin
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -277,6 +352,23 @@ const MainHeader = () => {
                 />
                 <Text style={styles.drawerText}>Quick Estimate</Text>
               </TouchableOpacity>
+
+              {/* Admin Logout (only shows when authenticated) */}
+              {isAdminAuthenticated && (
+                <TouchableOpacity
+                  style={[styles.drawerItem, { marginTop: 10 }]}
+                  onPress={handleAdminLogout}
+                >
+                  <MaterialIcons
+                    name="admin-panel-settings"
+                    size={26}
+                    color={theme.COLORS.warning}
+                  />
+                  <Text style={[styles.drawerText, { color: theme.COLORS.warning }]}>
+                    Logout Admin
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.drawerItem}
@@ -299,6 +391,90 @@ const MainHeader = () => {
           </Animated.View>
         </>
       )}
+
+      {/* 🔒 Admin Authentication Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showAdminAuth}
+        onRequestClose={() => setShowAdminAuth(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>🔒 Admin Authentication</Text>
+              <Text style={styles.modalSubtitle}>
+                Enter admin credentials to access Stock Check
+              </Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Username</Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  adminAuthError && styles.inputError
+                ]}
+                placeholder="Enter admin username"
+                value={adminUsername}
+                onChangeText={setAdminUsername}
+                autoCapitalize="none"
+                placeholderTextColor={theme.COLORS.gray}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  adminAuthError && styles.inputError
+                ]}
+                placeholder="Enter admin password"
+                value={adminPassword}
+                onChangeText={setAdminPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholderTextColor={theme.COLORS.gray}
+              />
+            </View>
+
+            {adminAuthError && (
+              <Text style={styles.errorText}>
+                ❌ Invalid credentials. Please try again.
+              </Text>
+            )}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowAdminAuth(false);
+                  setAdminUsername("");
+                  setAdminPassword("");
+                  setAdminAuthError(false);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.submitButton]}
+                onPress={handleAdminAuthentication}
+              >
+                <Text style={styles.submitButtonText}>Authenticate</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Hardcoded credentials hint (remove in production) */}
+            <View style={styles.credentialsHint}>
+              <Text style={styles.hintText}>
+                💡 Demo Credentials: admin / admin@123
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 };
