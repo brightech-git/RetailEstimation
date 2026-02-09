@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect,useContext } from "react";
 import {
   Modal,
   View,
@@ -14,6 +14,8 @@ import {
 import { useTheme } from "../../../Context/ThemeContext";
 import { createEstimationPreviewModalStyles } from "./EstimationPreviewModalStyles";
 import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {LoginContext} from '../../../Context/LoginContext'
 
 // Common utility functions
 export const formatDateSafe = (dateString) => {
@@ -61,6 +63,12 @@ const EstimationPreviewModal = ({
   const [printCount, setPrintCount] = useState(1);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   const [customPrintCount, setCustomPrintCount] = useState("");
+  const {
+    username,
+    companyName,
+    companyLogo,
+    companyLogoUrl
+  } = useContext(LoginContext);
 
   if (!slipData) {
     return (
@@ -530,7 +538,7 @@ const EstimationPreviewModal = ({
               <View style={styles.row}>
                 <Text style={styles.boldText}>ESTIMATION SLIP</Text>
                 <Text style={styles.boldText}>
-                  Est.No: {sample?.tranno || ""} - {"BMG"}
+                  Est.No: {sample?.tranno || ""} - {username}
                 </Text>
               </View>
 
@@ -702,12 +710,6 @@ const EstimationPreviewModal = ({
                 </View>
 
                 <View style={styles.dashedLine} />
-
-                {/* Footer */}
-                <View style={styles.footer}>
-                  <Text style={styles.boldText}>[SFH]</Text>
-                  <Text style={styles.text}>Est.No: {sample?.tranno || ""}</Text>
-                </View>
               </View>
             </ScrollView>
 

@@ -2,6 +2,8 @@ import TcpSocket from "react-native-tcp-socket";
 import { Alert } from "react-native";
 import axios from "axios";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
+import { LoginContext } from "../../Context/LoginContext";
+import react, { useState, useEffect, useContext } from "react";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -114,7 +116,7 @@ const printQRCode = (estimationNo) => {
 // ✅ FIXED: Create a simple function, not an object with methods
 export const createPrinterService = (baseUrl) => {
   const API_URL = `${baseUrl}/printers`;
-  
+
   // ✅ Return a simple object with functions, not a "service" that can be mistaken for a class
   return {
     // Get Printer By ID
@@ -181,7 +183,10 @@ export const createPrinterService = (baseUrl) => {
 
 // Fetch estimation data
 export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
-  console.log("🔍 fetchEstimationData called with:", { estBatchNo, apiBaseUrl });
+  console.log("🔍 fetchEstimationData called with:", {
+    estBatchNo,
+    apiBaseUrl,
+  });
 
   if (!estBatchNo) {
     Alert.alert("Error", "No Estimation No found for printing.");
@@ -199,7 +204,10 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
       timeout: 30000,
     });
 
-    console.log("📡 Making API call to:", `${apiBaseUrl}/printDetails/${estBatchNo}`);
+    console.log(
+      "📡 Making API call to:",
+      `${apiBaseUrl}/printDetails/${estBatchNo}`
+    );
     const response = await api.get(`/printDetails/${estBatchNo}`);
     console.log("✅ API Response received:", response.status);
 
@@ -250,6 +258,9 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
     const totalWastage = items.reduce((sum, i) => sum + (i.wastage || 0), 0);
     const totalMcharge = items.reduce((sum, i) => sum + (i.mcharge || 0), 0);
 
+    const { username, companyName, companyLogo, companyLogoUrl } =
+      useContext(LoginContext);
+
     // Get GST values from FIRST ITEM only
     let cgstAmount = 0;
     let sgstAmount = 0;
@@ -298,7 +309,10 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
         console.log(`✅ Found ${stones.length} stones for item`);
         return stones;
       } catch (err) {
-        console.warn(`Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`, err);
+        console.warn(
+          `Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`,
+          err
+        );
         return [];
       }
     };
@@ -343,7 +357,8 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
 
     let errorMessage = "Failed to fetch estimation data.";
     if (error.code === "NETWORK_ERROR") {
-      errorMessage = "Network error: Please check your internet connection and try again.";
+      errorMessage =
+        "Network error: Please check your internet connection and try again.";
     } else if (error.response) {
       errorMessage = `Server error: ${error.response.status} - ${error.response.statusText}`;
     } else if (error.request) {
@@ -383,7 +398,8 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
         activeValue === "true" ||
         activeValue === 1 ||
         activeValue === "1" ||
-        (typeof activeValue === "string" && activeValue.toLowerCase() === "true") ||
+        (typeof activeValue === "string" &&
+          activeValue.toLowerCase() === "true") ||
         activeValue === "Y" ||
         activeValue === "y";
 
@@ -427,7 +443,10 @@ export const checkPrinterConnection = async (
     let activePrinter = printer;
 
     if (!activePrinter && employeeId && apiBaseUrl) {
-      console.log("🔄 No printer provided, fetching active printer for employee:", employeeId);
+      console.log(
+        "🔄 No printer provided, fetching active printer for employee:",
+        employeeId
+      );
       activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
     }
 
@@ -446,7 +465,9 @@ export const checkPrinterConnection = async (
       timeout: 5000,
     };
 
-    console.log(`🔍 Checking printer connection: ${activePrinter.ip_address}:${activePrinter.port}`);
+    console.log(
+      `🔍 Checking printer connection: ${activePrinter.ip_address}:${activePrinter.port}`
+    );
 
     return new Promise((resolve) => {
       console.log("🔄 Creating TCP connection for printer check...");
@@ -516,7 +537,10 @@ export const printEstimationToPrinter = async (
     let activePrinter = currentPrinter;
 
     if (!activePrinter && employeeId && apiBaseUrl) {
-      console.log("🔄 No printer provided, fetching active printer for employee:", employeeId);
+      console.log(
+        "🔄 No printer provided, fetching active printer for employee:",
+        employeeId
+      );
       activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
     }
 
@@ -527,7 +551,13 @@ export const printEstimationToPrinter = async (
       );
     }
 
-    if (!(activePrinter.active === true || activePrinter.active === "true" || activePrinter.active === 1)) {
+    if (
+      !(
+        activePrinter.active === true ||
+        activePrinter.active === "true" ||
+        activePrinter.active === 1
+      )
+    ) {
       console.log("❌ Printer is not marked as active:", activePrinter);
       throw new Error(
         "Selected printer is not active. Please set a current printer in Printer Settings."
@@ -552,7 +582,9 @@ export const printEstimationToPrinter = async (
       timeout: 10000,
     };
 
-    console.log(`🖨️ Printing to: ${activePrinter.ip_address}:${activePrinter.port}`);
+    console.log(
+      `🖨️ Printing to: ${activePrinter.ip_address}:${activePrinter.port}`
+    );
 
     const {
       items,
@@ -609,7 +641,7 @@ export const printEstimationToPrinter = async (
         // Estimation Info
         printContent += formatStyledLine(
           "ESTIMATION SLIP",
-          `Est.No: ${sample?.tranno || ""} - ${"BMG"}`,
+          `Est.No: ${sample?.tranno || ""} - ${username}`,
           FONTS.BOLD_ON
         );
         printContent += formatStyledLine(
@@ -667,7 +699,9 @@ export const printEstimationToPrinter = async (
           stones.forEach((stone) => {
             printContent += formatStyledLine(
               "STUDDED",
-              `${stone.stnwt?.toFixed(3) || "0.000"}${stone.stoneunit || ""}        ${stone.stnamt?.toFixed(0) || "0"}`
+              `${stone.stnwt?.toFixed(3) || "0.000"}${
+                stone.stoneunit || ""
+              }        ${stone.stnamt?.toFixed(0) || "0"}`
             );
           });
         });
@@ -687,14 +721,23 @@ export const printEstimationToPrinter = async (
           );
         }
 
-        printContent += formatStyledLine("CGST (1.5%)", `${cgstAmount.toFixed(2)}`);
-        printContent += formatStyledLine("SGST (1.5%)", `${sgstAmount.toFixed(2)}`);
+        printContent += formatStyledLine(
+          "CGST (1.5%)",
+          `${cgstAmount.toFixed(2)}`
+        );
+        printContent += formatStyledLine(
+          "SGST (1.5%)",
+          `${sgstAmount.toFixed(2)}`
+        );
 
         printContent += "-----------------------------------------\n";
 
         // Grand Total
         printContent += FONTS.BOLD_ON + FONTS.DOUBLE_HEIGHT;
-        printContent += formatStyledLine("Sales TOTAL:", `${grandTotal.toFixed(0)}`);
+        printContent += formatStyledLine(
+          "Sales TOTAL:",
+          `${grandTotal.toFixed(0)}`
+        );
         printContent += FONTS.NORMAL;
 
         printContent += "-----------------------------------------\n";
@@ -765,7 +808,6 @@ export const printEstimationToPrinter = async (
     throw error;
   }
 };
-
 
 // Export all functions
 export default {
