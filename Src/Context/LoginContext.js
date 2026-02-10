@@ -15,6 +15,9 @@ export const LoginProvider = ({ children, showToast }) => {
   const [companyData, setCompanyData] = useState(null);
   const [companyLogoUrl, setCompanyLogoUrl] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [contactNumber, setContactNumber] = useState("");
+  const [stockUsername, setStockUsername] = useState("");
+  const [stockPassword, setStockPassword] = useState("");
 
   const login = async (username, password) => {
     try {
@@ -22,11 +25,12 @@ export const LoginProvider = ({ children, showToast }) => {
       const response = await axios.post(
         "https://app.bmgjewellers.com/api/v1/company/getByCredentials",
         { username, password },
-        { timeout: 10000 }
+        { timeout: 10000 },
       );
 
       if (response.status === 200 && response.data) {
         const data = response.data;
+        console.log("🔐 Login successful:", data);
 
         setUsername(data.USERNAME || "");
         setUserId(data.USERID || null);
@@ -36,12 +40,19 @@ export const LoginProvider = ({ children, showToast }) => {
         setCompanyUrl(data.BASEURL || null);
         setCompanyLogoUrl(data.LOGOBASEURL || null);
         setCompanyData(data);
+        setContactNumber(data.CONTACTNUMBER || "");
+        setStockUsername(data.STOCKUSERNAME || "");
+        setStockPassword(data.STOCKPASSWORD || "");
 
         await AsyncStorage.setItem("COMPANY_DATA", JSON.stringify(data));
 
         console.log("✅ Login stored:", data);
 
-        showToast?.(`Welcome, ${data.COMPANYNAME || username}!`, "success", 3000);
+        showToast?.(
+          `Welcome, ${data.COMPANYNAME || username}!`,
+          "success",
+          3000,
+        );
         return true;
       } else {
         showToast?.("Invalid credentials", "error", 3000);
@@ -68,6 +79,9 @@ export const LoginProvider = ({ children, showToast }) => {
       setCompanyUrl(null);
       setCompanyData(null);
       setCompanyLogoUrl(null);
+      setContactNumber("");
+      setStockUsername("");
+      setStockPassword("");
 
       showToast?.("Logged out successfully", "info", 2000);
     } catch (error) {
@@ -89,6 +103,10 @@ export const LoginProvider = ({ children, showToast }) => {
         setCompanyUrl(data.BASEURL || null);
         setCompanyData(data);
         setCompanyLogoUrl(data.LOGOBASEURL || null);
+        setContactNumber(data.CONTACTNUMBER || "");
+        setStockUsername(data.STOCKUSERNAME || "");
+        setStockPassword(data.STOCKPASSWORD || "");
+
         console.log("📦 Restored company data:", data);
       }
     } catch (err) {
@@ -124,6 +142,12 @@ export const LoginProvider = ({ children, showToast }) => {
         loading,
         login,
         logout,
+        contactNumber,
+        setContactNumber,
+        stockUsername,
+        setStockUsername,
+        stockPassword,
+        setStockPassword,
       }}
     >
       {children}

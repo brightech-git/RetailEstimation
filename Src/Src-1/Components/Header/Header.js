@@ -32,11 +32,16 @@ const MainHeader = () => {
   const [rateUpdated, setRateUpdated] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
 
-  // 🔒 Admin Authentication States (Password only)
+  // 🔒 Admin Authentication States
   const [showAdminAuth, setShowAdminAuth] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminAuthError, setAdminAuthError] = useState(false);
+
+  // 🔒 Change Password Authentication States
+  const [showChangePasswordAuth, setShowChangePasswordAuth] = useState(false);
+  const [contactNumberInput, setContactNumberInput] = useState("");
+  const [changePasswordAuthError, setChangePasswordAuthError] = useState(false);
 
   const API_BASE_URL = useApiBaseUrl();
   const navigation = useNavigation();
@@ -52,12 +57,15 @@ const MainHeader = () => {
     companyLogo,
     companyLogoUrl,
     logout,
+    contactNumber,
+    stockUsername,
+    stockPassword,
     loading: contextLoading,
   } = useContext(LoginContext);
 
   const companyLogoFullPath = companyLogoUrl
     ? `${companyLogoUrl.replace(/\/$/, "")}/${encodeURI(
-        companyLogo?.replace(/^\//, "") || ""
+        companyLogo?.replace(/^\//, "") || "",
       )}`
     : null;
 
@@ -81,7 +89,7 @@ const MainHeader = () => {
 
   const [currentDateTime] = useState(new Date());
   const date = `${String(currentDateTime.getDate()).padStart(2, "0")}-${String(
-    currentDateTime.getMonth() + 1
+    currentDateTime.getMonth() + 1,
   ).padStart(2, "0")}-${currentDateTime.getFullYear()}`;
 
   const fetchRates = async () => {
@@ -124,12 +132,10 @@ const MainHeader = () => {
     }).start(() => setDrawerVisible(false));
   };
 
-  // 🔒 Admin Authentication Functions (Password only)
+  // 🔒 Admin Authentication Functions (using stockPassword from context)
   const handleAdminAuthentication = () => {
-    // Hardcoded admin password only
-    const HARDCODED_PASSWORD = "admin@123";
-
-    if (adminPassword === HARDCODED_PASSWORD) {
+    // Use stockPassword from context instead of hardcoded password
+    if (stockPassword && adminPassword === stockPassword) {
       setIsAdminAuthenticated(true);
       setAdminAuthError(false);
       setShowAdminAuth(false);
@@ -151,13 +157,50 @@ const MainHeader = () => {
               setAdminPassword("");
             },
           },
-        ]
+        ],
+      );
+    }
+  };
+
+  // 🔒 Contact Number Verification for Change Password
+  const handleContactNumberVerification = () => {
+    if (contactNumberInput === contactNumber) {
+      setChangePasswordAuthError(false);
+      setShowChangePasswordAuth(false);
+      setContactNumberInput("");
+      
+      // Navigate to Change Stock Password Screen
+      closeDrawer();
+      navigation.navigate("ChangeStockPassword");
+    } else {
+      setChangePasswordAuthError(true);
+      Alert.alert(
+        "Verification Failed",
+        "Contact number does not match. Please try again.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setContactNumberInput("");
+            },
+          },
+        ],
       );
     }
   };
 
   const handleStockCheckPress = () => {
     closeDrawer();
+
+    // Check if stockPassword exists in context
+    if (!stockPassword) {
+      Alert.alert(
+        "Access Restricted",
+        "Stock password is not configured. Please contact administrator.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
 
     if (isAdminAuthenticated) {
       // If already authenticated, navigate directly
@@ -166,6 +209,22 @@ const MainHeader = () => {
       // Show admin authentication modal
       setShowAdminAuth(true);
     }
+  };
+
+  const handleChangePasswordPress = () => {
+    closeDrawer();
+    
+    if (!contactNumber) {
+      Alert.alert(
+        "Information Missing",
+        "Contact number is not available. Please contact administrator.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    
+    // Show contact number verification modal
+    setShowChangePasswordAuth(true);
   };
 
   const handleAdminLogout = () => {
@@ -234,8 +293,8 @@ const MainHeader = () => {
                 {loadingRates
                   ? "Loading..."
                   : error
-                  ? "Error"
-                  : goldRate?.toLocaleString() ?? "N/A"}
+                    ? "Error"
+                    : (goldRate?.toLocaleString() ?? "N/A")}
               </Text>
             </View>
           </View>
@@ -252,8 +311,8 @@ const MainHeader = () => {
                 {loadingRates
                   ? "Loading..."
                   : error
-                  ? "Error"
-                  : silverRate?.toLocaleString() ?? "N/A"}
+                    ? "Error"
+                    : (silverRate?.toLocaleString() ?? "N/A")}
               </Text>
             </View>
           </View>
@@ -378,6 +437,19 @@ const MainHeader = () => {
                 <Text style={styles.drawerText}>Quick Estimate</Text>
               </TouchableOpacity>
 
+              {/* 🔒 Change Stock Password */}
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={handleChangePasswordPress}
+              >
+                <MaterialIcons
+                  name="lock-reset"
+                  size={26}
+                  color={theme.COLORS.iconPrimary}
+                />
+                <Text style={styles.drawerText}>Change Stock Password</Text>
+              </TouchableOpacity>
+
               {/* Admin Logout (only shows when authenticated) */}
               {isAdminAuthenticated && (
                 <TouchableOpacity
@@ -474,10 +546,64 @@ const MainHeader = () => {
                 <Text style={styles.submitButtonText}>Authenticate</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
 
-            {/* Hardcoded password hint (remove in production) */}
-            <View style={styles.credentialsHint}>
-              <Text style={styles.hintText}>💡 Demo Password: admin@123</Text>
+      {/* 🔒 Contact Number Verification Modal for Change Password */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showChangePasswordAuth}
+        onRequestClose={() => setShowChangePasswordAuth(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>📞 Contact Verification</Text>
+              <Text style={styles.modalSubtitle}>
+                Enter your registered contact number to change stock password
+              </Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Contact Number</Text>
+              <TextInput
+                style={[styles.textInput, changePasswordAuthError && styles.inputError]}
+                placeholder="Enter contact number"
+                value={contactNumberInput}
+                onChangeText={setContactNumberInput}
+                keyboardType="phone-pad"
+                autoCapitalize="none"
+                placeholderTextColor={theme.COLORS.gray}
+                onSubmitEditing={handleContactNumberVerification}
+              />
+            </View>
+
+            {changePasswordAuthError && (
+              <Text style={styles.errorText}>
+                ❌ Contact number does not match. Please try again.
+              </Text>
+            )}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowChangePasswordAuth(false);
+                  setContactNumberInput("");
+                  setChangePasswordAuthError(false);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.submitButton]}
+                onPress={handleContactNumberVerification}
+              >
+                <Text style={styles.submitButtonText}>Verify</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

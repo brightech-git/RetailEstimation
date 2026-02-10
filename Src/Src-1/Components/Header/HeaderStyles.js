@@ -341,5 +341,104 @@ drawerText: {
     textAlign: 'center',
     fontStyle: 'italic',
   },
+  // In your HeaderStyles.js, add these to the returned styles object
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 20,
+},
+modalContainer: {
+  width: "90%",
+  backgroundColor: theme.COLORS.card,
+  borderRadius: 12,
+  padding: 20,
+  maxWidth: 400,
+},
+modalHeader: {
+  marginBottom: 20,
+},
+modalTitle: {
+  fontSize: 20,
+  fontWeight: "bold",
+  color: theme.COLORS.title,
+  marginBottom: 8,
+  textAlign: "center",
+},
+modalSubtitle: {
+  fontSize: 14,
+  color: theme.COLORS.text,
+  textAlign: "center",
+  marginBottom: 5,
+},
+inputContainer: {
+  marginBottom: 15,
+},
+inputLabel: {
+  fontSize: 14,
+  fontWeight: "600",
+  color: theme.COLORS.text,
+  marginBottom: 8,
+},
+textInput: {
+  borderWidth: 1,
+  borderColor: theme.COLORS.border,
+  borderRadius: 8,
+  padding: 12,
+  fontSize: 16,
+  color: theme.COLORS.text,
+  backgroundColor: theme.COLORS.inputBackground,
+},
+inputError: {
+  borderColor: theme.COLORS.danger,
+},
+errorText: {
+  color: theme.COLORS.danger,
+  fontSize: 14,
+  textAlign: "center",
+  marginVertical: 10,
+},
+modalButtons: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginTop: 20,
+},
+modalButton: {
+  flex: 1,
+  padding: 14,
+  borderRadius: 8,
+  alignItems: "center",
+  marginHorizontal: 5,
+},
+cancelButton: {
+  backgroundColor: theme.COLORS.gray,
+},
+submitButton: {
+  backgroundColor: theme.COLORS.primary,
+},
+cancelButtonText: {
+  color: theme.COLORS.white,
+  fontWeight: "bold",
+  fontSize: 16,
+},
+submitButtonText: {
+  color: theme.COLORS.white,
+  fontWeight: "bold",
+  fontSize: 16,
+},
+credentialsHint: {
+  marginTop: 15,
+  padding: 10,
+  backgroundColor: theme.COLORS.infoLight,
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: theme.COLORS.info,
+},
+hintText: {
+  color: theme.COLORS.info,
+  fontSize: 12,
+  textAlign: "center",
+},
   });
 }

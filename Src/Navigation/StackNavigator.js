@@ -14,6 +14,7 @@ import WebViewPrintScreen from '../Src-1/screens/WebViewPrint/WebViewPrintScreen
 import Homescreen1 from "../Src-2/Screens/Home/Home";
 import BMGJewellersScreen from "../Src-3/Screens/Home/Home";
 import ResultsScreen from "../Src-3/Screens/Result/ResultScreen";
+import ChangeStockPassword from "../Src-1/screens/StockPassword/ChangeStockPassword";
 
 // Context
 import { LoginProvider, LoginContext } from "../Context/LoginContext";
@@ -69,6 +70,11 @@ function AppStack() {
         <Stack.Screen
           name="Results"
           component={ResultsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ChangeStockPassword"
+          component={ChangeStockPassword}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
