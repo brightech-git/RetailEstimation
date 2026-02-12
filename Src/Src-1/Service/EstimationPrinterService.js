@@ -2,8 +2,8 @@ import TcpSocket from "react-native-tcp-socket";
 import { Alert } from "react-native";
 import axios from "axios";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
-import { LoginContext } from "../../Context/LoginContext";
-import react, { useState, useEffect, useContext } from "react";
+// import { LoginContext } from "../../Context/LoginContext";
+// import react, { useState, useEffect, useContext } from "react";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -182,7 +182,7 @@ export const createPrinterService = (baseUrl) => {
 };
 
 // Fetch estimation data
-export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
+export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
   console.log("🔍 fetchEstimationData called with:", {
     estBatchNo,
     apiBaseUrl,
@@ -258,8 +258,8 @@ export const fetchEstimationData = async (estBatchNo, username, apiBaseUrl) => {
     const totalWastage = items.reduce((sum, i) => sum + (i.wastage || 0), 0);
     const totalMcharge = items.reduce((sum, i) => sum + (i.mcharge || 0), 0);
 
-    const { username, companyName, companyLogo, companyLogoUrl } =
-      useContext(LoginContext);
+    // const { username, companyName, companyLogo, companyLogoUrl } =
+    //   useContext(LoginContext);
 
     // Get GST values from FIRST ITEM only
     let cgstAmount = 0;

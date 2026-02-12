@@ -34,11 +34,11 @@ export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl) => {
       return;
     }
 
-    const slipData = await fetchEstimationData(
-      estBatchNo,
-      username,
-      apiBaseUrl
-    );
+const slipData = await fetchEstimationData(
+  estBatchNo,
+  apiBaseUrl
+);
+
     if (slipData) {
       console.log("✅ Slip data fetched successfully, showing preview");
       showEstimationPreview(slipData);
