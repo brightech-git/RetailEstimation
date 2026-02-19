@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   ScrollView,
@@ -13,13 +13,10 @@ import { useItemTagService } from "../../Service/ItemTagService";
 import FiltersComponent from "../../Components/MainComponents/Filters";
 
 const InventoryStatsCard = React.memo(({ stats, loading, refreshing }) => {
-  const { checkedPct, uncheckedPct } = useMemo(() => {
-    const total = Math.max(stats.totalCount, 1);
-    return {
-      checkedPct: (stats.totalChecked / total) * 100,
-      uncheckedPct: (stats.totalUnchecked / total) * 100,
-    };
-  }, [stats]);
+  const checkedPct =
+    stats.totalCount > 0 ? (stats.totalChecked / stats.totalCount) * 100 : 0;
+  const uncheckedPct =
+    stats.totalCount > 0 ? (stats.totalUnchecked / stats.totalCount) * 100 : 0;
 
   if (loading && !refreshing) {
     return (
@@ -59,23 +56,37 @@ const InventoryStatsCard = React.memo(({ stats, loading, refreshing }) => {
 
 const BMGJewellersScreen = ({ navigation }) => {
   const service = useItemTagService();
+
+  // Use refs to prevent infinite loops
+  const isMounted = useRef(true);
+  const initialLoadDone = useRef(false);
+  const metalLoadInProgress = useRef(false);
+
   const [filters, setFilters] = useState({
-    itemId: "",
-    metalId: "",
-    subItemId: "",
-    itemCtrId: "",
+    metalId: null, // First - Metal
+    itemCtrId: null, // Counter
+    itemId: null, // Second - Item (depends on metal)
+    subItemId: null, // Third - Sub Item (depends on item)
   });
+
   const [dropdownData, setDropdownData] = useState({
     items: [],
     subItems: [],
     metals: [],
     counters: [],
   });
+
+  const [loadingStates, setLoadingStates] = useState({
+    items: false,
+    subItems: false,
+  });
+
   const [toast, setToast] = useState({
     visible: false,
     message: "",
     color: "green",
   });
+
   const [stats, setStats] = useState({
     totalCount: 0,
     totalChecked: 0,
@@ -84,38 +95,241 @@ const BMGJewellersScreen = ({ navigation }) => {
     refreshing: false,
   });
 
-  const showToast = (msg, color = "green") =>
-    setToast({ visible: true, message: msg, color });
-
-  const loadStats = useCallback(async () => {
-    setStats((s) => ({ ...s, loading: true, refreshing: true }));
-    try {
-      const data = await service.fetchItemTags({}, 0, 1);
-      setStats({
-        totalCount: data.totalCount || 0,
-        totalChecked: data.totalChecked || 0,
-        totalUnchecked: data.totalUnchecked || 0,
-        loading: false,
-        refreshing: false,
-      });
-    } catch {
-      showToast("Failed to load data", "red");
-      setStats((s) => ({ ...s, loading: false, refreshing: false }));
-    }
-  }, [service]);
-
+  // Cleanup on unmount
   useEffect(() => {
-    Promise.all([service.loadAllDropdownData(), loadStats()]).then(([dd]) =>
-      setDropdownData(dd)
-    );
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
-  const navigate = (f = filters) =>
-    navigation.navigate("Results", {
-      service,
-      initialFilters: f,
-      initialDropdownData: dropdownData,
+  const showToast = useCallback((msg, color = "green") => {
+    setToast({ visible: true, message: msg, color });
+  }, []);
+
+  const loadStats = useCallback(async () => {
+    if (!isMounted.current) return;
+
+    setStats((s) => ({ ...s, loading: true }));
+    try {
+      const data = await service.fetchItemTags({}, 0, 1);
+      if (isMounted.current) {
+        setStats({
+          totalCount: data.totalCount || 0,
+          totalChecked: data.totalChecked || 0,
+          totalUnchecked: data.totalUnchecked || 0,
+          loading: false,
+          refreshing: false,
+        });
+      }
+    } catch (error) {
+      console.log("Load stats error:", error);
+      if (isMounted.current) {
+        showToast("Failed to load data", "red");
+        setStats((s) => ({ ...s, loading: false, refreshing: false }));
+      }
+    }
+  }, [service, showToast]);
+
+  // Initial load - only metals and counters
+  useEffect(() => {
+    const initialize = async () => {
+      if (initialLoadDone.current) return;
+      initialLoadDone.current = true;
+
+      try {
+        const dropdowns = await service.loadAllDropdownData();
+        console.log("Initial metals:", dropdowns.metals?.length);
+        console.log("Initial counters:", dropdowns.counters?.length);
+
+        if (isMounted.current) {
+          setDropdownData({
+            items: [],
+            subItems: [],
+            metals: dropdowns.metals || [],
+            counters: dropdowns.counters || [],
+          });
+
+          await loadStats();
+        }
+      } catch (err) {
+        console.log("Initialization error:", err);
+      }
+    };
+
+    initialize();
+  }, [service, loadStats]);
+
+  // Handle metal change - load items based on metal
+  const handleMetalChange = useCallback(
+    async (metalId) => {
+      console.log("Metal changed to:", metalId);
+
+      if (!isMounted.current) return;
+
+      if (!metalId) {
+        setDropdownData((prev) => ({
+          ...prev,
+          items: [],
+          subItems: [],
+        }));
+        return;
+      }
+
+      // Prevent multiple simultaneous calls
+      if (metalLoadInProgress.current) return;
+      metalLoadInProgress.current = true;
+
+      setLoadingStates((prev) => ({ ...prev, items: true }));
+
+      try {
+        // Fetch items based on the selected metal using correct parameter
+        const items = await service.fetchItemsByMetal(metalId);
+        console.log(`Items for metal ${metalId}:`, items?.length || 0);
+
+        if (isMounted.current) {
+          setDropdownData((prev) => ({
+            ...prev,
+            items: items || [],
+            subItems: [],
+          }));
+        }
+      } catch (error) {
+        console.log("Error loading items by metal:", error);
+        if (isMounted.current) {
+          showToast("Failed to load items", "red");
+        }
+      } finally {
+        if (isMounted.current) {
+          setLoadingStates((prev) => ({ ...prev, items: false }));
+        }
+        metalLoadInProgress.current = false;
+      }
+    },
+    [service, showToast],
+  );
+
+  // Handle item change - load subitems
+  const handleItemChange = useCallback(
+    async (itemId) => {
+      console.log("Item changed to:", itemId, "with metal:", filters.metalId);
+
+      if (!isMounted.current) return;
+
+      if (!itemId || !filters.metalId) {
+        setDropdownData((prev) => ({ ...prev, subItems: [] }));
+        return;
+      }
+
+      setLoadingStates((prev) => ({ ...prev, subItems: true }));
+
+      try {
+        const subItems = await service.fetchSubItems(itemId, filters.metalId);
+        console.log(`Subitems for item ${itemId}:`, subItems?.length || 0);
+
+        if (isMounted.current) {
+          setDropdownData((prev) => ({
+            ...prev,
+            subItems: subItems || [],
+          }));
+        }
+      } catch (error) {
+        console.log("Error loading subitems:", error);
+        if (isMounted.current) {
+          showToast("Failed to load subitems", "red");
+        }
+      } finally {
+        if (isMounted.current) {
+          setLoadingStates((prev) => ({ ...prev, subItems: false }));
+        }
+      }
+    },
+    [service, filters.metalId, showToast],
+  );
+
+  // Watch for metal changes
+  useEffect(() => {
+    if (filters.metalId) {
+      handleMetalChange(filters.metalId);
+    } else {
+      setDropdownData((prev) => ({
+        ...prev,
+        items: [],
+        subItems: [],
+      }));
+      // Clear dependent filters
+      if (filters.itemId || filters.subItemId) {
+        setFilters((prev) => ({
+          ...prev,
+          itemId: null,
+          subItemId: null,
+        }));
+      }
+    }
+  }, [filters.metalId]);
+
+  // Watch for item changes
+  useEffect(() => {
+    if (filters.itemId && filters.metalId) {
+      handleItemChange(filters.itemId);
+    } else {
+      setDropdownData((prev) => ({ ...prev, subItems: [] }));
+    }
+  }, [filters.itemId, filters.metalId]);
+
+  const navigate = useCallback(
+    (filterParams = filters) => {
+      // Clean up filters - only include filters that have values
+      const cleanFilters = {};
+      Object.keys(filterParams).forEach((key) => {
+        if (
+          filterParams[key] !== null &&
+          filterParams[key] !== undefined &&
+          filterParams[key] !== ""
+        ) {
+          cleanFilters[key] = filterParams[key];
+        }
+      });
+
+      console.log("Navigating with filters:", cleanFilters);
+
+      navigation.navigate("Results", {
+        service,
+        initialFilters: cleanFilters,
+        initialDropdownData: dropdownData,
+      });
+    },
+    [navigation, service, dropdownData],
+  );
+
+  const handleApplyFilter = useCallback(() => {
+    const activeFilters = {};
+    Object.keys(filters).forEach((key) => {
+      if (filters[key] !== null && filters[key] !== undefined) {
+        activeFilters[key] = filters[key];
+      }
     });
+
+    showToast("Filters applied");
+    navigate(activeFilters);
+  }, [filters, navigate, showToast]);
+
+  const handleShowAll = useCallback(() => {
+    setFilters({
+      metalId: null,
+      itemCtrId: null,
+      itemId: null,
+      subItemId: null,
+    });
+
+    setDropdownData((prev) => ({
+      ...prev,
+      items: [],
+      subItems: [],
+    }));
+
+    navigate({});
+    showToast("Showing all items");
+  }, [navigate, showToast]);
 
   return (
     <View style={styles.container}>
@@ -123,16 +337,26 @@ const BMGJewellersScreen = ({ navigation }) => {
         {...toast}
         onHide={() => setToast((t) => ({ ...t, visible: false }))}
       />
-      <CommonHeader 
-      title="Stock Checker" 
-      titleColor="#000"
-       onLeftPress={() => navigation.goBack()}
-       leftIcon="arrow-back"
+      <CommonHeader
+        title="Stock Checker"
+        titleColor="#000"
+        onLeftPress={() => navigation.goBack()}
+        leftIcon="arrow-back"
       />
 
       <ScrollView
         refreshControl={
-          <RefreshControl refreshing={stats.refreshing} onRefresh={loadStats} />
+          <RefreshControl
+            refreshing={stats.refreshing}
+            onRefresh={() => {
+              setStats((s) => ({ ...s, refreshing: true }));
+              loadStats().finally(() => {
+                if (isMounted.current) {
+                  setStats((s) => ({ ...s, refreshing: false }));
+                }
+              });
+            }}
+          />
         }
       >
         <InventoryStatsCard
@@ -145,14 +369,9 @@ const BMGJewellersScreen = ({ navigation }) => {
             filters={filters}
             setFilters={setFilters}
             dropdownData={dropdownData}
-            applyFilter={() => {
-              showToast("Filters applied");
-              navigate();
-            }}
-            showAll={() => {
-              setFilters({});
-              navigate({});
-            }}
+            applyFilter={handleApplyFilter}
+            showAll={handleShowAll}
+            loadingStates={loadingStates}
           />
         </View>
       </ScrollView>

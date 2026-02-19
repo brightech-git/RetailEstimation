@@ -8,8 +8,6 @@ class ItemTagService {
 
   // ===================== SERVICE METHODS =====================
 
-  // ===================== STATS ONLY METHOD =====================
-
   async fetchStats(filters = {}) {
     try {
       const url = new URL(`${this.API_BASE_URL}/itemtag/filter`);
@@ -47,11 +45,11 @@ class ItemTagService {
     try {
       const url = new URL(`${this.API_BASE_URL}/itemtag/filter`);
 
-      // Add pagination parameters (your API uses page starting from 0)
+      // Add pagination parameters
       url.searchParams.append("page", page);
       url.searchParams.append("pageSize", pageSize);
 
-      // Add filter parameters
+      // Add filter parameters - only add if they exist
       if (filters.itemId) url.searchParams.append("itemId", filters.itemId);
       if (filters.metalId) url.searchParams.append("metalId", filters.metalId);
       if (filters.subItemId) url.searchParams.append("subItemId", filters.subItemId);
@@ -60,7 +58,6 @@ class ItemTagService {
       const res = await fetch(url.toString());
       const data = await res.json();
       
-      // Transform API response to match our expected format
       return {
         itemTags: data.itemTags || [],
         totalCount: data.total || 0,
@@ -86,21 +83,15 @@ class ItemTagService {
     }
   }
 
-  // Update item check status - UPDATED TO MATCH YOUR API
+  // Update item check status
   async updateItemCheck(itemId, tagNo, subItemId, metalId, itemCtrId) {
     try {
-      // Get metal name from metalId (assuming you have a way to map this)
-      // For now, I'll pass metalId directly as metalName if needed
-      const metalName = metalId; // You may need to fetch metal name from dropdownData
-      
-      // Build URL with all required parameters
       const url = new URL(`${this.API_BASE_URL}/itemtag/updateCheck`);
       
-      // Add all required query parameters
       url.searchParams.append("itemId", itemId);
       url.searchParams.append("tagNo", tagNo);
       url.searchParams.append("subItemId", subItemId);
-      url.searchParams.append("metalName", metalId); // Using metalId as metalName
+      url.searchParams.append("metalName", metalId);
       url.searchParams.append("itemCtrId", itemCtrId);
       
       console.log("Update API URL:", url.toString());
@@ -121,77 +112,14 @@ class ItemTagService {
     }
   }
 
-  // Alternative version if you need to map metalId to metalName
-  async updateItemCheckWithMetalMapping(itemId, tagNo, subItemId, metalId, itemCtrId, dropdownData = null) {
-    try {
-      let metalName = metalId;
-      
-      // If dropdownData is provided, try to find metal name
-      if (dropdownData && dropdownData.metals && Array.isArray(dropdownData.metals)) {
-        const metal = dropdownData.metals.find(m => 
-          m.id === parseInt(metalId) || m.value === metalId || m.id?.toString() === metalId
-        );
-        if (metal) {
-          metalName = metal.name || metal.label || metal.value || metalId;
-        }
-      }
-      
-      // Build URL with all required parameters
-      const url = new URL(`${this.API_BASE_URL}/itemtag/updateCheck`);
-      
-      // Add all required query parameters
-      url.searchParams.append("itemId", itemId);
-      url.searchParams.append("tagNo", tagNo);
-      url.searchParams.append("subItemId", subItemId);
-      url.searchParams.append("metalName", metalName);
-      url.searchParams.append("itemCtrId", itemCtrId);
-      
-      console.log("Update API URL with metal mapping:", url.toString());
-      
-      const res = await fetch(url, { 
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      const result = await res.json();
-      console.log("Update response:", result);
-      return result;
-    } catch (err) {
-      console.log("Update item check error:", err);
-      return { status: "failed", message: "Something went wrong" };
-    }
-  }
-
   // ===================== DROPDOWN DATA METHODS =====================
 
-  async fetchItemNames() {
-    try {
-      const res = await fetch(`${this.API_BASE_URL}/itemtag/itemnames`);
-      const data = await res.json();
-      return data || [];
-    } catch (err) {
-      console.log("Fetch item names error:", err);
-      return [];
-    }
-  }
-
-  async fetchSubItemNames() {
-    try {
-      const res = await fetch(`${this.API_BASE_URL}/subitemnames`);
-      const data = await res.json();
-      return data || [];
-    } catch (err) {
-      console.log("Fetch subitem names error:", err);
-      return [];
-    }
-  }
-
+  // Fetch metal names
   async fetchMetalNames() {
     try {
       const res = await fetch(`${this.API_BASE_URL}/metalnames`);
       const data = await res.json();
+      console.log("Fetched metal names:", data);
       return data || [];
     } catch (err) {
       console.log("Fetch metal names error:", err);
@@ -199,10 +127,12 @@ class ItemTagService {
     }
   }
 
+  // Fetch counter names
   async fetchCounterNames() {
     try {
       const res = await fetch(`${this.API_BASE_URL}/itemctrnames`);
       const data = await res.json();
+      console.log("Fetched counter names:", data?.length || 0);
       return data || [];
     } catch (err) {
       console.log("Fetch counter names error:", err);
@@ -210,25 +140,116 @@ class ItemTagService {
     }
   }
 
-  // Load all dropdown data in parallel
+  /**
+   * Fetch items based on metalId
+   * Using the correct parameter: metalId (not metall)
+   */
+  async fetchItemsByMetal(metalId) {
+    try {
+      if (!metalId) return [];
+
+      const url = new URL(`${this.API_BASE_URL}/itemtag/itemnames-with-subitems`);
+      
+      // Use metalId parameter as shown in your API example
+      url.searchParams.append("metalId", metalId);
+
+      console.log("Fetching items by metal:", url.toString());
+      
+      const res = await fetch(url.toString());
+      const data = await res.json();
+      
+      console.log(`Fetched ${Array.isArray(data) ? data.length : 1} items for metal ${metalId}`);
+      
+      // Handle the API response
+      if (Array.isArray(data)) {
+        // Map to consistent format
+        return data.map(item => ({
+          id: item.item_id || item.id,
+          name: item.item_name || item.name,
+          subitems: item.subitems || []
+        }));
+      } else if (data && typeof data === 'object') {
+        // If it's a single object, wrap it in an array
+        return [{
+          id: data.item_id || data.id,
+          name: data.item_name || data.name,
+          subitems: data.subitems || []
+        }];
+      }
+      
+      return [];
+
+    } catch (err) {
+      console.log("Fetch items by metal error:", err);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch subitems for a specific item and metal
+   */
+  async fetchSubItems(itemId, metalId) {
+    try {
+      if (!itemId || !metalId) return [];
+
+      const url = new URL(`${this.API_BASE_URL}/itemtag/itemnames-with-subitems`);
+      
+      url.searchParams.append("itemId", itemId);
+      url.searchParams.append("metalId", metalId);
+
+      console.log("Fetching subitems:", url.toString());
+      
+      const res = await fetch(url.toString());
+      const data = await res.json();
+      
+      console.log(`Fetched subitems for item ${itemId}`);
+      
+      // Handle array response
+      if (Array.isArray(data)) {
+        // Find the matching item and return its subitems
+        const matchingItem = data.find(item => 
+          item.item_id?.toString() === itemId?.toString() || 
+          item.id?.toString() === itemId?.toString()
+        );
+        return matchingItem?.subitems || [];
+      } 
+      // Handle single object response
+      else if (data && data.subitems) {
+        return data.subitems;
+      }
+      
+      return [];
+
+    } catch (err) {
+      console.log("Fetch subitems error:", err);
+      return [];
+    }
+  }
+
+  /**
+   * Load all dropdown data - metals and counters first
+   */
   async loadAllDropdownData() {
     try {
-      const [items, subItems, metals, counters] = await Promise.all([
-        this.fetchItemNames(),
-        this.fetchSubItemNames(),
+      const [metals, counters] = await Promise.all([
         this.fetchMetalNames(),
         this.fetchCounterNames()
       ]);
 
       return {
-        items: items || [],
-        subItems: subItems || [],
+        items: [], // Will be populated when metal is selected
+        subItems: [], // Will be populated when item is selected
         metals: metals || [],
         counters: counters || []
       };
     } catch (err) {
       console.log("Load dropdown data error:", err);
-      return { items: [], subItems: [], metals: [], counters: [] };
+      return { 
+        items: [], 
+        subItems: [], 
+        metals: [], 
+        counters: [] 
+      };
     }
   }
 }
@@ -239,5 +260,4 @@ export const useItemTagService = () => {
   return new ItemTagService(API_BASE_URL);
 };
 
-// Export the class for direct usage if needed
 export default ItemTagService;

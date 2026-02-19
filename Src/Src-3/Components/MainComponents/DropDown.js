@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   Text, 
@@ -14,29 +14,75 @@ import { Ionicons } from "@expo/vector-icons";
 
 const { width, height } = Dimensions.get("window");
 
-const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
+const DropdownInput = ({ 
+  label, 
+  options, 
+  selectedValue, 
+  onSelect, 
+  disabled = false,
+  placeholder 
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [localSelectedValue, setLocalSelectedValue] = useState(selectedValue);
 
-  const filteredOptions = options.filter(opt =>
-    opt.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Update local state when prop changes
+  useEffect(() => {
+    setLocalSelectedValue(selectedValue);
+  }, [selectedValue]);
 
-  const displayValue = options.find(opt => opt.id === selectedValue)?.name || `Select ${label}`;
+  const safeOptions = Array.isArray(options) ? options : [];
+
+  const filteredOptions = safeOptions.filter(opt => {
+    if (!opt || !opt.name) return false;
+    return opt.name.toLowerCase().includes(searchText.toLowerCase());
+  });
+
+  // Find the display value
+  const getDisplayValue = () => {
+    if (!localSelectedValue) {
+      return placeholder || `Select ${label}`;
+    }
+    
+    const selected = safeOptions.find(
+      opt => opt.id?.toString() === localSelectedValue?.toString()
+    );
+    
+    return selected ? selected.name : (placeholder || `Select ${label}`);
+  };
+
+  const handleSelect = (id) => {
+    setLocalSelectedValue(id);
+    onSelect(id);
+    setModalVisible(false);
+    setSearchText("");
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       
       <TouchableOpacity 
-        style={styles.dropdownButton} 
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.7}
+        style={[
+          styles.dropdownButton,
+          disabled && styles.disabledButton
+        ]} 
+        onPress={() => !disabled && setModalVisible(true)}
+        activeOpacity={disabled ? 1 : 0.7}
+        disabled={disabled}
       >
-        <Text style={styles.dropdownText} numberOfLines={1}>
-          {displayValue}
+        <Text style={[
+          styles.dropdownText,
+          disabled && styles.disabledText,
+          !localSelectedValue && styles.placeholderText
+        ]} numberOfLines={1}>
+          {getDisplayValue()}
         </Text>
-        <Ionicons name="chevron-down" size={20} color="#666" />
+        <Ionicons 
+          name="chevron-down" 
+          size={20} 
+          color={disabled ? "#ccc" : "#666"} 
+        />
       </TouchableOpacity>
 
       <Modal
@@ -86,24 +132,20 @@ const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
                   {filteredOptions.length > 0 ? (
                     filteredOptions.map(opt => (
                       <TouchableOpacity
-                        key={opt.id}
+                        key={opt.id?.toString() || Math.random().toString()}
                         style={[
                           styles.optionItem,
-                          selectedValue === opt.id && styles.selectedOption
+                          localSelectedValue?.toString() === opt.id?.toString() && styles.selectedOption
                         ]}
-                        onPress={() => {
-                          onSelect(opt.id);
-                          setModalVisible(false);
-                          setSearchText("");
-                        }}
+                        onPress={() => handleSelect(opt.id)}
                       >
                         <Text style={[
                           styles.optionText,
-                          selectedValue === opt.id && styles.selectedOptionText
+                          localSelectedValue?.toString() === opt.id?.toString() && styles.selectedOptionText
                         ]}>
                           {opt.name}
                         </Text>
-                        {selectedValue === opt.id && (
+                        {localSelectedValue?.toString() === opt.id?.toString() && (
                           <Ionicons name="checkmark" size={20} color="#1C467C" />
                         )}
                       </TouchableOpacity>
@@ -146,7 +188,7 @@ const DropdownInput = ({ label, options, selectedValue, onSelect }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: "48%",
+    width: "100%",
     marginBottom: 16,
   },
   label: {
@@ -166,11 +208,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: "#fafafa",
   },
+  disabledButton: {
+    backgroundColor: "#f0f0f0",
+    borderColor: "#e0e0e0",
+  },
   dropdownText: {
     flex: 1,
     fontSize: 14,
     color: "#333",
     marginRight: 8,
+  },
+  disabledText: {
+    color: "#999",
+  },
+  placeholderText: {
+    color: "#999",
   },
   modalOverlay: {
     flex: 1,

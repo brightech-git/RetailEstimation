@@ -406,10 +406,10 @@ modalButtons: {
 },
 modalButton: {
   flex: 1,
-  padding: 14,
+  padding: 10,
   borderRadius: 8,
   alignItems: "center",
-  marginHorizontal: 5,
+  marginHorizontal: 1,
 },
 cancelButton: {
   backgroundColor: theme.COLORS.gray,
