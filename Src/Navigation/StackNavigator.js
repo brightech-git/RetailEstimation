@@ -1,7 +1,10 @@
 // AppContainer.js
 import React, { useState, useEffect, useContext } from "react";
 import { StyleSheet, ActivityIndicator, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  DefaultTheme,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LoginScreen from "../Src-1/screens/Login/LoginScreen";
 import HomeScreen from "../Src-1/screens/Home/HomeScreen";
 import PrintScreen from "../Src-1/screens/AddPrinter/PrintMain";
-import WebViewPrintScreen from '../Src-1/screens/WebViewPrint/WebViewPrintScreen'
+import WebViewPrintScreen from "../Src-1/screens/WebViewPrint/WebViewPrintScreen";
 import Homescreen1 from "../Src-2/Screens/Home/Home";
 import BMGJewellersScreen from "../Src-3/Screens/Home/Home";
 import ResultsScreen from "../Src-3/Screens/Result/ResultScreen";
@@ -21,12 +24,42 @@ import { LoginProvider, LoginContext } from "../Context/LoginContext";
 import { ToastProvider } from "../Src-1/Context/ToastContext";
 
 const Stack = createNativeStackNavigator();
+const PERSISTENCE_KEY = "NAVIGATION_STATE";
 
-// ✅ Create a separate inner stack handler
 function AppStack() {
   const { username, loading } = useContext(LoginContext);
 
-  if (loading) {
+  const [isReady, setIsReady] = useState(false);
+  const [initialState, setInitialState] = useState();
+
+  // 🔥 Restore navigation state
+  useEffect(() => {
+    const restoreState = async () => {
+      try {
+        const savedState = await AsyncStorage.getItem(PERSISTENCE_KEY);
+        const state = savedState ? JSON.parse(savedState) : undefined;
+
+        if (state !== undefined && username) {
+          setInitialState(state);
+        }
+      } catch (e) {
+        console.log("Failed to restore navigation state", e);
+      } finally {
+        setIsReady(true);
+      }
+    };
+
+    restoreState();
+  }, [username]);
+
+  // 🔥 Clear navigation state when user logs out
+  useEffect(() => {
+    if (!username) {
+      AsyncStorage.removeItem(PERSISTENCE_KEY);
+    }
+  }, [username]);
+
+  if (loading || !isReady) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6a1b9a" />
@@ -35,48 +68,32 @@ function AppStack() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName={username ? "Home" : "Login"}>
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Homescreen1"
-          component={Homescreen1}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Print"
-          component={PrintScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="WebViewPrint"
-          component={WebViewPrintScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="BMGJewellers"
-          component={BMGJewellersScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Results"
-          component={ResultsScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ChangeStockPassword"
-          component={ChangeStockPassword}
-          options={{ headerShown: false }}
-        />
+    <NavigationContainer
+      initialState={initialState}
+      onStateChange={(state) =>
+        AsyncStorage.setItem(PERSISTENCE_KEY, JSON.stringify(state))
+      }
+      theme={DefaultTheme}
+    >
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!username ? (
+          // 🔐 If not logged in
+          <Stack.Screen name="Login" component={LoginScreen} />
+        ) : (
+          // 🔓 If logged in
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Homescreen1" component={Homescreen1} />
+            <Stack.Screen name="Print" component={PrintScreen} />
+            <Stack.Screen name="WebViewPrint" component={WebViewPrintScreen} />
+            <Stack.Screen name="BMGJewellers" component={BMGJewellersScreen} />
+            <Stack.Screen name="Results" component={ResultsScreen} />
+            <Stack.Screen
+              name="ChangeStockPassword"
+              component={ChangeStockPassword}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
