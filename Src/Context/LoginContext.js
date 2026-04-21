@@ -6,6 +6,7 @@ import axios from "axios";
 export const LoginContext = createContext();
 
 export const LoginProvider = ({ children, showToast }) => {
+  // --- existing states ---
   const [username, setUsername] = useState("");
   const [userId, setUserId] = useState(null);
   const [companyName, setCompanyName] = useState("");
@@ -19,6 +20,12 @@ export const LoginProvider = ({ children, showToast }) => {
   const [stockUsername, setStockUsername] = useState("");
   const [stockPassword, setStockPassword] = useState("");
 
+  // --- new states for cost ID feature ---
+  const [costOptions, setCostOptions] = useState([]);      // list of {COSTID, COSTNAME, COMPANYID}
+  const [selectedCostId, setSelectedCostId] = useState(""); // currently selected COSTID (e.g., "BH")
+  const [costLoading, setCostLoading] = useState(false);   // loading indicator for fetching options
+
+  // --- login function (unchanged, cost ID is NOT sent here) ---
   const login = async (username, password) => {
     try {
       setLoading(true);
@@ -67,9 +74,54 @@ export const LoginProvider = ({ children, showToast }) => {
     }
   };
 
+  // --- new function: fetch cost ID options from your local API ---
+  const fetchCostOptions = async () => {
+    try {
+      setCostLoading(true);
+      // Note: Replace with your actual production URL when deploying
+      const response = await axios.get("https://est.bmgjewellers.com/api/v1/costId", {
+        timeout: 10000,
+      });
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        setCostOptions(response.data);
+        console.log("📦 Cost options fetched:", response.data);
+
+        // Optionally: auto-select first cost ID if nothing is selected yet
+        if (response.data.length > 0 && !selectedCostId) {
+          const firstCostId = response.data[0].COSTID;
+          setSelectedCostId(firstCostId);
+          await AsyncStorage.setItem("SELECTED_COST_ID", firstCostId);
+        }
+        return true;
+      } else {
+        showToast?.("Failed to load cost options", "error", 3000);
+        return false;
+      }
+    } catch (error) {
+      console.error("Fetch cost options error:", error);
+      showToast?.("Could not fetch cost options", "error", 3000);
+      return false;
+    } finally {
+      setCostLoading(false);
+    }
+  };
+
+  // --- update selected cost ID and persist it ---
+  const updateSelectedCostId = async (costId) => {
+    setSelectedCostId(costId);
+    if (costId) {
+      await AsyncStorage.setItem("SELECTED_COST_ID", costId);
+    } else {
+      await AsyncStorage.removeItem("SELECTED_COST_ID");
+    }
+  };
+
+  // --- logout: clear everything including cost data ---
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("COMPANY_DATA");
+      await AsyncStorage.removeItem("SELECTED_COST_ID");
 
       setUsername("");
       setUserId(null);
@@ -83,6 +135,11 @@ export const LoginProvider = ({ children, showToast }) => {
       setStockUsername("");
       setStockPassword("");
 
+      // clear cost-related states
+      setCostOptions([]);
+      setSelectedCostId("");
+      setCostLoading(false);
+
       showToast?.("Logged out successfully", "info", 2000);
     } catch (error) {
       console.error("Logout error:", error);
@@ -90,8 +147,10 @@ export const LoginProvider = ({ children, showToast }) => {
     }
   };
 
+  // --- load stored company data (existing) and stored selected cost ID (new) ---
   const loadStoredData = async () => {
     try {
+      // Load company data
       const stored = await AsyncStorage.getItem("COMPANY_DATA");
       if (stored) {
         const data = JSON.parse(stored);
@@ -106,9 +165,19 @@ export const LoginProvider = ({ children, showToast }) => {
         setContactNumber(data.CONTACTNUMBER || "");
         setStockUsername(data.STOCKUSERNAME || "");
         setStockPassword(data.STOCKPASSWORD || "");
-
         console.log("📦 Restored company data:", data);
       }
+
+      // Load stored selected cost ID
+      const storedCostId = await AsyncStorage.getItem("SELECTED_COST_ID");
+      if (storedCostId) {
+        setSelectedCostId(storedCostId);
+        console.log("📦 Restored selected cost ID:", storedCostId);
+      }
+
+      // Optionally fetch fresh cost options after restoring (if needed)
+      // Uncomment the next line if you want to always fetch on app start
+      // await fetchCostOptions();
     } catch (err) {
       console.error("Error loading stored data:", err);
     } finally {
@@ -123,6 +192,7 @@ export const LoginProvider = ({ children, showToast }) => {
   return (
     <LoginContext.Provider
       value={{
+        // existing
         username,
         setUsername,
         userId,
@@ -148,6 +218,13 @@ export const LoginProvider = ({ children, showToast }) => {
         setStockUsername,
         stockPassword,
         setStockPassword,
+
+        // new cost ID related
+        costOptions,           // array of cost objects
+        selectedCostId,        // currently selected COSTID
+        setSelectedCostId: updateSelectedCostId,  // use setter that persists
+        costLoading,           // loading flag for fetching options
+        fetchCostOptions,      // function to manually fetch options (call after login)
       }}
     >
       {children}

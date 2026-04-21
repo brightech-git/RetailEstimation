@@ -11,32 +11,49 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Modal,
+  FlatList,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { LoginContext } from "../../../Context/LoginContext";
 import { useToast } from "../../Context/ToastContext";
 import Footer from "../../Components/Footer/Footer";
 import { useTheme } from "../../../Context/ThemeContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";   // 👈 ADDED
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getStyles } from "./LoginStyles";
 
 const { width } = Dimensions.get("window");
 
 const LoginScreen = ({ navigation }) => {
-  const { login, loading } = useContext(LoginContext);
+  const {
+    login,
+    loading,
+    costOptions,
+    selectedCostId,
+    setSelectedCostId,
+    costLoading,
+    fetchCostOptions,
+  } = useContext(LoginContext);
   const { showToast } = useToast();
   const { theme, isDarkMode } = useTheme();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [employeeId, setEmployeeId] = useState("");
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
+  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const logoScale = useRef(new Animated.Value(0.5)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const formScale = useRef(new Animated.Value(0.95)).current;
 
+  // Fetch cost options when screen mounts
+  useEffect(() => {
+    fetchCostOptions();
+  }, []);
 
   // UI animations
   useEffect(() => {
@@ -54,10 +71,13 @@ const LoginScreen = ({ navigation }) => {
     ]).start();
   }, []);
 
-  // 🚀 LOGIN LOGIC — Store Employee ID
   const handleLogin = async () => {
     if (!username || !password || !employeeId) {
       showToast("Please enter username, password & Employee ID", "warning");
+      return;
+    }
+    if (!selectedCostId) {
+      showToast("Please select a Cost ID", "warning");
       return;
     }
 
@@ -67,16 +87,15 @@ const LoginScreen = ({ navigation }) => {
     ]).start();
 
     try {
-      // Pass employeeId inside login()
-      const success = await login(username, password, employeeId);
+      // login() does NOT send costId to backend
+      const success = await login(username, password);
 
       if (success) {
-        await AsyncStorage.setItem("EMPLOYEE_ID", employeeId); // 👈 SAVE
-       console.log("Employee ID saved:", employeeId);
-         // ✅ Reset form after successful login
-      setUsername("");
-      setPassword("");
-      setEmployeeId("");
+        await AsyncStorage.setItem("EMPLOYEE_ID", employeeId);
+        console.log("Employee ID saved:", employeeId);
+        setUsername("");
+        setPassword("");
+        setEmployeeId("");
         showToast("Login successful!", "success");
         setTimeout(() => navigation.replace("Home"), 600);
       } else {
@@ -88,6 +107,12 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const styles = getStyles(theme);
+
+  // Renders selected cost name for dropdown button
+  const getSelectedCostName = () => {
+    const selected = costOptions.find(opt => opt.COSTID === selectedCostId);
+    return selected ? `${selected.COSTID} - ${selected.COSTNAME}` : "Select Cost ID";
+  };
 
   return (
     <>
@@ -108,7 +133,7 @@ const LoginScreen = ({ navigation }) => {
           <Animated.View
             style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
           >
-            {/* Logo */ }
+            {/* Logo */}
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
               <Text style={styles.title}>
                 Retail{"\n"}
@@ -117,7 +142,7 @@ const LoginScreen = ({ navigation }) => {
               <Text style={styles.subtitle}>Exquisite Craftsmanship</Text>
             </Animated.View>
 
-            {/* Form */ }
+            {/* Form */}
             <Animated.View style={[styles.formContainer, { transform: [{ scale: formScale }] }]}>
               <LinearGradient
                 colors={
@@ -153,10 +178,27 @@ const LoginScreen = ({ navigation }) => {
                     onChangeText={setEmployeeId}
                   />
 
+                  {/* Cost ID Dropdown */}
                   <TouchableOpacity
-                    style={[styles.button, loading && styles.buttonDisabled]}
+                    style={styles.dropdownButton}
+                    onPress={() => setDropdownVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownButtonText,
+                        !selectedCostId && styles.dropdownPlaceholder,
+                      ]}
+                    >
+                      {costLoading ? "Loading cost options..." : getSelectedCostName()}
+                    </Text>
+                    <Text style={styles.dropdownArrow}>▼</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.button, (loading || costLoading) && styles.buttonDisabled]}
                     onPress={handleLogin}
-                    disabled={loading}
+                    disabled={loading || costLoading}
                     activeOpacity={0.85}
                   >
                     <LinearGradient colors={theme.COLORS.gradientPrimary} style={styles.gradientButton}>
@@ -175,6 +217,61 @@ const LoginScreen = ({ navigation }) => {
 
         <Footer />
       </LinearGradient>
+
+      {/* Cost ID Selection Modal */}
+      <Modal
+        visible={dropdownVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDropdownVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setDropdownVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Select Cost ID</Text>
+                {costLoading ? (
+                  <ActivityIndicator size="large" color={theme.COLORS.primary} style={{ margin: 20 }} />
+                ) : costOptions.length === 0 ? (
+                  <Text style={styles.modalEmptyText}>No cost options available</Text>
+                ) : (
+                  <FlatList
+                    data={costOptions}
+                    keyExtractor={(item) => item.COSTID}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={[
+                          styles.modalItem,
+                          selectedCostId === item.COSTID && styles.modalItemSelected,
+                        ]}
+                        onPress={() => {
+                          setSelectedCostId(item.COSTID);
+                          setDropdownVisible(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.modalItemText,
+                            selectedCostId === item.COSTID && styles.modalItemTextSelected,
+                          ]}
+                        >
+                          {item.COSTID} - {item.COSTNAME}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                )}
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setDropdownVisible(false)}
+                >
+                  <Text style={styles.modalCloseText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </>
   );
 };

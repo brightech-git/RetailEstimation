@@ -16,16 +16,18 @@ export class EstimationService {
   }
 
   async fetchEstimationData(ITEMID, TAGNO) {
+    const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
     const response = await this.api.get("/estimationTotal", {
-      params: { ITEMID, TAGNO },
+      params: { ITEMID, TAGNO, COSTID: costId || "" },
     });
     return response.data;
   }
 
   async checkTagExists(ITEMID, TAGNO) {
     try {
+      const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
       const response = await this.api.get(`/tag-details`, {
-        params: { ITEMID, TAGNO },
+        params: { ITEMID, TAGNO, COSTID: costId || "" },
       });
       return response.data;
     } catch (error) {

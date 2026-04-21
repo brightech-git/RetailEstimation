@@ -1,6 +1,8 @@
 // 📁 src/Screens/Login/LoginStyles.js
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
 import { moderateScale } from "../../Utills/Scalling";
+
+const { width } = Dimensions.get("window");
 
 export const getStyles = (theme) => {
   const { COLORS, FONTS, SIZES } = theme;
@@ -77,6 +79,101 @@ export const getStyles = (theme) => {
       marginBottom: moderateScale(16),
       ...FONTS.text,
     },
+    // --- Dropdown Button (Cost ID) ---
+    dropdownButton: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: COLORS.input,
+      borderRadius: SIZES.radius,
+      borderWidth: 1,
+      borderColor: COLORS.borderColor,
+      paddingHorizontal: moderateScale(16),
+      paddingVertical: moderateScale(14),
+      marginBottom: moderateScale(16),
+      height: moderateScale(54),
+    },
+    dropdownButtonText: {
+      fontSize: moderateScale(16),
+      color: COLORS.text,
+      flex: 1,
+      ...FONTS.text,
+    },
+    dropdownPlaceholder: {
+      color: COLORS.placeholder,
+    },
+    dropdownArrow: {
+      fontSize: moderateScale(14),
+      color: COLORS.placeholder,
+      marginLeft: moderateScale(8),
+    },
+    // --- Modal Styles ---
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      width: width * 0.85,
+      maxHeight: "70%",
+      backgroundColor: COLORS.card,
+      borderRadius: SIZES.radius_lg,
+      padding: moderateScale(20),
+      ...(theme.SHADOW?.medium || {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      }),
+    },
+    modalTitle: {
+      fontSize: moderateScale(18),
+      fontWeight: "600",
+      color: COLORS.title,
+      marginBottom: moderateScale(16),
+      textAlign: "center",
+      ...FONTS.h5,
+    },
+    modalItem: {
+      paddingVertical: moderateScale(12),
+      paddingHorizontal: moderateScale(16),
+      borderRadius: SIZES.radius,
+      marginBottom: moderateScale(4),
+    },
+    modalItemSelected: {
+      backgroundColor: COLORS.primary + "20", // 20% opacity
+    },
+    modalItemText: {
+      fontSize: moderateScale(16),
+      color: COLORS.text,
+      ...FONTS.text,
+    },
+    modalItemTextSelected: {
+      color: COLORS.primary,
+      fontWeight: "500",
+    },
+    modalEmptyText: {
+      textAlign: "center",
+      color: COLORS.placeholder,
+      marginVertical: moderateScale(20),
+      ...FONTS.text,
+    },
+    modalCloseButton: {
+      marginTop: moderateScale(16),
+      paddingVertical: moderateScale(12),
+      alignItems: "center",
+      borderTopWidth: 1,
+      borderTopColor: COLORS.borderColor,
+    },
+    modalCloseText: {
+      fontSize: moderateScale(16),
+      fontWeight: "500",
+      color: COLORS.primary,
+      ...FONTS.subheading,
+    },
+    // --- Existing Styles ---
     button: {
       width: "100%",
       height: moderateScale(56),

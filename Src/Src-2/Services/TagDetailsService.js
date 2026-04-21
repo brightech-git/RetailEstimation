@@ -16,8 +16,9 @@ const useEstimationData = (itemId, tagNo) => {
       setEstimationData(null);
 
       try {
+        const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
         const response = await fetch(
-          `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}`
+          `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId || ""}`
         );
 
         if (!response.ok) throw new Error('Failed to fetch estimation data');

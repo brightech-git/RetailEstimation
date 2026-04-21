@@ -56,24 +56,21 @@ const InventoryStatsCard = React.memo(({ stats, loading, refreshing }) => {
 
 const BMGJewellersScreen = ({ navigation }) => {
   const service = useItemTagService();
-
-  // Use refs to prevent infinite loops
   const isMounted = useRef(true);
   const initialLoadDone = useRef(false);
-  const metalLoadInProgress = useRef(false);
 
   const [filters, setFilters] = useState({
-    metalId: null, // First - Metal
-    itemCtrId: null, // Counter
-    itemId: null, // Second - Item (depends on metal)
-    subItemId: null, // Third - Sub Item (depends on item)
+    metalId: null,
+    itemCtrId: null,
+    itemId: null,
+    subItemId: null,
   });
 
   const [dropdownData, setDropdownData] = useState({
-    items: [],
-    subItems: [],
     metals: [],
     counters: [],
+    items: [],
+    subItems: [],
   });
 
   const [loadingStates, setLoadingStates] = useState({
@@ -95,7 +92,6 @@ const BMGJewellersScreen = ({ navigation }) => {
     refreshing: false,
   });
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -108,7 +104,6 @@ const BMGJewellersScreen = ({ navigation }) => {
 
   const loadStats = useCallback(async () => {
     if (!isMounted.current) return;
-
     setStats((s) => ({ ...s, loading: true }));
     try {
       const data = await service.fetchItemTags({}, 0, 1);
@@ -121,8 +116,7 @@ const BMGJewellersScreen = ({ navigation }) => {
           refreshing: false,
         });
       }
-    } catch (error) {
-      console.log("Load stats error:", error);
+    } catch {
       if (isMounted.current) {
         showToast("Failed to load data", "red");
         setStats((s) => ({ ...s, loading: false, refreshing: false }));
@@ -130,168 +124,110 @@ const BMGJewellersScreen = ({ navigation }) => {
     }
   }, [service, showToast]);
 
-  // Initial load - only metals and counters
-  useEffect(() => {
-    const initialize = async () => {
-      if (initialLoadDone.current) return;
-      initialLoadDone.current = true;
+  // Initial load — metals only
+useEffect(() => {
+    if (initialLoadDone.current) return;
+    initialLoadDone.current = true;
 
-      try {
-        const dropdowns = await service.loadAllDropdownData();
-        console.log("Initial metals:", dropdowns.metals?.length);
-        console.log("Initial counters:", dropdowns.counters?.length);
-
-        if (isMounted.current) {
-          setDropdownData({
-            items: [],
-            subItems: [],
-            metals: dropdowns.metals || [],
-            counters: dropdowns.counters || [],
-          });
-
-          await loadStats();
-        }
-      } catch (err) {
-        console.log("Initialization error:", err);
-      }
-    };
-
-    initialize();
-  }, [service, loadStats]);
-
-  // Handle metal change - load items based on metal
-  const handleMetalChange = useCallback(
-    async (metalId) => {
-      console.log("Metal changed to:", metalId);
-
-      if (!isMounted.current) return;
-
-      if (!metalId) {
-        setDropdownData((prev) => ({
-          ...prev,
+    service.loadAllDropdownData().then((dropdowns) => {
+      if (isMounted.current) {
+        setDropdownData({
+          metals: dropdowns.metals || [],
+          counters: dropdowns.counters || [], // now populated on load
           items: [],
           subItems: [],
-        }));
-        return;
+        });
       }
+    });
 
-      // Prevent multiple simultaneous calls
-      if (metalLoadInProgress.current) return;
-      metalLoadInProgress.current = true;
+    loadStats();
+  }, []); // eslint-disable-line
 
+  // Metal change — fetch counters + items together
+useEffect(() => {
+    if (!filters.metalId) {
+      // Reset items/subitems but restore full counter list
       setLoadingStates((prev) => ({ ...prev, items: true }));
-
-      try {
-        // Fetch items based on the selected metal using correct parameter
-        const items = await service.fetchItemsByMetal(metalId);
-        console.log(`Items for metal ${metalId}:`, items?.length || 0);
-
+      service.fetchFilteredRaw({}).then((data) => {
         if (isMounted.current) {
           setDropdownData((prev) => ({
             ...prev,
-            items: items || [],
+            counters: service.extractCounters(data),
+            items: [],
             subItems: [],
           }));
         }
-      } catch (error) {
-        console.log("Error loading items by metal:", error);
-        if (isMounted.current) {
-          showToast("Failed to load items", "red");
-        }
-      } finally {
-        if (isMounted.current) {
+      }).finally(() => {
+        if (isMounted.current)
           setLoadingStates((prev) => ({ ...prev, items: false }));
-        }
-        metalLoadInProgress.current = false;
-      }
-    },
-    [service, showToast],
-  );
+      });
+      return;
+    }
 
-  // Handle item change - load subitems
-  const handleItemChange = useCallback(
-    async (itemId) => {
-      console.log("Item changed to:", itemId, "with metal:", filters.metalId);
+    let cancelled = false;
+    setLoadingStates((prev) => ({ ...prev, items: true }));
 
-      if (!isMounted.current) return;
-
-      if (!itemId || !filters.metalId) {
-        setDropdownData((prev) => ({ ...prev, subItems: [] }));
-        return;
-      }
-
-      setLoadingStates((prev) => ({ ...prev, subItems: true }));
-
-      try {
-        const subItems = await service.fetchSubItems(itemId, filters.metalId);
-        console.log(`Subitems for item ${itemId}:`, subItems?.length || 0);
-
-        if (isMounted.current) {
-          setDropdownData((prev) => ({
-            ...prev,
-            subItems: subItems || [],
-          }));
-        }
-      } catch (error) {
-        console.log("Error loading subitems:", error);
-        if (isMounted.current) {
-          showToast("Failed to load subitems", "red");
-        }
-      } finally {
-        if (isMounted.current) {
-          setLoadingStates((prev) => ({ ...prev, subItems: false }));
-        }
-      }
-    },
-    [service, filters.metalId, showToast],
-  );
-
-  // Watch for metal changes
-  useEffect(() => {
-    if (filters.metalId) {
-      handleMetalChange(filters.metalId);
-    } else {
-      setDropdownData((prev) => ({
-        ...prev,
-        items: [],
-        subItems: [],
-      }));
-      // Clear dependent filters
-      if (filters.itemId || filters.subItemId) {
-        setFilters((prev) => ({
+    service.fetchDropdownsByMetal(filters.metalId).then(({ items, counters }) => {
+      if (!cancelled && isMounted.current) {
+        setDropdownData((prev) => ({
           ...prev,
-          itemId: null,
-          subItemId: null,
+          counters: counters || [],
+          items: items || [],
+          subItems: [],
         }));
       }
-    }
-  }, [filters.metalId]);
+    }).catch(() => {
+      if (!cancelled && isMounted.current) showToast("Failed to load filters", "red");
+    }).finally(() => {
+      if (!cancelled && isMounted.current)
+        setLoadingStates((prev) => ({ ...prev, items: false }));
+    });
 
-  // Watch for item changes
+    return () => { cancelled = true; };
+  }, [filters.metalId]); // eslint-disable-line
+
+  // Item change — fetch subitems
   useEffect(() => {
-    if (filters.itemId && filters.metalId) {
-      handleItemChange(filters.itemId);
-    } else {
+    if (!filters.itemId || !filters.metalId) {
       setDropdownData((prev) => ({ ...prev, subItems: [] }));
+      return;
     }
-  }, [filters.itemId, filters.metalId]);
+
+    let cancelled = false;
+    setLoadingStates((prev) => ({ ...prev, subItems: true }));
+
+    service
+      .fetchSubItems(filters.itemId, filters.metalId)
+      .then((subItems) => {
+        if (!cancelled && isMounted.current) {
+          setDropdownData((prev) => ({ ...prev, subItems: subItems || [] }));
+        }
+      })
+      .catch(() => {
+        if (!cancelled && isMounted.current)
+          showToast("Failed to load subitems", "red");
+      })
+      .finally(() => {
+        if (!cancelled && isMounted.current)
+          setLoadingStates((prev) => ({ ...prev, subItems: false }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.itemId, filters.metalId]); // eslint-disable-line
 
   const navigate = useCallback(
-    (filterParams = filters) => {
-      // Clean up filters - only include filters that have values
+    (filterParams = {}) => {
       const cleanFilters = {};
       Object.keys(filterParams).forEach((key) => {
-        if (
-          filterParams[key] !== null &&
-          filterParams[key] !== undefined &&
-          filterParams[key] !== ""
-        ) {
-          cleanFilters[key] = filterParams[key];
+        const val = filterParams[key];
+        if (val !== null && val !== undefined && val !== "") {
+          cleanFilters[key] = String(val);
         }
       });
 
       console.log("Navigating with filters:", cleanFilters);
-
       navigation.navigate("Results", {
         service,
         initialFilters: cleanFilters,
@@ -308,7 +244,6 @@ const BMGJewellersScreen = ({ navigation }) => {
         activeFilters[key] = filters[key];
       }
     });
-
     showToast("Filters applied");
     navigate(activeFilters);
   }, [filters, navigate, showToast]);
@@ -320,13 +255,6 @@ const BMGJewellersScreen = ({ navigation }) => {
       itemId: null,
       subItemId: null,
     });
-
-    setDropdownData((prev) => ({
-      ...prev,
-      items: [],
-      subItems: [],
-    }));
-
     navigate({});
     showToast("Showing all items");
   }, [navigate, showToast]);
@@ -343,18 +271,13 @@ const BMGJewellersScreen = ({ navigation }) => {
         onLeftPress={() => navigation.goBack()}
         leftIcon="arrow-back"
       />
-
       <ScrollView
         refreshControl={
           <RefreshControl
             refreshing={stats.refreshing}
             onRefresh={() => {
               setStats((s) => ({ ...s, refreshing: true }));
-              loadStats().finally(() => {
-                if (isMounted.current) {
-                  setStats((s) => ({ ...s, refreshing: false }));
-                }
-              });
+              loadStats();
             }}
           />
         }

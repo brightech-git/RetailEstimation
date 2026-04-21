@@ -127,8 +127,9 @@ const fetchApiData = async () => {
 
   try {
     // 1️⃣ CHECK IF TAG IS ISSUED
+    const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
     const issuedResponse = await fetch(
-      `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}`
+      `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId || ""}`
     );
     const issuedData = await issuedResponse.json();
 
@@ -155,8 +156,9 @@ const fetchApiData = async () => {
     }
 
     // 2️⃣ NOT ISSUED → NORMAL ESTIMATION FLOW
+    const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
     const response = await fetch(
-      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}`
+      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId || ""}`
     );
     const data = await response.json();
 
