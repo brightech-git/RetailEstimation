@@ -52,6 +52,8 @@ const HomeScreen1 = () => {
     displayDataRef.current = displayData;
   }, [displayData]);
 
+  
+
   // Get employee ID from AsyncStorage on component mount
   useEffect(() => {
     const getEmployeeId = async () => {
@@ -111,10 +113,7 @@ const HomeScreen1 = () => {
 
   // Fetch API data based on combined input
 const fetchApiData = async () => {
-  if (!combinedInput) {
-
-    return;
-  }
+  if (!combinedInput) return;
 
   const parsed = parseCombinedInput(combinedInput);
   if (!parsed) return;
@@ -126,47 +125,41 @@ const fetchApiData = async () => {
   estimation.setEstBatchNo(null);
 
   try {
-    // 1️⃣ CHECK IF TAG IS ISSUED
-    const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
-    const issuedResponse = await fetch(
-      `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId || ""}`
-    );
-    const issuedData = await issuedResponse.json();
+    const costId = await estimation.getCostId();
 
-    if (issuedData?.status === "issued") {
-
-      // Format the ISO timestamp into a readable date
-      const issuedDate = new Date(issuedData.trandate).toLocaleDateString(
-        "en-IN",
-        {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }
-      );
-
-      Alert.alert(
-        "Tag Already Issued",
-        `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
-      );
-
-      // ❌ Do not show cards, do not fetch estimation, stop here
+    if (!costId) {
+      Alert.alert("Error", "Cost ID not available. Please login again.");
       setLoadingApiData(false);
       return;
     }
 
-    // 2️⃣ NOT ISSUED → NORMAL ESTIMATION FLOW
-    const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
-    const response = await fetch(
-      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId || ""}`
+    // CHECK TAG ISSUED
+    const issuedResponse = await fetch(
+      `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId}`
     );
+    const issuedData = await issuedResponse.json();
+
+    if (issuedData?.status === "issued") {
+      Alert.alert(
+        "Tag Already Issued",
+        `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
+      );
+      setLoadingApiData(false);
+      return;
+    }
+
+    // ESTIMATION API
+    const response = await fetch(
+      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId}`
+    );
+    console.log("🔵 Estimation API URL:", response.url);
+
     const data = await response.json();
 
-    setValidationError("");
     setDisplayData(data || []);
-
     estimation.setITEMID(itemId);
     estimation.setTAGNO(tagNo);
+    setValidationError("");
 
   } catch (err) {
     console.error(err);

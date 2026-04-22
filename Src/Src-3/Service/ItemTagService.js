@@ -3,177 +3,230 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 class ItemTagService {
   constructor(apiBaseUrl) {
-   this.API_BASE_URL = apiBaseUrl || "https://est.bmgjewellers.com/api/v1";
+    this.API_BASE_URL =
+      apiBaseUrl || "https://est.bmgjewellers.com/api/v1";
   }
 
-  async #getCostId() {
+  // ===================== COMMON =====================
+
+  async getCostId() {
     try {
-      const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
-      return costId || null;
-    } catch {
+      return await AsyncStorage.getItem("SELECTED_COST_ID");
+    } catch (e) {
+      console.log("CostId error:", e);
       return null;
     }
   }
 
-  async #request(endpoint, options = {}, params = {}) {
+  async buildUrl(endpoint, params = {}) {
+    const costId = await this.getCostId();
+
+    if (!costId) throw new Error("costId missing");
+
+    const url = new URL(`${this.API_BASE_URL}${endpoint}`);
+    url.searchParams.append("costId", costId);
+
+    Object.keys(params).forEach((key) => {
+      if (params[key] !== undefined && params[key] !== null) {
+        url.searchParams.append(key, params[key]);
+      }
+    });
+
+    return url;
+  }
+
+  log(label, url, data) {
+    const length = Array.isArray(data)
+      ? data.length
+      : data?.itemTags?.length || 0;
+
+    console.log(`🔹 ${label}`);
+    console.log("URL:", url);
+    console.log("Length:", length);
+  }
+
+  // ===================== STATS =====================
+
+  async fetchStats(filters = {}) {
     try {
-      const url = new URL(`${this.API_BASE_URL}${endpoint}`);
+      const url = await this.buildUrl("/itemtag/filter", filters);
+      const res = await fetch(url.toString());
+      const data = await res.json();
 
-      const costId = await this.#getCostId();
-      if (costId) url.searchParams.append("costId", costId);
+      this.log("Stats", url.toString(), data);
 
-      Object.keys(params).forEach((key) => {
-        if (
-          params[key] !== undefined &&
-          params[key] !== null &&
-          params[key] !== ""
-        ) {
-          url.searchParams.append(key, String(params[key]));
-        }
-      });
+      const total = data.total || data.totalCount || 0;
+      const totalUnchecked = data.totalUnchecked || 0;
+      const totalChecked =
+        data.totalChecked ?? total - totalUnchecked;
 
-      console.log("API URL:", url.toString());
-      const res = await fetch(url.toString(), options);
-      return await res.json();
+      return {
+        totalCount: total,
+        totalChecked,
+        totalUnchecked,
+      };
     } catch (err) {
-      console.log("API error:", err);
-      throw err;
+      console.log("Stats error:", err);
+      return { totalCount: 0, totalChecked: 0, totalUnchecked: 0 };
     }
   }
 
-  async fetchFilteredRaw(filters = {}) {
-    try {
-      return await this.#request("/itemtag/filter", {}, filters);
-    } catch {
-      return {};
-    }
-  }
+  // ===================== TABLE DATA =====================
 
   async fetchItemTags(filters = {}, page = 0, pageSize = 20) {
     try {
-      const data = await this.#request(
-        "/itemtag/filter",
-        {},
-        { ...filters, page, pageSize },
-      );
+      const url = await this.buildUrl("/itemtag/filter", {
+        ...filters,
+        page,
+        pageSize,
+      });
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      this.log("ItemTags", url.toString(), data);
+
+      const total = data.total || 0;
+
       return {
         itemTags: data.itemTags || [],
-        totalCount: data.total || 0,
-        totalPages: Math.ceil((data.total || 0) / pageSize),
+        totalCount: total,
+        totalPages: Math.ceil(total / pageSize),
         currentPage: data.page || 0,
         hasMore: data.hasMore || false,
-        pageSize: data.pageSize || pageSize,
-        totalChecked: data.totalChecked || 0,
-        totalUnchecked: data.totalUnchecked || 0,
       };
-    } catch {
+    } catch (err) {
+      console.log("ItemTags error:", err);
       return {
         itemTags: [],
         totalCount: 0,
         totalPages: 0,
         currentPage: 0,
         hasMore: false,
-        totalChecked: 0,
-        totalUnchecked: 0,
       };
     }
   }
 
-  async updateItemCheck(itemId, tagNo, subItemId, metalId, itemCtrId) {
-    try {
-      return await this.#request(
-        "/itemtag/updateCheck",
-        { method: "PUT", headers: { "Content-Type": "application/json" } },
-        { itemId, tagNo, subItemId, metalName: metalId, itemCtrId },
-      );
-    } catch {
-      return { status: "failed", message: "Something went wrong" };
-    }
-  }
+  // ===================== DROPDOWNS (FULL DATA) =====================
 
   async fetchMetalNames() {
     try {
-      return (await this.#request("/metalnames")) || [];
-    } catch {
+      const url = await this.buildUrl("/metalnames");
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      this.log("Metals", url.toString(), data);
+
+      return data || [];
+    } catch (err) {
+      console.log("Metals error:", err);
       return [];
     }
   }
 
-  extractCounters(filterData) {
-    const seen = new Set();
-    return (filterData.itemTags || []).reduce((acc, item) => {
-      if (item.ITEMCTRID && !seen.has(item.ITEMCTRID)) {
-        seen.add(item.ITEMCTRID);
-        acc.push({ id: item.ITEMCTRID, name: item.ITEMCTRNAME });
-      }
-      return acc;
-    }, []);
-  }
-
-  extractItems(filterData) {
-    const seen = new Set();
-    return (filterData.itemTags || []).reduce((acc, item) => {
-      if (item.ITEMID && !seen.has(item.ITEMID)) {
-        seen.add(item.ITEMID);
-        acc.push({ id: item.ITEMID, name: item.ITEMNAME });
-      }
-      return acc;
-    }, []);
-  }
-
-  extractSubItems(filterData) {
-    const seen = new Set();
-    return (filterData.itemTags || []).reduce((acc, item) => {
-      if (item.SUBITEMID && !seen.has(item.SUBITEMID)) {
-        seen.add(item.SUBITEMID);
-        acc.push({ id: item.SUBITEMID, name: item.SUBITEMNAME });
-      }
-      return acc;
-    }, []);
-  }
-
-async loadAllDropdownData() {
+  async fetchCounterNames() {
     try {
-      const [metals, filterData] = await Promise.all([
-        this.fetchMetalNames(),
-        this.fetchFilteredRaw({}), // no metalId = all counters for costId
-      ]);
+      const url = await this.buildUrl("/itemctrnames");
+      const res = await fetch(url.toString());
+      const data = await res.json();
 
-      return {
-        metals: metals || [],
-        counters: this.extractCounters(filterData), // populated on init
-        items: [],
-        subItems: [],
-      };
-    } catch {
-      return { metals: [], counters: [], items: [], subItems: [] };
+      this.log("Counters", url.toString(), data);
+
+      return data || [];
+    } catch (err) {
+      console.log("Counters error:", err);
+      return [];
     }
   }
 
-  async fetchDropdownsByMetal(metalId) {
+  async fetchItemsByMetal(metalId) {
     try {
-      if (!metalId) return { items: [], counters: [] };
-      const data = await this.fetchFilteredRaw({ metalId });
-      return {
-        items: this.extractItems(data),
-        counters: this.extractCounters(data),
-      };
-    } catch {
-      return { items: [], counters: [] };
+      if (!metalId) return [];
+
+      const url = await this.buildUrl(
+        "/itemtag/itemnames-with-subitems",
+        { metalId }
+      );
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      this.log("Items", url.toString(), data);
+
+      if (Array.isArray(data)) {
+        return data.map((item) => ({
+          id: item.id ?? item.item_id,
+          name: item.name ?? item.item_name,
+          subitems: item.subitems || [],
+        }));
+      }
+
+      return [];
+    } catch (err) {
+      console.log("Items error:", err);
+      return [];
     }
   }
 
   async fetchSubItems(itemId, metalId) {
     try {
       if (!itemId || !metalId) return [];
-      const data = await this.fetchFilteredRaw({ metalId, itemId });
-      return this.extractSubItems(data);
-    } catch {
+
+      const url = await this.buildUrl(
+        "/itemtag/itemnames-with-subitems",
+        { itemId, metalId }
+      );
+
+      const res = await fetch(url.toString());
+      const data = await res.json();
+
+      this.log("SubItems", url.toString(), data);
+
+      if (Array.isArray(data)) {
+        const match = data.find(
+          (i) =>
+            (i.id?.toString() ?? i.item_id?.toString()) ===
+            itemId.toString()
+        );
+
+        return match?.subitems || [];
+      }
+
+      return data?.subitems || [];
+    } catch (err) {
+      console.log("SubItems error:", err);
       return [];
+    }
+  }
+
+  // ===================== INITIAL LOAD =====================
+
+  async loadAllDropdownData() {
+    try {
+      const [metals, counters] = await Promise.all([
+        this.fetchMetalNames(),
+        this.fetchCounterNames(),
+      ]);
+
+      return {
+        metals,
+        counters,
+        items: [],
+        subItems: [],
+      };
+    } catch (err) {
+      console.log("Dropdown load error:", err);
+      return {
+        metals: [],
+        counters: [],
+        items: [],
+        subItems: [],
+      };
     }
   }
 }
 
+// Hook
 export const useItemTagService = () => {
   const API_BASE_URL = useApiBaseUrl();
   return new ItemTagService(API_BASE_URL);

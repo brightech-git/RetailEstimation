@@ -102,27 +102,32 @@ const BMGJewellersScreen = ({ navigation }) => {
     setToast({ visible: true, message: msg, color });
   }, []);
 
-  const loadStats = useCallback(async () => {
-    if (!isMounted.current) return;
-    setStats((s) => ({ ...s, loading: true }));
-    try {
-      const data = await service.fetchItemTags({}, 0, 1);
-      if (isMounted.current) {
-        setStats({
-          totalCount: data.totalCount || 0,
-          totalChecked: data.totalChecked || 0,
-          totalUnchecked: data.totalUnchecked || 0,
-          loading: false,
-          refreshing: false,
-        });
-      }
-    } catch {
-      if (isMounted.current) {
-        showToast("Failed to load data", "red");
-        setStats((s) => ({ ...s, loading: false, refreshing: false }));
-      }
+const loadStats = useCallback(async () => {
+  if (!isMounted.current) return;
+
+  setStats((s) => ({ ...s, loading: true }));
+
+  try {
+    const data = await service.fetchStats(filters);
+
+    if (isMounted.current) {
+      setStats({
+        totalCount: data.totalCount || 0,
+        totalChecked: data.totalChecked || 0,
+        totalUnchecked: data.totalUnchecked || 0,
+        loading: false,
+        refreshing: false,
+      });
     }
-  }, [service, showToast]);
+  } catch (error) {
+    console.log("Load stats error:", error);
+
+    if (isMounted.current) {
+      showToast("Failed to load stats", "red");
+      setStats((s) => ({ ...s, loading: false, refreshing: false }));
+    }
+  }
+}, [filters, showToast]);
 
   // Initial load — metals only
 useEffect(() => {
@@ -145,29 +150,37 @@ useEffect(() => {
 
   // Metal change — fetch counters + items together
 useEffect(() => {
-    if (!filters.metalId) {
-      // Reset items/subitems but restore full counter list
-      setLoadingStates((prev) => ({ ...prev, items: true }));
-      service.fetchFilteredRaw({}).then((data) => {
+  if (!filters.metalId) {
+    setLoadingStates((prev) => ({ ...prev, items: true }));
+
+    service.fetchCounterNames()
+      .then((counters) => {
         if (isMounted.current) {
           setDropdownData((prev) => ({
             ...prev,
-            counters: service.extractCounters(data),
+            counters: counters || [],
             items: [],
             subItems: [],
           }));
         }
-      }).finally(() => {
-        if (isMounted.current)
+      })
+      .finally(() => {
+        if (isMounted.current) {
           setLoadingStates((prev) => ({ ...prev, items: false }));
+        }
       });
-      return;
-    }
 
-    let cancelled = false;
-    setLoadingStates((prev) => ({ ...prev, items: true }));
+    return;
+  }
 
-    service.fetchDropdownsByMetal(filters.metalId).then(({ items, counters }) => {
+  let cancelled = false;
+  setLoadingStates((prev) => ({ ...prev, items: true }));
+
+  Promise.all([
+    service.fetchItemsByMetal(filters.metalId),
+    service.fetchCounterNames(), // keep full counters OR filter if needed
+  ])
+    .then(([items, counters]) => {
       if (!cancelled && isMounted.current) {
         setDropdownData((prev) => ({
           ...prev,
@@ -176,15 +189,22 @@ useEffect(() => {
           subItems: [],
         }));
       }
-    }).catch(() => {
-      if (!cancelled && isMounted.current) showToast("Failed to load filters", "red");
-    }).finally(() => {
-      if (!cancelled && isMounted.current)
+    })
+    .catch(() => {
+      if (!cancelled && isMounted.current) {
+        showToast("Failed to load filters", "red");
+      }
+    })
+    .finally(() => {
+      if (!cancelled && isMounted.current) {
         setLoadingStates((prev) => ({ ...prev, items: false }));
+      }
     });
 
-    return () => { cancelled = true; };
-  }, [filters.metalId]); // eslint-disable-line
+  return () => {
+    cancelled = true;
+  };
+}, [filters.metalId]);
 
   // Item change — fetch subitems
   useEffect(() => {

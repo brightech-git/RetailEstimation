@@ -20,16 +20,7 @@ const FiltersComponent = ({
     });
   };
 
-  // Log when filters change for debugging
-  useEffect(() => {
-    console.log("Current filters:", filters);
-    console.log("Dropdown data available:", {
-      metals: dropdownData.metals?.length || 0,
-      counters: dropdownData.counters?.length || 0,
-      items: dropdownData.items?.length || 0,
-      subItems: dropdownData.subItems?.length || 0,
-    });
-  }, [filters, dropdownData]);
+
 
   return (
     <View style={styles.container}>
