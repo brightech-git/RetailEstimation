@@ -182,18 +182,19 @@ const ResultsScreen = ({ route, navigation }) => {
   }, []);
 
   // Auto refresh stats
-  const refreshStatsOnly = useCallback(async () => {
-    try {
-      const data = await service.fetchItemTags(filters, 0, PAGE_SIZE);
-      if (data) {
-        setTotalChecked(data.totalChecked || 0);
-        setTotalUnchecked(data.totalUnchecked || 0);
-        setTotalCount(data.totalCount || 0);
-      }
-    } catch (e) {
-      console.log("Auto refresh failed");
+const refreshStatsOnly = useCallback(async () => {
+  try {
+    const data = await service.fetchStats(filters);
+
+    if (data) {
+      setTotalChecked(data.totalChecked || 0);
+      setTotalUnchecked(data.totalUnchecked || 0);
+      setTotalCount(data.totalCount || 0);
     }
-  }, [filters, service]);
+  } catch (e) {
+    console.log("Auto refresh failed");
+  }
+}, [filters, service]);
 
   useEffect(() => {
     const interval = setInterval(refreshStatsOnly, 1000);
@@ -256,9 +257,10 @@ const ResultsScreen = ({ route, navigation }) => {
         );
 
         // Get filter values (use empty string if not set)
-        const subItemId = filters.subItemId || "";
+       const subItemId = filters.subItemId || null;
+const itemCtrId = filters.itemCtrId || null;
         const metalName = getMetalName(filters.metalId) || "";
-        const itemCtrId = filters.itemCtrId || "";
+        // const itemCtrId = filters.itemCtrId || "";
 
         // Call service with all parameters (some may be empty strings)
         const result = await service.updateItemCheck(

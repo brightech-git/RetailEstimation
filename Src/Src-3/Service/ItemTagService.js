@@ -40,9 +40,9 @@ class ItemTagService {
       ? data.length
       : data?.itemTags?.length || 0;
 
-    console.log(`🔹 ${label}`);
-    console.log("URL:", url);
-    console.log("Length:", length);
+    // console.log(`🔹 ${label}`);
+    // console.log("URL:", url);
+    // console.log("Length:", length);
   }
 
   // ===================== STATS =====================
@@ -198,6 +198,36 @@ class ItemTagService {
       return [];
     }
   }
+
+
+  // ===================== UPDATE ITEM =====================
+async updateItemCheck(itemId, tagNo, subItemId, metalName, itemCtrId) {
+  try {
+    const url = await this.buildUrl("/itemtag/updateCheck", {
+      itemId,
+      tagNo,
+      metalName,
+      subItemId,
+      itemCtrId,
+    });
+
+    console.log("🔹 Update API");
+    console.log("URL:", url.toString());
+
+    const res = await fetch(url.toString(), {
+      method: "PUT", // ✅ MUST be PUT
+    });
+
+    const data = await res.json();
+
+    console.log("RESPONSE:", data);
+
+    return data;
+  } catch (err) {
+    console.log("Update error:", err);
+    throw err;
+  }
+}
 
   // ===================== INITIAL LOAD =====================
 
