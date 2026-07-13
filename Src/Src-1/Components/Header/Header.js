@@ -75,12 +75,12 @@ const MainHeader = () => {
       await AsyncStorage.clear();
       console.log("AsyncStorage cleared");
 
-      // Call your existing logout (clears context/login state)
+      // Call your existing logout (clears context/login state). Once
+      // `username` becomes empty, StackNavigator swaps to the logged-out
+      // stack automatically - no manual navigation.replace needed (and
+      // calling it here would target a screen removed by that swap).
       await logout();
-
-      // Reset navigation
-      navigation.replace("Login");
-      console.log("Navigation reset to Login screen");
+      console.log("Logged out - navigator will switch to Login screen");
     } catch (error) {
       console.error("Error clearing data:", error);
       Alert.alert("Error", "Something went wrong while logging out.");

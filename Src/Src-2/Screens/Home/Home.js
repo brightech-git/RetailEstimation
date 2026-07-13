@@ -125,32 +125,45 @@ const fetchApiData = async () => {
   estimation.setEstBatchNo(null);
 
   try {
-    const costId = await estimation.getCostId();
+    // Some companies don't use cost centres at all - selectedCostId can
+    // legitimately be empty for them. COSTID is still a required query
+    // param on the backend, so the key itself must always be sent (an
+    // empty value is fine, an entirely missing key 400s).
+    const costId = (await estimation.getCostId()) || "";
 
-    if (!costId) {
-      Alert.alert("Error", "Cost ID not available. Please login again.");
-      setLoadingApiData(false);
-      return;
-    }
-
-    // CHECK TAG ISSUED
-    const issuedResponse = await fetch(
-      `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId}`
-    );
-    const issuedData = await issuedResponse.json();
-
-    if (issuedData?.status === "issued") {
-      Alert.alert(
-        "Tag Already Issued",
-        `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
+    // CHECK TAG ISSUED - best-effort. Without a real cost centre this can
+    // fail server-side; don't block the estimation lookup on it.
+    try {
+      const issuedResponse = await fetch(
+        `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
+          costId
+        )}`
       );
-      setLoadingApiData(false);
-      return;
+      if (issuedResponse.ok) {
+        const issuedData = await issuedResponse.json();
+        if (issuedData?.status === "issued") {
+          Alert.alert(
+            "Tag Already Issued",
+            `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
+          );
+          setLoadingApiData(false);
+          return;
+        }
+      } else {
+        console.warn(
+          "tag-details check failed, continuing without it:",
+          issuedResponse.status
+        );
+      }
+    } catch (issuedErr) {
+      console.warn("tag-details check errored, continuing without it:", issuedErr);
     }
 
     // ESTIMATION API
     const response = await fetch(
-      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId}`
+      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
+        costId
+      )}`
     );
     console.log("🔵 Estimation API URL:", response.url);
 

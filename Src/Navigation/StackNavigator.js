@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // Screens
 import LoginScreen from "../Src-1/screens/Login/LoginScreen";
+import SelectCostCenterScreen from "../Src-1/screens/SelectCostCenter/SelectCostCenterScreen";
 import HomeScreen from "../Src-1/screens/Home/HomeScreen";
 import PrintScreen from "../Src-1/screens/AddPrinter/PrintMain";
 import WebViewPrintScreen from "../Src-1/screens/WebViewPrint/WebViewPrintScreen";
@@ -82,6 +83,10 @@ function AppStack() {
         ) : (
           // 🔓 If logged in
           <>
+            <Stack.Screen
+              name="SelectCostCenter"
+              component={SelectCostCenterScreen}
+            />
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Homescreen1" component={Homescreen1} />
             <Stack.Screen name="Print" component={PrintScreen} />

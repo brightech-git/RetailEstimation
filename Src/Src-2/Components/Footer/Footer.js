@@ -6,7 +6,7 @@ import { useTheme } from "../../../Context/ThemeContext"; // Adjust path as need
 import { createFooterStyles } from "./FooterStyles"; // Adjust path as needed
 
 const Footer = ({
-  companyName = "© 2025 Brightechsoftware Solutions",
+  companyName = "© 2026 Brightech Software Services Pvt Ltd",
   style,
   testID = "footer-component",
 }) => {

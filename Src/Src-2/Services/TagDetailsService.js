@@ -20,15 +20,17 @@ const useEstimationData = (itemId, tagNo) => {
       setEstimationData(null);
 
       try {
-        const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
-
-        if (!costId) {
-          setError("Cost ID missing. Please login again.");
-          return;
-        }
+        // Some companies don't use cost centres at all, so this can
+        // legitimately be empty - don't block the fetch on it. COSTID is
+        // still a required query param on the backend (it resolves the
+        // cost centre itself from ITEMID+TAGNO when it's blank), so the
+        // key must still be sent.
+        const costId = (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
 
         const response = await fetch(
-          `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${costId}`
+          `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
+            costId
+          )}`
         );
 console.log("🔵 Fetching Estimation Data from:", response.url);
         if (!response.ok) {

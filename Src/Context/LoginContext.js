@@ -74,32 +74,51 @@ export const LoginProvider = ({ children, showToast }) => {
     }
   };
 
-  // --- new function: fetch cost ID options from your local API ---
-  const fetchCostOptions = async () => {
+  // --- fetch cost ID options for the logged-in company ---
+  // Uses the company's own base URL (returned by login) so each
+  // customer's app instance talks to their own backend.
+  const fetchCostOptions = async (baseUrlOverride) => {
+    const baseUrl = baseUrlOverride || companyUrl;
+
+    if (!baseUrl) {
+      console.warn("fetchCostOptions: no company base URL available yet");
+      showToast?.("Please login again to load cost options", "error", 3000);
+      return false;
+    }
+
+    const url = `${baseUrl}/costId`;
+
     try {
       setCostLoading(true);
-      // Note: Replace with your actual production URL when deploying
-      const response = await axios.get("https://est.bmgjewellers.com/api/v1/costId", {
-        timeout: 10000,
-      });
+      console.log("📡 [GET] Cost centre request:", url);
+
+      const response = await axios.get(url, { timeout: 10000 });
+
+      console.log("✅ Cost centre response status:", response.status);
+      console.log("📦 Cost centre response data:", response.data);
 
       if (response.status === 200 && Array.isArray(response.data)) {
         setCostOptions(response.data);
-        console.log("📦 Cost options fetched:", response.data);
-
-        // Optionally: auto-select first cost ID if nothing is selected yet
-        if (response.data.length > 0 && !selectedCostId) {
-          const firstCostId = response.data[0].COSTID;
-          setSelectedCostId(firstCostId);
-          await AsyncStorage.setItem("SELECTED_COST_ID", firstCostId);
-        }
+        console.log(
+          `📦 Cost options loaded: ${response.data.length} record(s)`
+        );
         return true;
       } else {
+        console.warn(
+          "⚠️ Cost centre response was not a 200 + array:",
+          response.status,
+          response.data
+        );
         showToast?.("Failed to load cost options", "error", 3000);
         return false;
       }
     } catch (error) {
-      console.error("Fetch cost options error:", error);
+      console.error("❌ Fetch cost options error:", {
+        url,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
       showToast?.("Could not fetch cost options", "error", 3000);
       return false;
     } finally {

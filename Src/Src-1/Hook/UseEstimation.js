@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LoginContext } from "../../Context/LoginContext";
 
 import {
@@ -25,7 +26,12 @@ export const useEstimation = (apiBaseUrl) => {
   const [scanningField, setScanningField] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
 
-  const { username, userId, companyId, companyName } = useContext(LoginContext);
+  const {
+    username,
+    userId,
+    companyId: loggedInCompanyId,
+    companyName,
+  } = useContext(LoginContext);
   const [service, setService] = useState(null);
 
   const itemIdInputRef = useRef(null);
@@ -34,6 +40,19 @@ export const useEstimation = (apiBaseUrl) => {
 
   const removeRow = (index) => {
     setTableData((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Expose the logged-in user's currently selected cost ID (from
+  // AsyncStorage, kept in sync by LoginContext) so screens can build
+  // costId-scoped requests without re-implementing storage access.
+  const getCostId = async () => {
+    if (service) return service.getCostId();
+    try {
+      return (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
+    } catch (e) {
+      console.warn("Failed to read SELECTED_COST_ID:", e);
+      return "";
+    }
   };
 
   const clearAll = () => {
@@ -139,9 +158,12 @@ export const useEstimation = (apiBaseUrl) => {
         return;
       }
 
+      // /estimationTotal doesn't return COSTID/COMPANYID on the row, so
+      // firstItem.COSTID is always empty - the real source of truth is
+      // the cost centre the user picked at login (SELECTED_COST_ID).
       const firstItem = data[0];
-      const costId = firstItem.COSTID || "";
-      const companyId = firstItem.COMPANYID || "";
+      const costId = firstItem.COSTID || (await service.getCostId()) || "";
+      const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
 
       const newData = data.map((d) => ({
         ...d,
@@ -195,10 +217,13 @@ export const useEstimation = (apiBaseUrl) => {
       console.log("TRANNO Response:", TRANNO);
       if (!TRANNO) throw new Error("Failed to get TRANNO");
 
-      // Get COSTID and COMPANYID from the first item
+      // Get COSTID and COMPANYID from the first item, falling back to the
+      // logged-in user's selected cost centre / company - some callers
+      // (e.g. Homescreen1's raw API data) never had COSTID/COMPANYID on
+      // the row to begin with, since /estimationTotal doesn't return them.
       const firstItem = data[0];
-      const costId = firstItem.COSTID || "";
-      const companyId = firstItem.COMPANYID || "";
+      const costId = firstItem.COSTID || (await service.getCostId()) || "";
+      const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
 
       // Get estimation batch number
       const batchNo = await service.getEstimationBatchNo(costId, companyId);
@@ -217,7 +242,8 @@ export const useEstimation = (apiBaseUrl) => {
           // Fetch stone inputs
           let stoneInputs = await service.getStoneInputs(
             item.ITEMID,
-            item.TAGNO
+            item.TAGNO,
+            item.COSTID || costId
           );
 
           // Fetch stone category codes
@@ -225,12 +251,16 @@ export const useEstimation = (apiBaseUrl) => {
             if (!stn?.stnitemid) continue;
             stn.catcode = await service.getStoneCategoryCode(
               item.ITEMID,
-              stn.stnitemid
+              stn.stnitemid,
+              item.COSTID || costId
             );
           }
 
           // Fetch tag details
-          const tagDetails = await service.getTagDetails(item.TAGNO);
+          const tagDetails = await service.getTagDetails(
+            item.TAGNO,
+            item.COSTID || costId
+          );
 
           // Get transaction date
           let trandateString = formatDateToSqlDateTime();
@@ -536,7 +566,7 @@ export const useEstimation = (apiBaseUrl) => {
       // Get final details for printing
       const [ipAddress, estDetails, rateResponse] = await Promise.all([
         service.getIPAddress(),
-        service.getEstimationDetails(TRANNO),
+        service.getEstimationDetails(TRANNO, costId),
         service.getTodayRates(),
       ]);
 
@@ -631,6 +661,7 @@ export const useEstimation = (apiBaseUrl) => {
     submitData,
     removeRow,
     clearAll,
+    getCostId,
 
     // Calculations
     totalGross,

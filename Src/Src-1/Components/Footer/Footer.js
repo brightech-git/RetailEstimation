@@ -8,7 +8,7 @@ import {
 } from "react-native";
 
 const Footer = ({
-  companyName = "© 2025 Brightechsoftware Solutions",
+  companyName = "© 2026 Brightech Software Services Pvt Ltd",
   theme = "light", // 'light' or 'dark'
   style,
   testID = "footer-component",

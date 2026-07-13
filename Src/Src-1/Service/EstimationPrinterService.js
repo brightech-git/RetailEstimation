@@ -1,6 +1,7 @@
 import TcpSocket from "react-native-tcp-socket";
 import { Alert } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
 // import { LoginContext } from "../../Context/LoginContext";
 // import react, { useState, useEffect, useContext } from "react";
@@ -204,11 +205,16 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
       timeout: 30000,
     });
 
+    // Scope every downstream call to the logged-in user's cost centre
+    const costId = (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
+
     console.log(
       "📡 Making API call to:",
       `${apiBaseUrl}/printDetails/${estBatchNo}`
     );
-    const response = await api.get(`/printDetails/${estBatchNo}`);
+    const response = await api.get(`/printDetails/${estBatchNo}`, {
+      params: { costId: costId || undefined },
+    });
     console.log("✅ API Response received:", response.status);
 
     const itemsRaw = Array.isArray(response.data) ? response.data : [];
@@ -228,7 +234,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     try {
       console.log("📡 Fetching offer data...");
       const offerRes = await api.post("/offer", null, {
-        params: { tagno: sample.tagno },
+        params: { tagno: sample.tagno, costId: costId || undefined },
       });
       offer = offerRes.data || offer;
       console.log("✅ Offer data:", offer);
@@ -302,7 +308,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
       try {
         console.log(`📡 Fetching stones for ITEMID=${itemid} TAGNO=${tagno}`);
         const res = await api.get("/stnInputs", {
-          params: { itemid, tagno },
+          params: { itemid, tagno, costId: costId || undefined },
           timeout: 15000,
         });
         const stones = Array.isArray(res.data) ? res.data : [];

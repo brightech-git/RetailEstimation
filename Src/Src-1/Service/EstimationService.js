@@ -8,6 +8,17 @@ export class EstimationService {
     });
   }
 
+  // Centralized costId accessor - single source of truth for the
+  // logged-in user's selected cost centre (set by LoginContext).
+  async getCostId() {
+    try {
+      return (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
+    } catch (e) {
+      console.warn("Failed to read SELECTED_COST_ID:", e);
+      return "";
+    }
+  }
+
   // Data fetching methods
   async fetchItemList() {
     const response = await this.api.get("/list");
@@ -16,8 +27,14 @@ export class EstimationService {
     return uniqueItemIds;
   }
 
+  // NOTE: COSTID is a required query param on the backend for both
+  // /estimationTotal and /tag-details, so the key itself must always be
+  // sent (Spring 400s if it's missing entirely). When the logged-in
+  // company has no cost centre selected, we send COSTID="" - the
+  // backend's estimationTotal already handles that by resolving the
+  // COSTID itself from ITEMID+TAGNO, so this degrades gracefully.
   async fetchEstimationData(ITEMID, TAGNO) {
-    const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
+    const costId = await this.getCostId();
     const response = await this.api.get("/estimationTotal", {
       params: { ITEMID, TAGNO, COSTID: costId || "" },
     });
@@ -26,16 +43,18 @@ export class EstimationService {
 
   async checkTagExists(ITEMID, TAGNO) {
     try {
-      const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
+      const costId = await this.getCostId();
       const response = await this.api.get(`/tag-details`, {
         params: { ITEMID, TAGNO, COSTID: costId || "" },
       });
       return response.data;
     } catch (error) {
-      if (error.response?.status === 404) {
-        return null;
-      }
-      throw error;
+      // Without a real cost centre this lookup can fail server-side
+      // (404/500) rather than returning "not issued" - either way, treat
+      // it as "couldn't verify, let the user continue" instead of
+      // blocking the whole screen.
+      console.warn("checkTagExists failed, continuing without it:", error);
+      return null;
     }
   }
 
@@ -57,10 +76,11 @@ export class EstimationService {
     return response.data;
   }
 
-  async getStoneInputs(itemId, tagNo) {
+  async getStoneInputs(itemId, tagNo, costId) {
     try {
+      const resolvedCostId = costId || (await this.getCostId());
       const response = await this.api.get("/stnInputs", {
-        params: { itemid: itemId, tagno: tagNo },
+        params: { itemid: itemId, tagno: tagNo, costId: resolvedCostId || undefined },
       });
       return response.data || [];
     } catch (err) {
@@ -69,10 +89,11 @@ export class EstimationService {
     }
   }
 
-  async getStoneCategoryCode(itemId, stnItemId) {
+  async getStoneCategoryCode(itemId, stnItemId, costId) {
     try {
+      const resolvedCostId = costId || (await this.getCostId());
       const response = await this.api.get("/stone-catcode", {
-        params: { itemId, stnItemId },
+        params: { itemId, stnItemId, costId: resolvedCostId || undefined },
       });
       return response.data?.stoneCatCode || "";
     } catch (err) {
@@ -81,9 +102,12 @@ export class EstimationService {
     }
   }
 
-  async getTagDetails(tagNo) {
+  async getTagDetails(tagNo, costId) {
     try {
-      const response = await this.api.get(`/tagDetails/${tagNo}`);
+      const resolvedCostId = costId || (await this.getCostId());
+      const response = await this.api.get(`/tagDetails/${tagNo}`, {
+        params: { costId: resolvedCostId || undefined },
+      });
       return response.data || {};
     } catch (err) {
       console.warn(`Failed to fetch tag details`, err);
@@ -166,8 +190,11 @@ export class EstimationService {
     return response.data?.ip || response.data || "";
   }
 
-  async getEstimationDetails(tranno) {
-    const response = await this.api.get(`/details/${tranno}`);
+  async getEstimationDetails(tranno, costId) {
+    const resolvedCostId = costId || (await this.getCostId());
+    const response = await this.api.get(`/details/${tranno}`, {
+      params: { costId: resolvedCostId || undefined },
+    });
     return response.data?.[0] || {};
   }
 

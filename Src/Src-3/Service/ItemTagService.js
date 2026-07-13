@@ -3,8 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 class ItemTagService {
   constructor(apiBaseUrl) {
-    this.API_BASE_URL =
-      apiBaseUrl || "https://est.bmgjewellers.com/api/v1";
+    // No hardcoded fallback: each company has its own backend, resolved
+    // at login (LoginContext.companyUrl / useApiBaseUrl). If it's not
+    // available yet, calls should fail loudly rather than silently hit
+    // another company's server.
+    this.API_BASE_URL = apiBaseUrl || null;
   }
 
   // ===================== COMMON =====================
@@ -19,6 +22,12 @@ class ItemTagService {
   }
 
   async buildUrl(endpoint, params = {}) {
+    if (!this.API_BASE_URL) {
+      throw new Error(
+        "API base URL missing - user is not logged in yet (or company URL failed to load)"
+      );
+    }
+
     const costId = await this.getCostId();
 
     if (!costId) throw new Error("costId missing");
