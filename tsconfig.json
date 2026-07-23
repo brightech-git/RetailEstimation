@@ -30,6 +30,7 @@
     "paths": {
       "@app/*": ["Src/app/*"],
       "@core/*": ["Src/core/*"],
+      "@design": ["Src/design/index.ts"],
       "@design/*": ["Src/design/*"],
       "@shared/*": ["Src/shared/*"],
       "@modules/*": ["Src/modules/*"],
