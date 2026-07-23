@@ -72,6 +72,7 @@ export class EstimationService {
         companyId: companyId || "BMG",
         isEstimate: true,
       },
+      timeout: 15000,
     });
     return response.data;
   }
@@ -164,6 +165,7 @@ export class EstimationService {
   // Data submission methods
   async submitEstimationData(data) {
     const response = await this.api.post("/estissue", data);
+    console.log("Save response:", response.data);
     return response.data;
   }
 

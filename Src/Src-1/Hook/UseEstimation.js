@@ -31,6 +31,9 @@ export const useEstimation = (apiBaseUrl) => {
     userId,
     companyId: loggedInCompanyId,
     companyName,
+    companyData,
+    costOptions,
+    selectedCostId,
   } = useContext(LoginContext);
   const [service, setService] = useState(null);
 
@@ -214,7 +217,7 @@ export const useEstimation = (apiBaseUrl) => {
 
       // Get transaction number
       const TRANNO = await service.getTransactionNumber();
-      console.log("TRANNO Response:", TRANNO);
+      console.log("[TRANNO] Response:", TRANNO);
       if (!TRANNO) throw new Error("Failed to get TRANNO");
 
       // Get COSTID and COMPANYID from the first item, falling back to the
@@ -226,7 +229,18 @@ export const useEstimation = (apiBaseUrl) => {
       const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
 
       // Get estimation batch number
-      const batchNo = await service.getEstimationBatchNo(costId, companyId);
+      // companyId from LoginContext is a numeric ID; /estbatchno needs the
+      // string company code (e.g. "SFH"). Resolve it from costOptions first,
+      // then fall back to companyData fields.
+      const companyCode =
+        costOptions?.find((o) => o.COSTID === costId)?.COMPANYID ||
+        companyData?.COMPANYCODE ||
+        companyData?.COMPANYID ||
+        companyId ||
+        "";
+      console.log("[EstBatchNo] Payload:", { costId, companyId: companyCode });
+      const batchNo = await service.getEstimationBatchNo(costId, companyCode);
+      console.log("[EstBatchNo] Response:", batchNo);
       if (!batchNo) {
         Alert.alert("Error", "Could not retrieve ESTBATCHNO");
         return null;
@@ -240,11 +254,13 @@ export const useEstimation = (apiBaseUrl) => {
           );
 
           // Fetch stone inputs
+          console.log("[StoneInputs] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO, costId: item.COSTID || costId });
           let stoneInputs = await service.getStoneInputs(
             item.ITEMID,
             item.TAGNO,
             item.COSTID || costId
           );
+          console.log("[StoneInputs] Response:", stoneInputs);
 
           // Fetch stone category codes
           for (const stn of stoneInputs) {
@@ -257,120 +273,120 @@ export const useEstimation = (apiBaseUrl) => {
           }
 
           // Fetch tag details
+          console.log("[TagDetails] Payload:", { TAGNO: item.TAGNO, costId: item.COSTID || costId });
           const tagDetails = await service.getTagDetails(
             item.TAGNO,
             item.COSTID || costId
           );
+          console.log("[TagDetails] Response:", tagDetails);
 
           // Get transaction date
           let trandateString = formatDateToSqlDateTime();
+          console.log("[TranDate] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO });
           const dateFromApi = await service.getTransactionDate(
             item.ITEMID,
             item.TAGNO
           );
+          console.log("[TranDate] Response:", dateFromApi);
           if (dateFromApi) {
             trandateString = formatDateToSqlDateTime(dateFromApi);
           }
 
           // Build item payload
           const rawItem = {
-            TRANNO,
+            tranno: TRANNO,
             TRANDATE: formatDateToMidnightSql(item.trandate),
-            TRANTYPE: "SA",
-            PCS: parseFloat(item.PCS) || 0,
-            GRSWT: parseFloat(item.GRSWT) || 0,
-            NETWT: parseFloat(item.NETWT) || 0,
-            PUREWT: parseFloat(item.PUREWT || item.NETWT) || 0,
-            TAGNO: item.TAGNO || "",
-            ITEMID: item.ITEMID || 0,
-            WASTPER: tagDetails?.wastper,
-            WASTAGE: parseFloat(item.Wastage) || 0,
-            MCGRM:
+            trantype: "SA",
+            pcs: parseFloat(item.PCS) || 0,
+            grswt: parseFloat(item.GRSWT) || 0,
+            netwt: parseFloat(item.NETWT) || 0,
+            purewt: parseFloat(item.PUREWT || item.NETWT) || 0,
+            tagno: item.TAGNO || "",
+            itemid: item.ITEMID || 0,
+            wastper: tagDetails?.wastper,
+            wastage: parseFloat(item.Wastage) || 0,
+            mcgrm:
               parseFloat(item.MAXMCGRM) ||
               parseFloat(item.MC_FROM_API) ||
               parseFloat(tagDetails?.mcgram) ||
               0,
-            MCHARGE: parseFloat(item.MC_FROM_API) || tagDetails?.mcharge || 0,
-            AMOUNT: parseFloat(calculateGrossAmount(item).toFixed(2)) || 0,
-            RATE:
+            mcharge: parseFloat(item.MC_FROM_API) || tagDetails?.mcharge || 0,
+            amount: parseFloat(calculateGrossAmount(item).toFixed(2)) || 0,
+            rate:
               item.SALEMODE === "R"
                 ? parseFloat(item.RATE) || 0
                 : parseFloat(item.Rate) || 0,
-            BOARDRATE: parseFloat(item.Rate) || 0,
-            COSTID: item.COSTID || costId,
-            COMPANYID: item.COMPANYID || companyId,
-            EMPID: Number(item.EMP) || 0,
-            STNAMT: parseFloat(item.StoneAmount) || 0,
-            MISCAMT: parseFloat(item.MiscAmount) || 0,
-            LESSWT: tagDetails?.lesswt,
-            SUBITEMID: tagDetails?.subitemid,
-            SALEMODE: tagDetails?.salemode,
-            GRSNET: tagDetails?.grsnet,
-            TAGDESIGNER: tagDetails?.designerid,
-            ITEMTYPEID: tagDetails?.itemtypeid,
-            ITEMCTRID: tagDetails?.itemctrid,
-            PURITY: tagDetails?.purity,
-            TAGSVALUE: tagDetails?.salvalue,
-            TRANSTATUS: "",
-            REFNO: "",
-            REFDATE: null,
-            FLAG: "",
-            TAGGRSWT: parseFloat(item.GRSWT) || 0,
-            TAGNETWT: parseFloat(item.NETWT) || 0,
-            TAGRATEID: 0.0,
-            TABLECODE: "",
-            INCENTIVE: "",
-            WEIGHTUNIT: "",
-            CATCODE: item.CATCODE || 0,
-            OCATCODE: "",
-            ACCODE: "",
-            ALLOY: "0.000",
-            BATCHNO: "",
-            REMARK1: "",
-            REMARK2: "",
-            USERID: 999,
-            UPDATED: formatDateToMidnightSql(item.updated),
-            UPTIME: "",
-            SYSTEMID: "",
-            DISCOUNT: "0.00",
-            RUNNO: "",
-            CANCEL: "",
-            CASHID: "",
-            VATEXM: "",
-            ORSNO: "",
-            ORDERNO: "",
-            STONEUNIT: null,
-            PROTYPE: "0",
-            METALID: item.METALID || "0",
-            TAX: parseFloat(calculateGST(item).toFixed(2)) || 0,
-            SC: "0.00",
-            ADSC: "0.00",
-            APPVER: "",
-            PSNO: "",
-            DISCEMPID: "",
-            MARGINID: "0",
-            OTHERAMT: "",
-            RATEID: 0.0,
-            ESTBATCHNO: batchNo,
-            OESTBATCHNO: null,
-            SETGRPID: "",
-            STATUS: "",
-            DUEDATE: formatDateToMidnightSql(item.duedate),
-            TOUCH: "0.00",
-            STKTYPE: "",
-            BARPREFIX: "",
-            HSN: null,
+            boardrate: parseFloat(item.Rate) || 0,
+            costid: item.COSTID || costId,
+            companyid: item.COMPANYID || companyId,
+            empid: Number(item.EMP) || 0,
+            stnamt: parseFloat(item.StoneAmount) || 0,
+            miscamt: parseFloat(item.MiscAmount) || 0,
+            lesswt: tagDetails?.lesswt,
+            subitemid: tagDetails?.subitemid,
+            salemode: tagDetails?.salemode,
+            grsnet: tagDetails?.grsnet,
+            tagdesigner: tagDetails?.designerid,
+            itemtypeid: tagDetails?.itemtypeid,
+            itemctrid: tagDetails?.itemctrid,
+            purity: tagDetails?.purity,
+            tagsvalue: tagDetails?.salvalue,
+            transtatus: "",
+            refno: "",
+            refdate: "1900-01-01 00:00:00",
+            flag: "",
+            taggrswt: parseFloat(item.GRSWT) || 0,
+            tagnetwt: parseFloat(item.NETWT) || 0,
+            tagrateid: 0,
+            tablecode: "",
+            incentive: "",
+            weightunit: "",
+            catcode: item.CATCODE ? String(item.CATCODE) : "",
+            ocatcode: "",
+            accode: "",
+            alloy: "0.000",
+            batchno: "",
+            remark1: "",
+            remark2: "",
+            userid: String(userId || "1"),
+            updated: formatDateToMidnightSql(new Date()),
+            uptime: "",
+            systemid: "",
+            discount: "0.00",
+            runno: "",
+            cancel: "",
+            cashid: "",
+            vatexm: "",
+            orsno: "",
+            orderno: "",
+            stoneunit: "",
+            protype: "0",
+            metalid: item.METALID ? String(item.METALID) : "G",
+            tax: parseFloat(calculateGST(item).toFixed(2)) || 0,
+            sc: "0.00",
+            adsc: "0.00",
+            appver: "",
+            psno: "",
+            discempid: "",
+            marginid: "0",
+            otheramt: "",
+            rateid: "0.00",
+            estbatchno: batchNo,
+            oestbatchno: null,
+            setgrpid: "",
+            status: "",
+            duedate: formatDateToMidnightSql(item.duedate),
+            touch: "0.00",
+            stktype: "",
+            barprefix: "",
+            hsn: null,
           };
 
           return [rawItem, stoneInputs];
         })
       );
 
-      const rawItems = enrichedData.map(([item]) =>
-        Object.fromEntries(
-          Object.entries(item).filter(([_, v]) => v !== undefined && v !== null)
-        )
-      );
+      const rawItems = enrichedData.map(([item]) => item);
 
       console.log(
         "📤 Payload to /estissue:",
@@ -379,7 +395,7 @@ export const useEstimation = (apiBaseUrl) => {
 
       // Submit main estimation data
       const savedIssues = await service.submitEstimationData(rawItems);
-      console.log("📦 Saved issues received:", savedIssues);
+      console.log("[EstIssue] Response:", savedIssues);
 
       if (!Array.isArray(savedIssues)) {
         throw new Error(
@@ -391,37 +407,40 @@ export const useEstimation = (apiBaseUrl) => {
       // Create mapping for SNOs
       const snoMap = {};
       savedIssues.forEach((issue) => {
-        snoMap[issue.TAGNO || issue.tagno] = issue.SNO || issue.sno;
+        snoMap[issue.tagno || issue.TAGNO] = issue.sno || issue.SNO;
       });
 
       const tagToRawItemMap = {};
       enrichedData.forEach(([rawItem]) => {
-        const tag = rawItem?.TAGNO;
+        const tag = rawItem?.tagno;
         if (tag) {
           tagToRawItemMap[tag.toString().trim()] = rawItem;
         } else {
-          console.warn("❗ rawItem is missing TAGNO:", rawItem);
+          console.warn("❗ rawItem is missing tagno:", rawItem);
         }
       });
 
       // Submit stone data
       const allStonePayloads = [];
       for (const [item, stoneInputs] of enrichedData) {
-        const tagno = item.TAGNO;
+        const tagno = item.tagno;
         const estSNO = snoMap[tagno];
         const generatedSNO = await service.generateEstissStoneSno(
-          item.COSTID || costId,
-          item.COMPANYID || companyId
+          item.costid || costId,
+          item.companyid || companyId
         );
 
         if (!Array.isArray(stoneInputs) || stoneInputs.length === 0) continue;
+
+        console.log("[EstIssStoneSno] Payload:", { costId: item.costid || costId, companyId: item.companyid || companyId });
+        console.log("[EstIssStoneSno] Response:", generatedSNO);
 
         const stonePayloads = stoneInputs.map((stone) => ({
           sno: generatedSNO,
           isssno: estSNO,
           ismsno: "",
           tranno: TRANNO,
-          TRANDATE: formatDateToMidnightSql(item.TRANDATE),
+          TRANDATE: formatDateToMidnightSql(item.TRANDATE || item.trandate),
           trantype: "SA",
           stnpcs: stone.stnpcs || 0,
           stnwt: stone.stnwt || 0,
@@ -433,8 +452,8 @@ export const useEstimation = (apiBaseUrl) => {
           stoneunit: stone.stoneunit || "",
           stonemode: "",
           transtatus: "",
-          costid: stone.costid || item.COSTID || costId,
-          companyid: stone.companyid || item.COMPANYID || companyId,
+          costid: stone.costid || item.costid || costId,
+          companyid: stone.companyid || item.companyid || companyId,
           batchno: "",
           systemid: "",
           vatexm: "",
@@ -463,7 +482,9 @@ export const useEstimation = (apiBaseUrl) => {
       }
 
       if (allStonePayloads.length > 0) {
-        await service.submitStoneData(allStonePayloads);
+        console.log("[StoneData] Payload:", allStonePayloads);
+        const stoneResponse = await service.submitStoneData(allStonePayloads);
+        console.log("[StoneData] Response:", stoneResponse);
       }
 
       // Submit tax data
@@ -476,22 +497,24 @@ export const useEstimation = (apiBaseUrl) => {
           continue;
         }
 
-        const amount = parseFloat(rawItem.AMOUNT) || 0;
+        const amount = parseFloat(rawItem.amount) || 0;
         if (amount <= 0) {
           console.warn(
-            `⛔ Skipping tax entry for TAGNO=${tagno} because amount is 0`
+            `⛔ Skipping tax entry for tagno=${tagno} because amount is 0`
           );
           continue;
         }
 
+        console.log("[EstTaxTranSno] Payload:", { costId: rawItem.costid || costId, companyId: rawItem.companyid || companyId });
         const estTaxTranSno = await service.generateEstTaxTranSno(
-          rawItem.COSTID || costId,
-          rawItem.COMPANYID || companyId
+          rawItem.costid || costId,
+          rawItem.companyid || companyId
         );
-        console.log("✅ Generated ESTTAXTRAN SNO:", estTaxTranSno);
+        console.log("[EstTaxTranSno] Response:", estTaxTranSno);
 
-        const taxDetails = await service.getTaxDetails(rawItem.ITEMID);
-        console.log(`✅ Tax details for ITEMID=${rawItem.ITEMID}:`, taxDetails);
+        console.log("[TaxDetails] Payload:", { itemid: rawItem.itemid });
+        const taxDetails = await service.getTaxDetails(rawItem.itemid);
+        console.log("[TaxDetails] Response:", taxDetails);
 
         const basePayload = {
           sno: estTaxTranSno,
@@ -502,8 +525,8 @@ export const useEstimation = (apiBaseUrl) => {
           batchno: String(batchNo),
           amount: parseFloat(amount.toFixed(2)),
           taxtype: null,
-          costid: String(rawItem.COSTID || costId),
-          companyid: String(rawItem.COMPANYID || companyId),
+          costid: String(rawItem.costid || costId),
+          companyid: String(rawItem.companyid || companyId),
           studded: null,
         };
 
@@ -531,16 +554,10 @@ export const useEstimation = (apiBaseUrl) => {
 
         try {
           for (const entry of taxEntries) {
-            console.log(
-              "📤 Posting tax entry:",
-              JSON.stringify(entry, null, 2)
-            );
-            await service.submitTaxData(entry);
+            console.log("[TaxData] Payload:", entry);
+            const taxResponse = await service.submitTaxData(entry);
+            console.log("[TaxData] Response:", taxResponse);
           }
-          console.log(
-            "✅ SGST and CGST entries inserted for TAGNO:",
-            rawItem.TAGNO
-          );
         } catch (err) {
           console.warn(
             "❌ Failed to insert SGST/CGST tax entries:",
@@ -548,14 +565,15 @@ export const useEstimation = (apiBaseUrl) => {
           );
           Alert.alert(
             "Warning",
-            `Tax insert failed for TAGNO: ${rawItem.TAGNO}`
+            `Tax insert failed for tagno: ${rawItem.tagno}`
           );
         }
       }
 
       // Update transaction number
       try {
-        await service.updateTransactionNumber();
+        const updateTrannoRes = await service.updateTransactionNumber();
+        console.log("[UpdateTranno] Response:", updateTrannoRes);
       } catch (err) {
         Alert.alert(
           "Partial Success",
@@ -564,11 +582,15 @@ export const useEstimation = (apiBaseUrl) => {
       }
 
       // Get final details for printing
+      console.log("[EstDetails] Payload:", { TRANNO, costId });
       const [ipAddress, estDetails, rateResponse] = await Promise.all([
         service.getIPAddress(),
         service.getEstimationDetails(TRANNO, costId),
         service.getTodayRates(),
       ]);
+      console.log("[IPAddress] Response:", ipAddress);
+      console.log("[EstDetails] Response:", estDetails);
+      console.log("[TodayRates] Response:", rateResponse);
 
       let rawBillDate = estDetails?.billDate;
       let billDate =
@@ -588,7 +610,9 @@ export const useEstimation = (apiBaseUrl) => {
         estbatchno: batchNo,
       };
 
-      await service.submitPrintData(estPrintPayload);
+      console.log("[PrintData] Payload:", estPrintPayload);
+      const printResponse = await service.submitPrintData(estPrintPayload);
+      console.log("[PrintData] Response:", printResponse);
 
       Alert.alert("Success", `Sales Estimation No: ${TRANNO} Generated`);
       setTranno(TRANNO);
@@ -603,7 +627,8 @@ export const useEstimation = (apiBaseUrl) => {
           error.message ||
           "Something went wrong."
       );
-      console.error("Submitting error:", error);
+      console.error("Submitting error:",  error.response?.data?.message ||
+          error.message ||error);
       return null;
     } finally {
       setLoading(false);
