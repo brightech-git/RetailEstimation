@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import { Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LoginContext } from "../../Context/LoginContext";
+import { useLoading } from "@shared/hooks";
+import { storage } from "@shared/utils";
+import { logger } from "@core/logger";
 
 import {
   EstimationService,
   formatDateToSqlDateTime,
   formatDateToMidnightSql,
-  parseValue,
   calculateGrossAmount,
   calculateGST,
   calculateGrandTotal,
@@ -18,7 +19,7 @@ export const useEstimation = (apiBaseUrl) => {
   const [TAGNO, setTAGNO] = useState("");
   const [emp, setEmp] = useState("");
   const [tableData, setTableData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { loading, setLoading } = useLoading();
   const [itemList, setItemList] = useState([]);
   const [showList, setShowList] = useState(false);
   const [tranno, setTranno] = useState(null);
@@ -51,9 +52,9 @@ export const useEstimation = (apiBaseUrl) => {
   const getCostId = async () => {
     if (service) return service.getCostId();
     try {
-      return (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
+      return (await storage.get("SELECTED_COST_ID")) || "";
     } catch (e) {
-      console.warn("Failed to read SELECTED_COST_ID:", e);
+      logger.warn("Failed to read SELECTED_COST_ID:", e);
       return "";
     }
   };
@@ -126,7 +127,7 @@ export const useEstimation = (apiBaseUrl) => {
       // Check if tag already exists
       const tagDetails = await service.checkTagExists(ITEMID, TAGNO);
       if (tagDetails && tagDetails.trandate) {
-        console.log(
+        logger.debug(
           "Tag already issued on:",
           tagDetails,
           "Trn No:",
@@ -154,7 +155,7 @@ export const useEstimation = (apiBaseUrl) => {
       }
 
       const data = await service.fetchEstimationData(ITEMID, TAGNO);
-      console.log("Estimation Total Data:", data);
+      logger.debug("Estimation Total Data:", data);
 
       if (!Array.isArray(data) || data.length === 0) {
         Alert.alert("No data found.");
@@ -200,12 +201,12 @@ export const useEstimation = (apiBaseUrl) => {
 
   const handleRefresh = () => {
     fetchData(); // your API calling logic
-    console.log("Refreshed");
+    logger.debug("Refreshed");
   };
 
   const submitData = async (overrideData) => {
     const data = overrideData || tableData;
-    console.log("Submitting data:", data);
+    logger.debug("Submitting data:", data);
 
     if (data.length === 0) {
       Alert.alert("No data", "Please add items before submitting.");
@@ -217,7 +218,7 @@ export const useEstimation = (apiBaseUrl) => {
 
       // Get transaction number
       const TRANNO = await service.getTransactionNumber();
-      console.log("[TRANNO] Response:", TRANNO);
+      logger.debug("[TRANNO] Response:", TRANNO);
       if (!TRANNO) throw new Error("Failed to get TRANNO");
 
       // Get COSTID and COMPANYID from the first item, falling back to the
@@ -238,9 +239,9 @@ export const useEstimation = (apiBaseUrl) => {
         companyData?.COMPANYID ||
         companyId ||
         "";
-      console.log("[EstBatchNo] Payload:", { costId, companyId: companyCode });
+      logger.debug("[EstBatchNo] Payload:", { costId, companyId: companyCode });
       const batchNo = await service.getEstimationBatchNo(costId, companyCode);
-      console.log("[EstBatchNo] Response:", batchNo);
+      logger.debug("[EstBatchNo] Response:", batchNo);
       if (!batchNo) {
         Alert.alert("Error", "Could not retrieve ESTBATCHNO");
         return null;
@@ -249,18 +250,18 @@ export const useEstimation = (apiBaseUrl) => {
       // Enrich items with additional data
       const enrichedData = await Promise.all(
         data.map(async (item) => {
-          console.log(
+          logger.debug(
             `Fetching stone inputs for ITEMID=${item.ITEMID} TAGNO=${item.TAGNO}`
           );
 
           // Fetch stone inputs
-          console.log("[StoneInputs] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO, costId: item.COSTID || costId });
+          logger.debug("[StoneInputs] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO, costId: item.COSTID || costId });
           let stoneInputs = await service.getStoneInputs(
             item.ITEMID,
             item.TAGNO,
             item.COSTID || costId
           );
-          console.log("[StoneInputs] Response:", stoneInputs);
+          logger.debug("[StoneInputs] Response:", stoneInputs);
 
           // Fetch stone category codes
           for (const stn of stoneInputs) {
@@ -273,21 +274,21 @@ export const useEstimation = (apiBaseUrl) => {
           }
 
           // Fetch tag details
-          console.log("[TagDetails] Payload:", { TAGNO: item.TAGNO, costId: item.COSTID || costId });
+          logger.debug("[TagDetails] Payload:", { TAGNO: item.TAGNO, costId: item.COSTID || costId });
           const tagDetails = await service.getTagDetails(
             item.TAGNO,
             item.COSTID || costId
           );
-          console.log("[TagDetails] Response:", tagDetails);
+          logger.debug("[TagDetails] Response:", tagDetails);
 
           // Get transaction date
           let trandateString = formatDateToSqlDateTime();
-          console.log("[TranDate] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO });
+          logger.debug("[TranDate] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO });
           const dateFromApi = await service.getTransactionDate(
             item.ITEMID,
             item.TAGNO
           );
-          console.log("[TranDate] Response:", dateFromApi);
+          logger.debug("[TranDate] Response:", dateFromApi);
           if (dateFromApi) {
             trandateString = formatDateToSqlDateTime(dateFromApi);
           }
@@ -388,14 +389,14 @@ export const useEstimation = (apiBaseUrl) => {
 
       const rawItems = enrichedData.map(([item]) => item);
 
-      console.log(
+      logger.debug(
         "📤 Payload to /estissue:",
         JSON.stringify(rawItems, null, 2)
       );
 
       // Submit main estimation data
       const savedIssues = await service.submitEstimationData(rawItems);
-      console.log("[EstIssue] Response:", savedIssues);
+      logger.debug("[EstIssue] Response:", savedIssues);
 
       if (!Array.isArray(savedIssues)) {
         throw new Error(
@@ -416,7 +417,7 @@ export const useEstimation = (apiBaseUrl) => {
         if (tag) {
           tagToRawItemMap[tag.toString().trim()] = rawItem;
         } else {
-          console.warn("❗ rawItem is missing tagno:", rawItem);
+          logger.warn("❗ rawItem is missing tagno:", rawItem);
         }
       });
 
@@ -432,8 +433,8 @@ export const useEstimation = (apiBaseUrl) => {
 
         if (!Array.isArray(stoneInputs) || stoneInputs.length === 0) continue;
 
-        console.log("[EstIssStoneSno] Payload:", { costId: item.costid || costId, companyId: item.companyid || companyId });
-        console.log("[EstIssStoneSno] Response:", generatedSNO);
+        logger.debug("[EstIssStoneSno] Payload:", { costId: item.costid || costId, companyId: item.companyid || companyId });
+        logger.debug("[EstIssStoneSno] Response:", generatedSNO);
 
         const stonePayloads = stoneInputs.map((stone) => ({
           sno: generatedSNO,
@@ -482,9 +483,9 @@ export const useEstimation = (apiBaseUrl) => {
       }
 
       if (allStonePayloads.length > 0) {
-        console.log("[StoneData] Payload:", allStonePayloads);
+        logger.debug("[StoneData] Payload:", allStonePayloads);
         const stoneResponse = await service.submitStoneData(allStonePayloads);
-        console.log("[StoneData] Response:", stoneResponse);
+        logger.debug("[StoneData] Response:", stoneResponse);
       }
 
       // Submit tax data
@@ -493,28 +494,28 @@ export const useEstimation = (apiBaseUrl) => {
         const rawItem = tagToRawItemMap[tagno.toString().trim()];
 
         if (!rawItem) {
-          console.warn(`❌ rawItem not found for TAGNO=${tagno}`);
+          logger.warn(`❌ rawItem not found for TAGNO=${tagno}`);
           continue;
         }
 
         const amount = parseFloat(rawItem.amount) || 0;
         if (amount <= 0) {
-          console.warn(
+          logger.warn(
             `⛔ Skipping tax entry for tagno=${tagno} because amount is 0`
           );
           continue;
         }
 
-        console.log("[EstTaxTranSno] Payload:", { costId: rawItem.costid || costId, companyId: rawItem.companyid || companyId });
+        logger.debug("[EstTaxTranSno] Payload:", { costId: rawItem.costid || costId, companyId: rawItem.companyid || companyId });
         const estTaxTranSno = await service.generateEstTaxTranSno(
           rawItem.costid || costId,
           rawItem.companyid || companyId
         );
-        console.log("[EstTaxTranSno] Response:", estTaxTranSno);
+        logger.debug("[EstTaxTranSno] Response:", estTaxTranSno);
 
-        console.log("[TaxDetails] Payload:", { itemid: rawItem.itemid });
+        logger.debug("[TaxDetails] Payload:", { itemid: rawItem.itemid });
         const taxDetails = await service.getTaxDetails(rawItem.itemid);
-        console.log("[TaxDetails] Response:", taxDetails);
+        logger.debug("[TaxDetails] Response:", taxDetails);
 
         const basePayload = {
           sno: estTaxTranSno,
@@ -554,14 +555,14 @@ export const useEstimation = (apiBaseUrl) => {
 
         try {
           for (const entry of taxEntries) {
-            console.log("[TaxData] Payload:", entry);
+            logger.debug("[TaxData] Payload:", entry);
             const taxResponse = await service.submitTaxData(entry);
-            console.log("[TaxData] Response:", taxResponse);
+            logger.debug("[TaxData] Response:", taxResponse);
           }
         } catch (err) {
-          console.warn(
+          logger.warn(
             "❌ Failed to insert SGST/CGST tax entries:",
-            err.response?.data || err.message
+            err.data || err.message
           );
           Alert.alert(
             "Warning",
@@ -573,7 +574,7 @@ export const useEstimation = (apiBaseUrl) => {
       // Update transaction number
       try {
         const updateTrannoRes = await service.updateTransactionNumber();
-        console.log("[UpdateTranno] Response:", updateTrannoRes);
+        logger.debug("[UpdateTranno] Response:", updateTrannoRes);
       } catch (err) {
         Alert.alert(
           "Partial Success",
@@ -582,15 +583,15 @@ export const useEstimation = (apiBaseUrl) => {
       }
 
       // Get final details for printing
-      console.log("[EstDetails] Payload:", { TRANNO, costId });
+      logger.debug("[EstDetails] Payload:", { TRANNO, costId });
       const [ipAddress, estDetails, rateResponse] = await Promise.all([
         service.getIPAddress(),
         service.getEstimationDetails(TRANNO, costId),
         service.getTodayRates(),
       ]);
-      console.log("[IPAddress] Response:", ipAddress);
-      console.log("[EstDetails] Response:", estDetails);
-      console.log("[TodayRates] Response:", rateResponse);
+      logger.debug("[IPAddress] Response:", ipAddress);
+      logger.debug("[EstDetails] Response:", estDetails);
+      logger.debug("[TodayRates] Response:", rateResponse);
 
       let rawBillDate = estDetails?.billDate;
       let billDate =
@@ -610,9 +611,9 @@ export const useEstimation = (apiBaseUrl) => {
         estbatchno: batchNo,
       };
 
-      console.log("[PrintData] Payload:", estPrintPayload);
+      logger.debug("[PrintData] Payload:", estPrintPayload);
       const printResponse = await service.submitPrintData(estPrintPayload);
-      console.log("[PrintData] Response:", printResponse);
+      logger.debug("[PrintData] Response:", printResponse);
 
       Alert.alert("Success", `Sales Estimation No: ${TRANNO} Generated`);
       setTranno(TRANNO);
@@ -623,11 +624,11 @@ export const useEstimation = (apiBaseUrl) => {
     } catch (error) {
       Alert.alert(
         "Error",
-        error.response?.data?.message ||
+        error.data?.message ||
           error.message ||
           "Something went wrong."
       );
-      console.error("Submitting error:",  error.response?.data?.message ||
+      logger.error("Submitting error:",  error.data?.message ||
           error.message ||error);
       return null;
     } finally {

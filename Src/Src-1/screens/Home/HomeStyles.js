@@ -1,10 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { moderateScale } from '../../../Utills/Scalling';
 
-// This function will create styles based on the theme object from context
+// This function will create styles based on the theme object from context.
+// Totals + table styles were removed after those blocks moved into
+// @modules/estimation/components (TotalsCard, EstimationTable); only the styles
+// still used by HomeScreen remain.
 export const createHomeStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
-  
+
   return StyleSheet.create({
     scrollView: {
       backgroundColor: COLORS.background,
@@ -19,22 +22,21 @@ export const createHomeStyles = (theme) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: moderateScale(14),
-      gap: moderateScale(8), // Add gap between inputs
+      gap: moderateScale(8),
     },
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginHorizontal: moderateScale(0), // Remove horizontal margin since we have gap
+      marginHorizontal: moderateScale(0),
     },
-    // Specific widths for each input wrapper
     itemIdWrapper: {
-      flex: 0.45, // 45% width for Item ID
+      flex: 0.45,
     },
     tagNoWrapper: {
-      flex: 0.45, // 45% width for Tag No
+      flex: 0.45,
     },
     empIdWrapper: {
-      flex: 0.25, // 25% width for Emp ID
+      flex: 0.25,
     },
     input: {
       flex: 1,
@@ -81,71 +83,8 @@ export const createHomeStyles = (theme) => {
       color: COLORS.text,
       ...FONTS.font,
     },
-    totalsContainer: {
-      backgroundColor: COLORS.outline,
-      borderRadius: SIZES.radius,
-      padding: SIZES.padding,
-      marginBottom: moderateScale(10),
-      borderWidth: 1,
-      borderColor: COLORS.borderColor,
-    },
-    totalsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-    },
-    totalItem: {
-      alignItems: 'center',
-    },
-    totalLabel: {
-      fontSize: moderateScale(SIZES.fontSm),
-      color: COLORS.label,
-      ...FONTS.subheading,
-    },
-    totalValue: {
-      fontSize: moderateScale(SIZES.font),
-      fontWeight: '600',
-      color: COLORS.text,
-      ...FONTS.text,
-    },
-    grandTotal: {
-      fontWeight: 'bold',
-      color: COLORS.primary,
-    },
     loader: {
       marginVertical: moderateScale(20),
-    },
-    tableContainer: {
-      marginBottom: moderateScale(10),
-      borderRadius: SIZES.radius_sm,
-      overflow: 'hidden',
-    },
-    headerRow: {
-      flexDirection: 'row',
-      backgroundColor: COLORS.outline,
-      paddingVertical: moderateScale(6),
-    },
-    headerCell: {
-      color: COLORS.buttonText,
-      fontWeight: 'bold',
-      paddingHorizontal: moderateScale(10),
-      minWidth: moderateScale(80),
-      textAlign: 'center',
-      ...FONTS.fontSm,
-    },
-    dataRow: {
-      flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderColor: COLORS.borderColor,
-      paddingVertical: moderateScale(6),
-      backgroundColor: COLORS.surface,
-    },
-    cell: {
-      minWidth: moderateScale(80),
-      textAlign: 'center',
-      paddingHorizontal: moderateScale(10),
-      color: COLORS.text,
-      fontSize: moderateScale(SIZES.fontXs),
-      ...FONTS.fontXs,
     },
     trannoContainer: {
       marginTop: moderateScale(12),
@@ -190,124 +129,10 @@ export const createHomeStyles = (theme) => {
       backgroundColor: COLORS.placeholder,
       opacity: 0.6,
     },
-    printButtonsContainer: {
-      flexDirection: 'column',
-      gap: moderateScale(10),
+    clearButton: {
+      backgroundColor: '#444',
+      marginLeft: 10,
     },
-    quickPrintButtons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: moderateScale(10),
-    },
-    quickButton: {
-      flex: 1,
-      padding: moderateScale(12),
-      borderRadius: moderateScale(8),
-      alignItems: 'center',
-    },
-    thermalButton: {
-      backgroundColor: '#007AFF',
-    },
-    htmlButton: {
-      backgroundColor: '#34C759',
-    },
-    quickButtonText: {
-      color: '#FFFFFF',
-      fontSize: moderateScale(14),
-      fontWeight: 'bold',
-    },
-    deleteButton: {
-  backgroundColor: "red",
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 5,
-  marginLeft: 5,
-},
-deleteButtonText: {
-  color: "white",
-  fontWeight: "bold",
-},
-
-clearButton: {
-  backgroundColor: "#444",
-  marginLeft: 10,
-},
-deleteButton: {
-  backgroundColor: "red",
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 5,
-  marginRight: 5,
-},
-deleteButtonText: {
-  color: "white",
-  fontWeight: "bold",
-},
-column: {
-  width: 120,    // adjust as needed
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-deleteCol: {
-  width: 80,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-deleteCol: {
-  width: 80,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-
-column: {
-  width: 120,   // you can adjust
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-
-headerRow: {
-  flexDirection: "row",
-  backgroundColor: "#e8e8e8",
-},
-
-dataRow: {
-  flexDirection: "row",
-  backgroundColor: "white",
-},
-
-headerCell: {
-  fontWeight: "bold",
-  textAlign: "center",
-},
-
-cell: {
-  textAlign: "center",
-},
-
-deleteButton: {
-  backgroundColor: "red",
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 5,
-},
-
-deleteButtonText: {
-  color: "white",
-  fontWeight: "bold",
-},
-
   });
 };
 

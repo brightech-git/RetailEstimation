@@ -17,22 +17,11 @@ export class EstimationService {
   }
 
   // Internal request wrapper. Defaults to NO timeout (matching the previous
-  // axios.create, which set none) unless a call specifies one. Re-throws in
-  // the axios-compatible shape (err.response.data / err.message) that existing
-  // consumers (UseEstimation) already rely on.
+  // axios.create, which set none) unless a call specifies one. Errors reject
+  // as the shared ApiError ({ message, status, data }); consumers read
+  // error.data / error.message directly.
   async request(config) {
-    try {
-      return await api.request({ timeout: 0, ...config });
-    } catch (e) {
-      const err = new Error(e?.message || "Request failed");
-      err.status = e?.status;
-      err.data = e?.data;
-      err.response =
-        e?.data !== undefined || e?.status !== undefined
-          ? { data: e?.data, status: e?.status }
-          : undefined;
-      throw err;
-    }
+    return api.request({ timeout: 0, ...config });
   }
 
   // Centralized costId accessor - single source of truth for the
