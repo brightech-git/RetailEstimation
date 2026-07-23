@@ -1,0 +1,43 @@
+{
+  // Phase 1 – Foundation: gradual TypeScript adoption.
+  // Extends Expo's base config (ships with the SDK). `allowJs` lets the
+  // existing .js files keep compiling untouched while new code is .ts/.tsx.
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    /* --- Gradual migration --- */
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* --- Practical strictness (safe for a mixed JS/TS codebase) --- */
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* --- Module resolution --- */
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx",
+
+    /* --- Path aliases (mirror babel.config.js module-resolver) --- */
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["Src/app/*"],
+      "@core/*": ["Src/core/*"],
+      "@design/*": ["Src/design/*"],
+      "@shared/*": ["Src/shared/*"],
+      "@modules/*": ["Src/modules/*"],
+      "@services/*": ["Src/services/*"],
+      "@store/*": ["Src/store/*"],
+      "@types/*": ["Src/types/*"]
+    }
+  },
+  "include": ["Src/**/*.ts", "Src/**/*.tsx", "App.js", "index.js"],
+  "exclude": ["node_modules", "android", "ios", ".expo", "dist"]
+}
