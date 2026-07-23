@@ -8,7 +8,6 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import MainHeader from "../../Components/Header/Header";
 import Footer from "../../Components/Footer/Footer";
@@ -22,7 +21,9 @@ import { useTheme } from "../../../Context/ThemeContext";
 import { createHomeStyles } from "./HomeStyles";
 import { useEstimation } from "../../../Src-1/Hook/UseEstimation";
 import { LoginContext } from "../../../Context/LoginContext";
-import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard"; // Import the new component
+import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard";
+import createApiInstance from "../../../Api/axiosInstance";
+import ENDPOINTS from "../../../Api/endpoints";
 
 const HomeScreen1 = () => {
   const { theme } = useTheme();
@@ -125,51 +126,33 @@ const fetchApiData = async () => {
   estimation.setEstBatchNo(null);
 
   try {
-    // Some companies don't use cost centres at all - selectedCostId can
-    // legitimately be empty for them. COSTID is still a required query
-    // param on the backend, so the key itself must always be sent (an
-    // empty value is fine, an entirely missing key 400s).
-    const costId = (await estimation.getCostId()) || "";
+    const api = createApiInstance(API_BASE_URL);
 
-    // CHECK TAG ISSUED - best-effort. Without a real cost centre this can
-    // fail server-side; don't block the estimation lookup on it.
+    // CHECK TAG ISSUED
     try {
-      const issuedResponse = await fetch(
-        `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
-          costId
-        )}`
-      );
-      if (issuedResponse.ok) {
-        const issuedData = await issuedResponse.json();
-        if (issuedData?.status === "issued") {
-          Alert.alert(
-            "Tag Already Issued",
-            `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
-          );
-          setLoadingApiData(false);
-          return;
-        }
-      } else {
-        console.warn(
-          "tag-details check failed, continuing without it:",
-          issuedResponse.status
+      const issuedResponse = await api.get(ENDPOINTS.TAG_DETAILS, {
+        params: { ITEMID: itemId, TAGNO: tagNo },
+        validateStatus: (status) => [200, 404, 500].includes(status),
+      });
+      if (issuedResponse.status === 200 && issuedResponse.data?.status === "issued") {
+        Alert.alert(
+          "Tag Already Issued",
+          `This tag was already issued on ${issuedResponse.data.trandate}\nTransaction No: ${issuedResponse.data.tranno}`
         );
+        setLoadingApiData(false);
+        return;
       }
     } catch (issuedErr) {
       console.warn("tag-details check errored, continuing without it:", issuedErr);
     }
 
     // ESTIMATION API
-    const response = await fetch(
-      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
-        costId
-      )}`
-    );
-    console.log("🔵 Estimation API URL:", response.url);
+    const response = await api.get(ENDPOINTS.ESTIMATION_TOTAL, {
+      params: { ITEMID: itemId, TAGNO: tagNo },
+    });
+    console.log("🔵 Estimation API URL:", response.config?.url);
 
-    const data = await response.json();
-
-    setDisplayData(data || []);
+    setDisplayData(response.data || []);
     estimation.setITEMID(itemId);
     estimation.setTAGNO(tagNo);
     setValidationError("");

@@ -1,8 +1,30 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Endpoints that should NEVER receive costId / companyId from interceptor
-// (either they don't need it, or they handle their own uppercase COSTID param)
+// In-memory cache — updated on app start and whenever cost centre changes
+let _costId = null;
+let _companyId = null;
+
+// Call this once on app start and after every cost centre selection
+export const initCostCache = async () => {
+  try {
+    const [[, costId], [, companyId]] = await AsyncStorage.multiGet([
+      "SELECTED_COST_ID",
+      "SELECTED_COMPANY_ID",
+    ]);
+    _costId = costId || null;
+    _companyId = companyId || null;
+  } catch (e) {
+    console.warn("initCostCache: failed to read cost/company ID", e);
+  }
+};
+
+export const setCostCache = (costId, companyId) => {
+  _costId = costId || null;
+  _companyId = companyId || null;
+};
+
+// Endpoints that should NEVER receive costId / companyId
 const SKIP_COST_ID = [
   "/ipaddress",
   "/todayrate",
@@ -14,28 +36,14 @@ const SKIP_COST_ID = [
   "/printers/delete",
 ];
 
-/**
- * Creates an axios instance scoped to the given baseURL.
- * A request interceptor automatically appends costId and companyId
- * as query params on every request — only if they exist in AsyncStorage
- * and the endpoint is not in the SKIP_COST_ID list.
- */
 const createApiInstance = (baseURL) => {
   const instance = axios.create({ baseURL });
 
-  instance.interceptors.request.use(async (config) => {
+  instance.interceptors.request.use((config) => {
     const skip = SKIP_COST_ID.some((path) => config.url?.includes(path));
     if (!skip) {
-      try {
-        const [costId, companyId] = await AsyncStorage.multiGet([
-          "SELECTED_COST_ID",
-          "SELECTED_COMPANY_ID",
-        ]);
-        if (costId[1]) config.params = { ...config.params, costId: costId[1] };
-        if (companyId[1]) config.params = { ...config.params, companyId: companyId[1] };
-      } catch (e) {
-        console.warn("axiosInstance: failed to read cost/company ID", e);
-      }
+      if (_costId) config.params = { ...config.params, costId: _costId };
+      if (_companyId) config.params = { ...config.params, companyId: _companyId };
     }
     return config;
   });

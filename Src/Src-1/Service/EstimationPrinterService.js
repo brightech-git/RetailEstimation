@@ -1,6 +1,7 @@
 import TcpSocket from "react-native-tcp-socket";
 import { Alert } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
 import createApiInstance from "../../Api/axiosInstance";
 import ENDPOINTS from "../../Api/endpoints";
@@ -508,6 +509,12 @@ export const printEstimationToPrinter = async (
 ) => {
   try {
     console.log("🖨️ Starting print process...");
+
+    let username = "";
+    try {
+      const stored = await AsyncStorage.getItem("COMPANY_DATA");
+      if (stored) username = JSON.parse(stored)?.USERNAME || "";
+    } catch (_) {}
 
     // Get active printer
     let activePrinter = currentPrinter;

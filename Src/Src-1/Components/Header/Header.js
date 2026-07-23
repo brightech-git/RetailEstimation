@@ -60,6 +60,7 @@ const MainHeader = () => {
     contactNumber,
     stockUsername,
     stockPassword,
+    selectedCostId,
     loading: contextLoading,
   } = useContext(LoginContext);
 
@@ -317,11 +318,12 @@ const MainHeader = () => {
             </View>
           </View>
 
-          {rateUpdated && (
-            <Text style={styles.updatedText}>
-              🕒 Last updated: {rateUpdated}
-            </Text>
-          )}
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>💰 Cost ID : <Text style={styles.value}>{selectedCostId || "N/A"}</Text></Text>
+            {rateUpdated && (
+              <Text style={styles.updatedText}>🕒 Last updated: {rateUpdated}</Text>
+            )}
+          </View>
         </View>
       </View>
 

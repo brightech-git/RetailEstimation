@@ -28,7 +28,7 @@ export class EstimationService {
 
   async fetchEstimationData(ITEMID, TAGNO) {
     const response = await this.api.get(ENDPOINTS.ESTIMATION_TOTAL, {
-      params: { ITEMID, TAGNO },
+      params: { ITEMID, TAGNO },  // costId appended by interceptor (lowercase)
     });
     return response.data;
   }
@@ -37,10 +37,12 @@ export class EstimationService {
     try {
       const response = await this.api.get(ENDPOINTS.TAG_DETAILS, {
         params: { ITEMID, TAGNO },
+        validateStatus: (status) => [200, 404, 500].includes(status),
       });
+      if (response.status === 404) return { status: "not issued", trandate: null };
       return response.data;
     } catch (error) {
-      console.warn("checkTagExists failed, continuing without it:", error);
+      console.warn("tag-details check failed, continuing without it:", error.response?.status || error.message);
       return null;
     }
   }

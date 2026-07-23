@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { initCostCache, setCostCache } from "../Api/axiosInstance";
 
 export const LoginContext = createContext();
 
@@ -131,14 +132,17 @@ export const LoginProvider = ({ children, showToast }) => {
     setSelectedCostId(costId);
     if (costId) {
       await AsyncStorage.setItem("SELECTED_COST_ID", costId);
-      // Also persist the companyId that belongs to this cost centre
       const match = costOptions.find((o) => o.COSTID === costId);
       if (match?.COMPANYID) {
         await AsyncStorage.setItem("SELECTED_COMPANY_ID", match.COMPANYID);
+        setCostCache(costId, match.COMPANYID);
+      } else {
+        setCostCache(costId, null);
       }
     } else {
       await AsyncStorage.removeItem("SELECTED_COST_ID");
       await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
+      setCostCache(null, null);
     }
   };
 
@@ -194,16 +198,17 @@ export const LoginProvider = ({ children, showToast }) => {
         console.log("📦 Restored company data:", data);
       }
 
-      // Load stored selected cost ID
       const storedCostId = await AsyncStorage.getItem("SELECTED_COST_ID");
+      const storedCompanyId = await AsyncStorage.getItem("SELECTED_COMPANY_ID");
       if (storedCostId) {
         setSelectedCostId(storedCostId);
         console.log("📦 Restored selected cost ID:", storedCostId);
       }
-      const storedCompanyId = await AsyncStorage.getItem("SELECTED_COMPANY_ID");
       if (storedCompanyId) {
         console.log("📦 Restored selected company ID:", storedCompanyId);
       }
+      // Warm up the sync cache so interceptor works immediately
+      await initCostCache();
 
       // Optionally fetch fresh cost options after restoring (if needed)
       // Uncomment the next line if you want to always fetch on app start
