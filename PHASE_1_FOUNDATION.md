@@ -62,6 +62,7 @@ module.exports = function (api) {
           root: ["./"],
           alias: {
             "@app": "./Src/app",
+            "@api": "./Src/api",
             "@core": "./Src/core",
             "@design": "./Src/design",
             "@shared": "./Src/shared",

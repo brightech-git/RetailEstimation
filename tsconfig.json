@@ -29,6 +29,8 @@
     "baseUrl": ".",
     "paths": {
       "@app/*": ["Src/app/*"],
+      "@api": ["Src/api/index.ts"],
+      "@api/*": ["Src/api/*"],
       "@core/*": ["Src/core/*"],
       "@design": ["Src/design/index.ts"],
       "@design/*": ["Src/design/*"],
