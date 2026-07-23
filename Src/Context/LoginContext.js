@@ -114,7 +114,9 @@ export const LoginProvider = ({ children, showToast }) => {
   // --- update selected cost ID and persist it (same SELECTED_COST_ID key) ---
   const updateSelectedCostId = async (costId) => {
     setSelectedCostId(costId);
-    await persistSelectedCostId(costId);
+    // Resolve the string company code (e.g. "SFL") from costOptions
+    const companyCode = costOptions?.find((o) => o.COSTID === costId)?.COMPANYID || "";
+    await persistSelectedCostId(costId, companyCode);
   };
 
   // --- logout: clear session (COMPANY_DATA + SELECTED_COST_ID + backend URL) ---

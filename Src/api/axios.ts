@@ -7,14 +7,15 @@
 //
 // No token refresh, no retry, no upload/download helpers — intentionally simple.
 import axios, { AxiosError, type AxiosInstance } from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { backendManager } from "./backendManager";
 import { APP_CONFIG } from "../app/config/appConfig";
 import { logger } from "../core/logger";
 
-// Allow an `auth` flag on any request to target the auth backend.
+// Allow a custom flag on any request to target the auth backend.
 declare module "axios" {
   export interface AxiosRequestConfig {
-    auth?: boolean;
+    useAuthBackend?: boolean;
   }
 }
 
@@ -51,21 +52,42 @@ export const api: AxiosInstance = axios.create({
   },
 });
 
-// --- Request interceptor: pick the backend base URL ---
-api.interceptors.request.use((config) => {
-  const baseUrl = config.auth
+// --- Request interceptor: pick the backend base URL + auto-inject costId & companyId ---
+api.interceptors.request.use(async (config) => {
+  const baseUrl = config.useAuthBackend
     ? backendManager.getAuthUrl()
     : backendManager.getCompanyUrl();
 
   if (!baseUrl) {
-    // A business API was called before login resolved the company URL.
-    logger.error("API base URL missing", { url: config.url, auth: config.auth });
+    logger.error("API base URL missing", { url: config.url, useAuthBackend: config.useAuthBackend });
     return Promise.reject<never>({
       message: "API base URL not set — user is not logged in yet",
     } as ApiError);
   }
 
   config.baseURL = baseUrl;
+
+  // Auto-inject costId and companyId into every request if available
+  const costId = await AsyncStorage.getItem("SELECTED_COST_ID");
+  const companyId = await AsyncStorage.getItem("SELECTED_COMPANY_ID");
+
+  if (costId || companyId) {
+    const method = (config.method || "").toLowerCase();
+    if (method === "get") {
+      config.params = {
+        ...(costId ? { costId } : {}),
+        // ...(companyId ? { companyId } : {}),
+        ...config.params,
+      };
+    } else {
+      config.data = {
+        ...(costId ? { costId } : {}),
+        ...(companyId ? { companyId } : {}),
+        ...(config.data || {}),
+      };
+    }
+  }
+
   return config;
 });
 

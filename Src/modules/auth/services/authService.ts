@@ -15,7 +15,7 @@ import type { LoginCredentials, CompanyData } from "../types/auth.types";
  */
 export async function login(credentials: LoginCredentials): Promise<CompanyData> {
   const res = await api.post<CompanyData>(ENDPOINTS.AUTH.LOGIN, credentials, {
-    auth: true,
+    useAuthBackend: true,
     timeout: 10000,
   });
 

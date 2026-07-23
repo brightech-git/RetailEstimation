@@ -96,7 +96,7 @@ export const useEstimation = (apiBaseUrl) => {
     if (!service) return;
 
     try {
-      const data = await service.fetchItemList();
+      const data = await service.fetchItemList(await service.getCostId());
       setItemList(data);
       setShowList(true);
     } catch (error) {
@@ -285,7 +285,8 @@ export const useEstimation = (apiBaseUrl) => {
           logger.debug("[TranDate] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO });
           const dateFromApi = await service.getTransactionDate(
             item.ITEMID,
-            item.TAGNO
+            item.TAGNO,
+            item.COSTID || costId
           );
           logger.debug("[TranDate] Response:", dateFromApi);
           if (dateFromApi) {
@@ -513,7 +514,7 @@ export const useEstimation = (apiBaseUrl) => {
         logger.debug("[EstTaxTranSno] Response:", estTaxTranSno);
 
         logger.debug("[TaxDetails] Payload:", { itemid: rawItem.itemid });
-        const taxDetails = await service.getTaxDetails(rawItem.itemid);
+        const taxDetails = await service.getTaxDetails(rawItem.itemid, rawItem.costid || costId);
         logger.debug("[TaxDetails] Response:", taxDetails);
 
         const basePayload = {
@@ -572,7 +573,7 @@ export const useEstimation = (apiBaseUrl) => {
 
       // Update transaction number
       try {
-        const updateTrannoRes = await service.updateTransactionNumber();
+        const updateTrannoRes = await service.updateTransactionNumber(costId);
         logger.debug("[UpdateTranno] Response:", updateTrannoRes);
       } catch (err) {
         Alert.alert(
@@ -584,9 +585,9 @@ export const useEstimation = (apiBaseUrl) => {
       // Get final details for printing
       logger.debug("[EstDetails] Payload:", { TRANNO, costId });
       const [ipAddress, estDetails, rateResponse] = await Promise.all([
-        service.getIPAddress(),
+        service.getIPAddress(costId),
         service.getEstimationDetails(TRANNO, costId),
-        service.getTodayRates(),
+        service.getTodayRates(costId),
       ]);
       logger.debug("[IPAddress] Response:", ipAddress);
       logger.debug("[EstDetails] Response:", estDetails);
@@ -611,7 +612,7 @@ export const useEstimation = (apiBaseUrl) => {
       };
 
       logger.debug("[PrintData] Payload:", estPrintPayload);
-      const printResponse = await service.submitPrintData(estPrintPayload);
+      const printResponse = await service.submitPrintData(estPrintPayload, costId);
       logger.debug("[PrintData] Response:", printResponse);
 
       Alert.alert("Success", `Sales Estimation No: ${TRANNO} Generated`);

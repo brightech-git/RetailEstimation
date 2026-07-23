@@ -9,6 +9,7 @@ import type { CompanyData } from "../types/auth.types";
 export const AUTH_KEYS = {
   COMPANY_DATA: "COMPANY_DATA",
   SELECTED_COST_ID: "SELECTED_COST_ID",
+  SELECTED_COMPANY_ID: "SELECTED_COMPANY_ID",
   EMPLOYEE_ID: "EMPLOYEE_ID",
 } as const;
 
@@ -29,6 +30,7 @@ export async function loadSession(): Promise<CompanyData | null> {
 export async function clearSession(): Promise<void> {
   await storage.remove(AUTH_KEYS.COMPANY_DATA);
   await storage.remove(AUTH_KEYS.SELECTED_COST_ID);
+  await storage.remove(AUTH_KEYS.SELECTED_COMPANY_ID);
   backendManager.clear();
 }
 
@@ -36,9 +38,11 @@ export function getSelectedCostId(): Promise<string | null> {
   return storage.get<string>(AUTH_KEYS.SELECTED_COST_ID);
 }
 
-export async function setSelectedCostId(costId: string): Promise<void> {
+export async function setSelectedCostId(costId: string, companyId?: string): Promise<void> {
   if (costId) await storage.set(AUTH_KEYS.SELECTED_COST_ID, costId);
   else await storage.remove(AUTH_KEYS.SELECTED_COST_ID);
+  if (companyId) await storage.set(AUTH_KEYS.SELECTED_COMPANY_ID, companyId);
+  else await storage.remove(AUTH_KEYS.SELECTED_COMPANY_ID);
 }
 
 export async function saveEmployeeId(employeeId: string): Promise<void> {
