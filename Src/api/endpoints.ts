@@ -26,6 +26,8 @@ export const ENDPOINTS = {
     SAVE_OFFER: "/offer",
     UPDATE_TRAN_NO: "/updateTranno",
     PRINT: "/estprint",
+    IP_ADDRESS: "/ipaddress",
+    DETAILS: "/details", // + `/${tranno}`
   },
 
   RATE: {
