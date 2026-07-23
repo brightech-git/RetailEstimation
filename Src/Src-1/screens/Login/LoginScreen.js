@@ -17,8 +17,10 @@ import { LoginContext } from "../../../Context/LoginContext";
 import { useToast } from "../../Context/ToastContext";
 import Footer from "../../Components/Footer/Footer";
 import { useTheme } from "../../../Context/ThemeContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getStyles } from "./LoginStyles";
+import { Input, PasswordInput, Button } from "@shared/components";
+import { validateLoginForm, saveEmployeeId } from "@modules/auth";
+import { spacing } from "@design";
 
 const { width } = Dimensions.get("window");
 
@@ -55,8 +57,9 @@ const LoginScreen = ({ navigation }) => {
   }, []);
 
   const handleLogin = async () => {
-    if (!username || !password || !employeeId) {
-      showToast("Please enter username, password & Employee ID", "warning");
+    const validationError = validateLoginForm({ username, password, employeeId });
+    if (validationError) {
+      showToast(validationError, "warning");
       return;
     }
 
@@ -75,8 +78,7 @@ const LoginScreen = ({ navigation }) => {
       const success = await login(username, password);
 
       if (success) {
-        await AsyncStorage.setItem("EMPLOYEE_ID", employeeId);
-        console.log("Employee ID saved:", employeeId);
+        await saveEmployeeId(employeeId);
         setUsername("");
         setPassword("");
         setEmployeeId("");
@@ -132,43 +134,32 @@ const LoginScreen = ({ navigation }) => {
                 <View style={styles.formInner}>
                   <Text style={styles.formTitle}>Welcome Back</Text>
 
-                  <TextInput
-                    style={styles.input1}
+                  <Input
                     placeholder="Username"
-                    placeholderTextColor={theme.COLORS.placeholder}
                     value={username}
                     onChangeText={setUsername}
+                    autoCapitalize="none"
+                    containerStyle={{ marginBottom: spacing.md }}
                   />
-                  <TextInput
-                    style={styles.input}
+                  <PasswordInput
                     placeholder="Password"
-                    placeholderTextColor={theme.COLORS.placeholder}
-                    secureTextEntry
                     value={password}
                     onChangeText={setPassword}
+                    containerStyle={{ marginBottom: spacing.md }}
                   />
-                  <TextInput
-                    style={styles.input}
+                  <Input
                     placeholder="Employee ID"
-                    placeholderTextColor={theme.COLORS.placeholder}
                     value={employeeId}
                     onChangeText={setEmployeeId}
+                    containerStyle={{ marginBottom: spacing.md }}
                   />
 
-                  <TouchableOpacity
-                    style={[styles.button, loading && styles.buttonDisabled]}
+                  <Button
+                    label="SIGN IN"
                     onPress={handleLogin}
-                    disabled={loading}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient colors={theme.COLORS.gradientPrimary} style={styles.gradientButton}>
-                      {loading ? (
-                        <ActivityIndicator color={theme.COLORS.title} size="small" />
-                      ) : (
-                        <Text style={styles.buttonText}>SIGN IN</Text>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
+                    loading={loading}
+                    fullWidth
+                  />
                 </View>
               </LinearGradient>
             </Animated.View>
