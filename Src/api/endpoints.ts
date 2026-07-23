@@ -1,10 +1,3 @@
-// Phase 3 – API Foundation
-// One place for all API endpoint PATHS. No base URLs here — the base is added
-// at request time by the axios instance (auth vs company backend).
-//
-// Paths mirror the endpoints the existing services already call, so future
-// migrated services can reference these constants without changing behavior.
-// Endpoints that take a parameter are documented next to them.
 
 export const ENDPOINTS = {
   AUTH: {
