@@ -1,10 +1,9 @@
 import TcpSocket from "react-native-tcp-socket";
 import { Alert } from "react-native";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
-// import { LoginContext } from "../../Context/LoginContext";
-// import react, { useState, useEffect, useContext } from "react";
+import createApiInstance from "../../Api/axiosInstance";
+import ENDPOINTS from "../../Api/endpoints";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -114,16 +113,13 @@ const printQRCode = (estimationNo) => {
   return qr;
 };
 
-// ✅ FIXED: Create a simple function, not an object with methods
 export const createPrinterService = (baseUrl) => {
-  const API_URL = `${baseUrl}/printers`;
+  const api = createApiInstance(baseUrl);
 
-  // ✅ Return a simple object with functions, not a "service" that can be mistaken for a class
   return {
-    // Get Printer By ID
     getPrinterById: async (id) => {
       try {
-        const response = await axios.get(`${API_URL}/get`, { params: { id } });
+        const response = await api.get(ENDPOINTS.PRINTER_GET, { params: { id } });
         return response.data;
       } catch (error) {
         console.error("❌ Error getting printer by ID:", error);
@@ -131,12 +127,9 @@ export const createPrinterService = (baseUrl) => {
       }
     },
 
-    // Get Printers By Employee ID
     getPrintersByEmployee: async (empId) => {
       try {
-        const response = await axios.get(`${API_URL}/by-emp`, {
-          params: { empId },
-        });
+        const response = await api.get(ENDPOINTS.PRINTER_BY_EMP, { params: { empId } });
         console.log("📦 Printers for employee:", empId, response.data);
         return response.data;
       } catch (error) {
@@ -145,10 +138,9 @@ export const createPrinterService = (baseUrl) => {
       }
     },
 
-    // Create Printer
     createPrinter: async (printerData) => {
       try {
-        const response = await axios.post(`${API_URL}/create`, printerData);
+        const response = await api.post(ENDPOINTS.PRINTER_CREATE, printerData);
         return response.data;
       } catch (error) {
         console.error("❌ Error creating printer:", error);
@@ -156,10 +148,9 @@ export const createPrinterService = (baseUrl) => {
       }
     },
 
-    // Update Printer
     updatePrinter: async (printerData) => {
       try {
-        const response = await axios.put(`${API_URL}/update`, printerData);
+        const response = await api.put(ENDPOINTS.PRINTER_UPDATE, printerData);
         return response.data;
       } catch (error) {
         console.error("❌ Error updating printer:", error);
@@ -167,12 +158,9 @@ export const createPrinterService = (baseUrl) => {
       }
     },
 
-    // Delete Printer
     deletePrinter: async (id) => {
       try {
-        const response = await axios.delete(`${API_URL}/delete`, {
-          params: { id },
-        });
+        const response = await api.delete(ENDPOINTS.PRINTER_DELETE, { params: { id } });
         return response.data;
       } catch (error) {
         console.error("❌ Error deleting printer:", error);
@@ -182,12 +170,8 @@ export const createPrinterService = (baseUrl) => {
   };
 };
 
-// Fetch estimation data
 export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
-  console.log("🔍 fetchEstimationData called with:", {
-    estBatchNo,
-    apiBaseUrl,
-  });
+  console.log("🔍 fetchEstimationData called with:", { estBatchNo, apiBaseUrl });
 
   if (!estBatchNo) {
     Alert.alert("Error", "No Estimation No found for printing.");
@@ -200,21 +184,11 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
   }
 
   try {
-    const api = axios.create({
-      baseURL: apiBaseUrl,
-      timeout: 30000,
-    });
+    const api = createApiInstance(apiBaseUrl);
+    api.defaults.timeout = 30000;
 
-    // Scope every downstream call to the logged-in user's cost centre
-    const costId = (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
-
-    console.log(
-      "📡 Making API call to:",
-      `${apiBaseUrl}/printDetails/${estBatchNo}`
-    );
-    const response = await api.get(`/printDetails/${estBatchNo}`, {
-      params: { costId: costId || undefined },
-    });
+    console.log("📡 Making API call to:", `${apiBaseUrl}${ENDPOINTS.PRINT_DETAILS(estBatchNo)}`);
+    const response = await api.get(ENDPOINTS.PRINT_DETAILS(estBatchNo));
     console.log("✅ API Response received:", response.status);
 
     const itemsRaw = Array.isArray(response.data) ? response.data : [];
@@ -233,8 +207,8 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     let offer = { discount: 0, netwt: 0, board_rate: 0 };
     try {
       console.log("📡 Fetching offer data...");
-      const offerRes = await api.post("/offer", null, {
-        params: { tagno: sample.tagno, costId: costId || undefined },
+      const offerRes = await api.post(ENDPOINTS.OFFER, null, {
+        params: { tagno: sample.tagno },
       });
       offer = offerRes.data || offer;
       console.log("✅ Offer data:", offer);
@@ -243,11 +217,10 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     }
 
     // Fetch today rates
-    let goldRate = 0,
-      silverRate = 0;
+    let goldRate = 0, silverRate = 0;
     try {
       console.log("📡 Fetching today rates...");
-      const rateRes = await api.get("/todayrate");
+      const rateRes = await api.get(ENDPOINTS.TODAY_RATE);
       goldRate = rateRes.data?.GOLDRATE || 0;
       silverRate = rateRes.data?.SILVERRATE || 0;
       console.log("✅ Rates - Gold:", goldRate, "Silver:", silverRate);
@@ -307,18 +280,15 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     const fetchStonesForItem = async (itemid, tagno) => {
       try {
         console.log(`📡 Fetching stones for ITEMID=${itemid} TAGNO=${tagno}`);
-        const res = await api.get("/stnInputs", {
-          params: { itemid, tagno, costId: costId || undefined },
+        const res = await api.get(ENDPOINTS.STN_INPUTS, {
+          params: { itemid, tagno },
           timeout: 15000,
         });
         const stones = Array.isArray(res.data) ? res.data : [];
         console.log(`✅ Found ${stones.length} stones for item`);
         return stones;
       } catch (err) {
-        console.warn(
-          `Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`,
-          err
-        );
+        console.warn(`Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`, err);
         return [];
       }
     };

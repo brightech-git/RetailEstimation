@@ -125,19 +125,15 @@ export const useEstimation = (apiBaseUrl) => {
     try {
       // Check if tag already exists
       const tagDetails = await service.checkTagExists(ITEMID, TAGNO);
-      if (tagDetails && tagDetails.trandate) {
-        console.log(
-          "Tag already issued on:",
-          tagDetails,
-          "Trn No:",
-          tagDetails.tranno
-        );
+      if (tagDetails && tagDetails.status !== "not issued" && tagDetails.trandate) {
+        console.log("Tag already issued on:", tagDetails, "Trn No:", tagDetails.tranno);
         Alert.alert(
           "Tag Already Issued",
           `Issued on ${tagDetails.trandate}, Trn No: ${tagDetails.tranno}`
         );
         return;
       }
+      // status === "not issued" → proceed to fetch estimation data
 
       // Check for duplicates in current table
       const alreadyExists = tableData.some(
@@ -255,29 +251,18 @@ export const useEstimation = (apiBaseUrl) => {
 
           // Fetch stone inputs
           console.log("[StoneInputs] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO, costId: item.COSTID || costId });
-          let stoneInputs = await service.getStoneInputs(
-            item.ITEMID,
-            item.TAGNO,
-            item.COSTID || costId
-          );
+          let stoneInputs = await service.getStoneInputs(item.ITEMID, item.TAGNO);
           console.log("[StoneInputs] Response:", stoneInputs);
 
           // Fetch stone category codes
           for (const stn of stoneInputs) {
             if (!stn?.stnitemid) continue;
-            stn.catcode = await service.getStoneCategoryCode(
-              item.ITEMID,
-              stn.stnitemid,
-              item.COSTID || costId
-            );
+            stn.catcode = await service.getStoneCategoryCode(item.ITEMID, stn.stnitemid);
           }
 
           // Fetch tag details
           console.log("[TagDetails] Payload:", { TAGNO: item.TAGNO, costId: item.COSTID || costId });
-          const tagDetails = await service.getTagDetails(
-            item.TAGNO,
-            item.COSTID || costId
-          );
+          const tagDetails = await service.getTagDetails(item.TAGNO);
           console.log("[TagDetails] Response:", tagDetails);
 
           // Get transaction date
@@ -585,7 +570,7 @@ export const useEstimation = (apiBaseUrl) => {
       console.log("[EstDetails] Payload:", { TRANNO, costId });
       const [ipAddress, estDetails, rateResponse] = await Promise.all([
         service.getIPAddress(),
-        service.getEstimationDetails(TRANNO, costId),
+        service.getEstimationDetails(TRANNO),
         service.getTodayRates(),
       ]);
       console.log("[IPAddress] Response:", ipAddress);
@@ -621,14 +606,19 @@ export const useEstimation = (apiBaseUrl) => {
 
       return batchNo;
     } catch (error) {
-      Alert.alert(
-        "Error",
+      const errMsg =
         error.response?.data?.message ||
-          error.message ||
-          "Something went wrong."
-      );
-      console.error("Submitting error:",  error.response?.data?.message ||
-          error.message ||error);
+        error.response?.data ||
+        error.message ||
+        "Something went wrong.";
+      console.error("Submitting error details:", {
+        status: error.response?.status,
+        url: error.config?.url,
+        params: error.config?.params,
+        requestData: error.config?.data,
+        responseData: error.response?.data,
+      });
+      Alert.alert("Error", typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg));
       return null;
     } finally {
       setLoading(false);

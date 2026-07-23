@@ -1,16 +1,15 @@
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import createApiInstance from "../../Api/axiosInstance";
+import ENDPOINTS from "../../Api/endpoints";
 
 export class EstimationService {
   constructor(apiBaseUrl) {
-    this.api = axios.create({
-      baseURL: apiBaseUrl,
-    });
+    this.api = createApiInstance(apiBaseUrl);
   }
 
-  // Centralized costId accessor - single source of truth for the
-  // logged-in user's selected cost centre (set by LoginContext).
   async getCostId() {
+    // COSTID is now auto-appended by axiosInstance interceptor (uppercase)
+    // This method is kept for backward compatibility with UseEstimation.js
+    const { default: AsyncStorage } = await import("@react-native-async-storage/async-storage");
     try {
       return (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
     } catch (e) {
@@ -19,142 +18,120 @@ export class EstimationService {
     }
   }
 
-  // Data fetching methods
+  // ── GET ──────────────────────────────────────────────────────────────
+
   async fetchItemList() {
-    const response = await this.api.get("/list");
+    const response = await this.api.get(ENDPOINTS.LIST);
     const data = response.data;
-    const uniqueItemIds = Array.from(new Set(data.map((item) => item.ITEMID)));
-    return uniqueItemIds;
+    return Array.from(new Set(data.map((item) => item.ITEMID)));
   }
 
-  // NOTE: COSTID is a required query param on the backend for both
-  // /estimationTotal and /tag-details, so the key itself must always be
-  // sent (Spring 400s if it's missing entirely). When the logged-in
-  // company has no cost centre selected, we send COSTID="" - the
-  // backend's estimationTotal already handles that by resolving the
-  // COSTID itself from ITEMID+TAGNO, so this degrades gracefully.
   async fetchEstimationData(ITEMID, TAGNO) {
-    const costId = await this.getCostId();
-    const response = await this.api.get("/estimationTotal", {
-      params: { ITEMID, TAGNO, COSTID: costId || "" },
+    const response = await this.api.get(ENDPOINTS.ESTIMATION_TOTAL, {
+      params: { ITEMID, TAGNO },
     });
     return response.data;
   }
 
   async checkTagExists(ITEMID, TAGNO) {
     try {
-      const costId = await this.getCostId();
-      const response = await this.api.get(`/tag-details`, {
-        params: { ITEMID, TAGNO, COSTID: costId || "" },
+      const response = await this.api.get(ENDPOINTS.TAG_DETAILS, {
+        params: { ITEMID, TAGNO },
       });
       return response.data;
     } catch (error) {
-      // Without a real cost centre this lookup can fail server-side
-      // (404/500) rather than returning "not issued" - either way, treat
-      // it as "couldn't verify, let the user continue" instead of
-      // blocking the whole screen.
       console.warn("checkTagExists failed, continuing without it:", error);
       return null;
     }
   }
 
   async getTransactionNumber() {
-    const response = await this.api.get("/tranno");
+    const response = await this.api.get(ENDPOINTS.TRANNO);
     return response.data;
   }
 
   async getEstimationBatchNo(costId, companyId) {
     const today = new Date().toISOString().split("T")[0];
-    const response = await this.api.get("/estbatchno", {
-      params: {
-        costId: costId || "BP",
-        billDate: today,
-        companyId: companyId || "BMG",
-        isEstimate: true,
-      },
+    const response = await this.api.get(ENDPOINTS.EST_BATCH_NO, {
+      params: { costId, billDate: today, companyId, isEstimate: true },
       timeout: 15000,
     });
     return response.data;
   }
 
-  async getStoneInputs(itemId, tagNo, costId) {
+  async getStoneInputs(itemId, tagNo) {
     try {
-      const resolvedCostId = costId || (await this.getCostId());
-      const response = await this.api.get("/stnInputs", {
-        params: { itemid: itemId, tagno: tagNo, costId: resolvedCostId || undefined },
+      const response = await this.api.get(ENDPOINTS.STN_INPUTS, {
+        params: { itemid: itemId, tagno: tagNo },
       });
       return response.data || [];
     } catch (err) {
-      console.warn(`Failed to fetch stone inputs`, err);
+      console.warn("Failed to fetch stone inputs", err);
       return [];
     }
   }
 
-  async getStoneCategoryCode(itemId, stnItemId, costId) {
+  async getStoneCategoryCode(itemId, stnItemId) {
     try {
-      const resolvedCostId = costId || (await this.getCostId());
-      const response = await this.api.get("/stone-catcode", {
-        params: { itemId, stnItemId, costId: resolvedCostId || undefined },
+      const response = await this.api.get(ENDPOINTS.STONE_CATCODE, {
+        params: { itemId, stnItemId },
       });
       return response.data?.stoneCatCode || "";
     } catch (err) {
-      console.warn(`Failed to fetch catCode`, err);
+      console.warn("Failed to fetch catCode", err);
       return "";
     }
   }
 
-  async getTagDetails(tagNo, costId) {
+  async getTagDetails(tagNo) {
     try {
-      const resolvedCostId = costId || (await this.getCostId());
-      const response = await this.api.get(`/tagDetails/${tagNo}`, {
-        params: { costId: resolvedCostId || undefined },
-      });
+      const response = await this.api.get(ENDPOINTS.TAG_DETAILS_BY_TAGNO(tagNo));
       return response.data || {};
     } catch (err) {
-      console.warn(`Failed to fetch tag details`, err);
+      console.warn("Failed to fetch tag details", err);
       return {};
     }
   }
 
   async getTransactionDate(ITEMID, TAGNO) {
     try {
-      const response = await this.api.get("/trandate", {
+      const response = await this.api.get(ENDPOINTS.TRAN_DATE, {
         params: { ITEMID, TAGNO },
       });
       return response.data?.trandate;
     } catch (err) {
-      console.warn(`Failed to fetch trandate`, err);
+      console.warn("Failed to fetch trandate", err);
       return null;
     }
   }
 
   async generateEstissStoneSno(costId, companyId) {
     try {
-      const response = await this.api.get("/generate-estissstone-sno", {
+      const response = await this.api.get(ENDPOINTS.GENERATE_ESTISSSTONE_SNO, {
         params: { costId, companyId },
       });
       return response.data || "";
     } catch (err) {
-      console.warn(`Failed to generate SNO`, err);
+      console.warn("Failed to generate SNO", err);
       return "";
     }
   }
 
   async generateEstTaxTranSno(costId, companyId) {
     try {
-      const response = await this.api.get("/generate-esttaxtran-sno", {
+      const response = await this.api.get(ENDPOINTS.GENERATE_ESTTAXTRAN_SNO, {
         params: { costId, companyId },
       });
       return String(response.data || "");
     } catch (err) {
-      console.warn(`Failed to generate ESTTAXTRAN SNO:`, err);
+      console.warn("Failed to generate ESTTAXTRAN SNO:", err);
       return "";
     }
   }
 
   async getTaxDetails(itemId) {
     try {
-      const response = await this.api.get(`/getEstTaxTranDetails/${itemId}`);
+      const response = await this.api.get(ENDPOINTS.TAX_DETAILS(itemId));
       return response?.data?.[0] || {};
     } catch (err) {
       console.warn(`Failed to fetch tax details for ITEMID=${itemId}`, err);
@@ -162,15 +139,31 @@ export class EstimationService {
     }
   }
 
-  // Data submission methods
+  async getEstimationDetails(tranno) {
+    const response = await this.api.get(ENDPOINTS.EST_DETAILS(tranno));
+    return response.data?.[0] || {};
+  }
+
+  async getTodayRates() {
+    const response = await this.api.get(ENDPOINTS.TODAY_RATE);
+    return response.data;
+  }
+
+  async getIPAddress() {
+    const response = await this.api.get(ENDPOINTS.IP_ADDRESS);
+    return response.data?.ip || response.data || "";
+  }
+
+  // ── POST ─────────────────────────────────────────────────────────────
+
   async submitEstimationData(data) {
-    const response = await this.api.post("/estissue", data);
+    const response = await this.api.post(ENDPOINTS.EST_ISSUE, data);
     console.log("Save response:", response.data);
     return response.data;
   }
 
   async submitStoneData(data) {
-    const response = await this.api.post("/eststnissue", data, {
+    const response = await this.api.post(ENDPOINTS.EST_STN_ISSUE, data, {
       headers: { "Content-Type": "application/json" },
       timeout: 10000,
     });
@@ -178,40 +171,23 @@ export class EstimationService {
   }
 
   async submitTaxData(data) {
-    const response = await this.api.post("/estTaxTran", data);
+    const response = await this.api.post(ENDPOINTS.EST_TAX_TRAN, data);
     return response.data;
   }
 
   async updateTransactionNumber() {
-    const response = await this.api.post("/updateTranno");
-    return response.data;
-  }
-
-  async getIPAddress() {
-    const response = await this.api.get("/ipaddress");
-    return response.data?.ip || response.data || "";
-  }
-
-  async getEstimationDetails(tranno, costId) {
-    const resolvedCostId = costId || (await this.getCostId());
-    const response = await this.api.get(`/details/${tranno}`, {
-      params: { costId: resolvedCostId || undefined },
-    });
-    return response.data?.[0] || {};
-  }
-
-  async getTodayRates() {
-    const response = await this.api.get("/todayrate");
+    const response = await this.api.post(ENDPOINTS.UPDATE_TRANNO);
     return response.data;
   }
 
   async submitPrintData(data) {
-    const response = await this.api.post("/estprint", data);
+    const response = await this.api.post(ENDPOINTS.EST_PRINT, data);
     return response.data;
   }
 }
 
-// Utility functions
+// ── Utility functions ─────────────────────────────────────────────────
+
 export const formatDateToSqlDateTime = (dateInput) => {
   const dt = dateInput ? new Date(dateInput) : new Date();
   if (isNaN(dt)) return null;
@@ -229,16 +205,13 @@ export const formatDateToMidnightSql = (dateInput = new Date()) => {
 
 export const parseValue = (value) => {
   if (!value || value === "null" || value === "undefined") return 0;
-  const stringValue = String(value).replace(/"/g, "").trim();
-  const parsed = parseFloat(stringValue);
+  const parsed = parseFloat(String(value).replace(/"/g, "").trim());
   return isNaN(parsed) ? 0 : parsed;
 };
 
 export const calculateGrossAmount = (row) => {
   const grossFromApi = parseValue(row.GrossAmount);
-  if (grossFromApi > 0) {
-    return grossFromApi;
-  }
+  if (grossFromApi > 0) return grossFromApi;
   const netWt = parseValue(row.NETWT);
   const wastage = parseValue(row.Wastage);
   const rate = parseValue(row.Rate);
@@ -250,9 +223,7 @@ export const calculateGrossAmount = (row) => {
 
 export const calculateGST = (row) => {
   const gstFromApi = parseValue(row.GSTAmount);
-  if (gstFromApi > 0) {
-    return gstFromApi;
-  }
+  if (gstFromApi > 0) return gstFromApi;
   const gross = calculateGrossAmount(row);
   let gstPer = parseFloat(row.GSTPer);
   if (isNaN(gstPer)) gstPer = 0;
@@ -261,8 +232,6 @@ export const calculateGST = (row) => {
 
 export const calculateGrandTotal = (row) => {
   const grandTotalFromApi = parseValue(row.GrandTotal);
-  if (grandTotalFromApi > 0) {
-    return grandTotalFromApi;
-  }
+  if (grandTotalFromApi > 0) return grandTotalFromApi;
   return calculateGrossAmount(row) + calculateGST(row);
 };

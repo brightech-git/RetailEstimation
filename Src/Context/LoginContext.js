@@ -126,13 +126,19 @@ export const LoginProvider = ({ children, showToast }) => {
     }
   };
 
-  // --- update selected cost ID and persist it ---
+  // --- update selected cost ID + company ID and persist both ---
   const updateSelectedCostId = async (costId) => {
     setSelectedCostId(costId);
     if (costId) {
       await AsyncStorage.setItem("SELECTED_COST_ID", costId);
+      // Also persist the companyId that belongs to this cost centre
+      const match = costOptions.find((o) => o.COSTID === costId);
+      if (match?.COMPANYID) {
+        await AsyncStorage.setItem("SELECTED_COMPANY_ID", match.COMPANYID);
+      }
     } else {
       await AsyncStorage.removeItem("SELECTED_COST_ID");
+      await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
     }
   };
 
@@ -141,6 +147,7 @@ export const LoginProvider = ({ children, showToast }) => {
     try {
       await AsyncStorage.removeItem("COMPANY_DATA");
       await AsyncStorage.removeItem("SELECTED_COST_ID");
+      await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
 
       setUsername("");
       setUserId(null);
@@ -192,6 +199,10 @@ export const LoginProvider = ({ children, showToast }) => {
       if (storedCostId) {
         setSelectedCostId(storedCostId);
         console.log("📦 Restored selected cost ID:", storedCostId);
+      }
+      const storedCompanyId = await AsyncStorage.getItem("SELECTED_COMPANY_ID");
+      if (storedCompanyId) {
+        console.log("📦 Restored selected company ID:", storedCompanyId);
       }
 
       // Optionally fetch fresh cost options after restoring (if needed)
