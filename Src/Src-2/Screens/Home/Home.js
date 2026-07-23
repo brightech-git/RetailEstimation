@@ -8,7 +8,6 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import MainHeader from "../../Components/Header/Header";
 import Footer from "../../Components/Footer/Footer";
@@ -22,7 +21,10 @@ import { useTheme } from "../../../Context/ThemeContext";
 import { createHomeStyles } from "./HomeStyles";
 import { useEstimation } from "../../../Src-1/Hook/UseEstimation";
 import { LoginContext } from "../../../Context/LoginContext";
-import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard"; // Import the new component
+import { ItemDetailsCard } from "@modules/rate/components";
+import { api, ENDPOINTS } from "@api";
+import { storage } from "@shared/utils";
+import { logger } from "@core/logger";
 
 const HomeScreen1 = () => {
   const { theme } = useTheme();
@@ -54,17 +56,17 @@ const HomeScreen1 = () => {
 
   
 
-  // Get employee ID from AsyncStorage on component mount
+  // Get employee ID from storage on component mount
   useEffect(() => {
     const getEmployeeId = async () => {
       try {
-        const empId = await AsyncStorage.getItem("EMPLOYEE_ID");
+        const empId = await storage.get("EMPLOYEE_ID");
         if (empId) {
           setEmployeeId(empId);
           estimation.setEmp(empId); // Set in estimation hook too
         }
       } catch (error) {
-        console.error("Error fetching employee ID:", error);
+        logger.error("Error fetching employee ID:", error);
       }
     };
 
@@ -134,40 +136,29 @@ const fetchApiData = async () => {
     // CHECK TAG ISSUED - best-effort. Without a real cost centre this can
     // fail server-side; don't block the estimation lookup on it.
     try {
-      const issuedResponse = await fetch(
-        `${API_BASE_URL}/tag-details?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
-          costId
-        )}`
-      );
-      if (issuedResponse.ok) {
-        const issuedData = await issuedResponse.json();
-        if (issuedData?.status === "issued") {
-          Alert.alert(
-            "Tag Already Issued",
-            `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
-          );
-          setLoadingApiData(false);
-          return;
-        }
-      } else {
-        console.warn(
-          "tag-details check failed, continuing without it:",
-          issuedResponse.status
+      const issuedResponse = await api.get(ENDPOINTS.ESTIMATION.TAG_DETAILS, {
+        params: { ITEMID: itemId, TAGNO: tagNo, COSTID: costId },
+      });
+      const issuedData = issuedResponse.data;
+      if (issuedData?.status === "issued") {
+        Alert.alert(
+          "Tag Already Issued",
+          `This tag was already issued on ${issuedData.trandate}\nTransaction No: ${issuedData.tranno}`
         );
+        setLoadingApiData(false);
+        return;
       }
     } catch (issuedErr) {
-      console.warn("tag-details check errored, continuing without it:", issuedErr);
+      logger.warn("tag-details check errored, continuing without it:", issuedErr);
     }
 
     // ESTIMATION API
-    const response = await fetch(
-      `${API_BASE_URL}/estimationTotal?ITEMID=${itemId}&TAGNO=${tagNo}&COSTID=${encodeURIComponent(
-        costId
-      )}`
-    );
-    console.log("🔵 Estimation API URL:", response.url);
+    const response = await api.get(ENDPOINTS.ESTIMATION.GET_ESTIMATION, {
+      params: { ITEMID: itemId, TAGNO: tagNo, COSTID: costId },
+    });
+    logger.debug("Estimation API:", ENDPOINTS.ESTIMATION.GET_ESTIMATION);
 
-    const data = await response.json();
+    const data = response.data;
 
     setDisplayData(data || []);
     estimation.setITEMID(itemId);
@@ -175,7 +166,7 @@ const fetchApiData = async () => {
     setValidationError("");
 
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     Alert.alert("Error", "Unable to fetch data from API");
   } finally {
     setLoadingApiData(false);
@@ -210,21 +201,21 @@ const handleScannedData = (data) => {
       return;
     }
 
-    console.log("Submitting data from home:", currentData);
+    logger.debug("Submitting data from home:", currentData);
     setIsSubmitting(true);
     try {
       // Set data to estimation hook before submitting
 
       const batchNo = await estimation.submitData(currentData);
       if (batchNo) {
-        console.log("Submission successful. Batch No:", batchNo);
+        logger.debug("Submission successful. Batch No:", batchNo);
         estimation.setEstBatchNo(batchNo);
         // Clear local data after successful submission
         setDisplayData([]);
         setCombinedInput("");
       }
     } catch (error) {
-      console.error("Submission error:", error);
+      logger.error("Submission error:", error);
       Alert.alert(
         "Submission Failed",
         error.message || "Unable to submit data"
@@ -307,7 +298,6 @@ const handleScannedData = (data) => {
                     key={`item-${index}`}
                     item={item}
                     index={index}
-                    theme={theme} // Pass theme to component
                   />
                 ))}
               </View>

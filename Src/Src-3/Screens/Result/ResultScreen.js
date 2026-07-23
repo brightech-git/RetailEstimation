@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { logger } from "@core/logger";
 import {
   View,
   ScrollView,
@@ -165,7 +166,7 @@ const ResultsScreen = ({ route, navigation }) => {
           setTotalUnchecked(0);
         }
       } catch (error) {
-        console.error("Error loading data:", error);
+        logger.error("Error loading data:", error);
         showTopToast("Failed to load data", "red");
       } finally {
         setLoading(false);
@@ -192,7 +193,7 @@ const refreshStatsOnly = useCallback(async () => {
       setTotalCount(data.totalCount || 0);
     }
   } catch (e) {
-    console.log("Auto refresh failed");
+    logger.debug("Auto refresh failed");
   }
 }, [filters, service]);
 
@@ -290,7 +291,7 @@ const itemCtrId = filters.itemCtrId || null;
         if (isManual) setFormData({ itemId: "", tagNo: "" });
         await loadData(0, false);
       } catch (error) {
-        console.error("Update error:", error);
+        logger.error("Update error:", error);
         showTopToast("Update failed. Please try again.", "red");
         setRecentlyUpdatedItem(null);
       }

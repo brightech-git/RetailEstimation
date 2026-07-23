@@ -1,7 +1,8 @@
 import TcpSocket from "react-native-tcp-socket";
 import { Alert } from "react-native";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api, ENDPOINTS, backendManager } from "@api";
+import { storage } from "@shared/utils";
+import { logger } from "@core/logger";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
 // import { LoginContext } from "../../Context/LoginContext";
 // import react, { useState, useEffect, useContext } from "react";
@@ -114,77 +115,9 @@ const printQRCode = (estimationNo) => {
   return qr;
 };
 
-// ✅ FIXED: Create a simple function, not an object with methods
-export const createPrinterService = (baseUrl) => {
-  const API_URL = `${baseUrl}/printers`;
-
-  // ✅ Return a simple object with functions, not a "service" that can be mistaken for a class
-  return {
-    // Get Printer By ID
-    getPrinterById: async (id) => {
-      try {
-        const response = await axios.get(`${API_URL}/get`, { params: { id } });
-        return response.data;
-      } catch (error) {
-        console.error("❌ Error getting printer by ID:", error);
-        throw error;
-      }
-    },
-
-    // Get Printers By Employee ID
-    getPrintersByEmployee: async (empId) => {
-      try {
-        const response = await axios.get(`${API_URL}/by-emp`, {
-          params: { empId },
-        });
-        console.log("📦 Printers for employee:", empId, response.data);
-        return response.data;
-      } catch (error) {
-        console.error("❌ Error getting printers by employee:", error);
-        throw error;
-      }
-    },
-
-    // Create Printer
-    createPrinter: async (printerData) => {
-      try {
-        const response = await axios.post(`${API_URL}/create`, printerData);
-        return response.data;
-      } catch (error) {
-        console.error("❌ Error creating printer:", error);
-        throw error;
-      }
-    },
-
-    // Update Printer
-    updatePrinter: async (printerData) => {
-      try {
-        const response = await axios.put(`${API_URL}/update`, printerData);
-        return response.data;
-      } catch (error) {
-        console.error("❌ Error updating printer:", error);
-        throw error;
-      }
-    },
-
-    // Delete Printer
-    deletePrinter: async (id) => {
-      try {
-        const response = await axios.delete(`${API_URL}/delete`, {
-          params: { id },
-        });
-        return response.data;
-      } catch (error) {
-        console.error("❌ Error deleting printer:", error);
-        throw error;
-      }
-    },
-  };
-};
-
 // Fetch estimation data
 export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
-  console.log("🔍 fetchEstimationData called with:", {
+  logger.debug("🔍 fetchEstimationData called with:", {
     estBatchNo,
     apiBaseUrl,
   });
@@ -200,25 +133,27 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
   }
 
   try {
-    const api = axios.create({
-      baseURL: apiBaseUrl,
-      timeout: 30000,
-    });
+    // Register the per-company backend for the shared api instance.
+    backendManager.setCompanyUrl(apiBaseUrl);
 
     // Scope every downstream call to the logged-in user's cost centre
-    const costId = (await AsyncStorage.getItem("SELECTED_COST_ID")) || "";
+    const costId = (await storage.get("SELECTED_COST_ID")) || "";
 
-    console.log(
+    logger.debug(
       "📡 Making API call to:",
-      `${apiBaseUrl}/printDetails/${estBatchNo}`
+      `${apiBaseUrl}${ENDPOINTS.PRINTER.PRINT_DETAILS}/${estBatchNo}`
     );
-    const response = await api.get(`/printDetails/${estBatchNo}`, {
-      params: { costId: costId || undefined },
-    });
-    console.log("✅ API Response received:", response.status);
+    const response = await api.get(
+      `${ENDPOINTS.PRINTER.PRINT_DETAILS}/${estBatchNo}`,
+      {
+        params: { costId: costId || undefined },
+        timeout: 30000,
+      }
+    );
+    logger.debug("✅ API Response received:", response.status);
 
     const itemsRaw = Array.isArray(response.data) ? response.data : [];
-    console.log("📊 Items raw data length:", itemsRaw.length);
+    logger.debug("📊 Items raw data length:", itemsRaw.length);
 
     if (!itemsRaw.length) {
       Alert.alert("Error", "No data found for this Estimation.");
@@ -227,32 +162,33 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
 
     const items = mergeItems(itemsRaw);
     const sample = items[0];
-    console.log("📋 Sample item:", sample);
+    logger.debug("📋 Sample item:", sample);
 
     // Fetch offer
     let offer = { discount: 0, netwt: 0, board_rate: 0 };
     try {
-      console.log("📡 Fetching offer data...");
-      const offerRes = await api.post("/offer", null, {
+      logger.debug("📡 Fetching offer data...");
+      const offerRes = await api.post(ENDPOINTS.ESTIMATION.SAVE_OFFER, null, {
         params: { tagno: sample.tagno, costId: costId || undefined },
+        timeout: 30000,
       });
       offer = offerRes.data || offer;
-      console.log("✅ Offer data:", offer);
+      logger.debug("✅ Offer data:", offer);
     } catch (err) {
-      console.warn("Failed to fetch offer:", err);
+      logger.warn("Failed to fetch offer:", err);
     }
 
     // Fetch today rates
     let goldRate = 0,
       silverRate = 0;
     try {
-      console.log("📡 Fetching today rates...");
-      const rateRes = await api.get("/todayrate");
+      logger.debug("📡 Fetching today rates...");
+      const rateRes = await api.get(ENDPOINTS.RATE.TODAY_RATE, { timeout: 30000 });
       goldRate = rateRes.data?.GOLDRATE || 0;
       silverRate = rateRes.data?.SILVERRATE || 0;
-      console.log("✅ Rates - Gold:", goldRate, "Silver:", silverRate);
+      logger.debug("✅ Rates - Gold:", goldRate, "Silver:", silverRate);
     } catch (rateError) {
-      console.warn("Failed to fetch rates, using sample rates:", rateError);
+      logger.warn("Failed to fetch rates, using sample rates:", rateError);
       goldRate = sample.goldrate || 0;
       silverRate = sample.silverrate || 0;
     }
@@ -291,7 +227,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
 
     const grandTotal = baseAmount + totalTaxAmount;
 
-    console.log("💰 Totals:", {
+    logger.debug("💰 Totals:", {
       totalpcs,
       totalGrossWeight,
       baseAmount,
@@ -306,16 +242,16 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     // Fetch stones for each item
     const fetchStonesForItem = async (itemid, tagno) => {
       try {
-        console.log(`📡 Fetching stones for ITEMID=${itemid} TAGNO=${tagno}`);
-        const res = await api.get("/stnInputs", {
+        logger.debug(`📡 Fetching stones for ITEMID=${itemid} TAGNO=${tagno}`);
+        const res = await api.get(ENDPOINTS.ESTIMATION.STONE_INPUTS, {
           params: { itemid, tagno, costId: costId || undefined },
           timeout: 15000,
         });
         const stones = Array.isArray(res.data) ? res.data : [];
-        console.log(`✅ Found ${stones.length} stones for item`);
+        logger.debug(`✅ Found ${stones.length} stones for item`);
         return stones;
       } catch (err) {
-        console.warn(
+        logger.warn(
           `Failed to fetch stones for ITEMID=${itemid} TAGNO=${tagno}`,
           err
         );
@@ -324,7 +260,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     };
 
     // Build items with stones
-    console.log("🔄 Building items with stones...");
+    logger.debug("🔄 Building items with stones...");
     const itemsWithStones = await Promise.all(
       items.map(async (item) => {
         const stones = await fetchStonesForItem(item.itemid, item.tagno);
@@ -350,25 +286,21 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
       itemsWithStones,
     };
 
-    console.log("✅ Successfully built slip data with first item GST");
+    logger.debug("✅ Successfully built slip data with first item GST");
     return result;
   } catch (error) {
-    console.error("❌ Fetch error details:", {
+    // The shared api rejects with a normalized ApiError ({ message, status, data }).
+    logger.error("Fetch error details:", {
       message: error.message,
-      code: error.code,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
+      status: error.status,
+      data: error.data,
     });
 
     let errorMessage = "Failed to fetch estimation data.";
-    if (error.code === "NETWORK_ERROR") {
-      errorMessage =
-        "Network error: Please check your internet connection and try again.";
-    } else if (error.response) {
-      errorMessage = `Server error: ${error.response.status} - ${error.response.statusText}`;
-    } else if (error.request) {
-      errorMessage = "No response from server. Please try again.";
+    if (error.status) {
+      errorMessage = `Server error: ${error.status}`;
+    } else if (error.message) {
+      errorMessage = error.message;
     }
 
     Alert.alert("Error", errorMessage);
@@ -379,20 +311,22 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
 // Function to get active printer from API
 export const getActivePrinter = async (employeeId, apiBaseUrl) => {
   try {
-    console.log("🖨️ Fetching printers for employee:", employeeId);
+    logger.debug("🖨️ Fetching printers for employee:", employeeId);
 
     if (!apiBaseUrl) {
       throw new Error("API base URL is required to fetch printers");
     }
 
-    // ✅ FIXED: Properly call createPrinterService (no extra parentheses)
-    const printerService = createPrinterService(apiBaseUrl);
-    const printers = await printerService.getPrintersByEmployee(employeeId);
+    backendManager.setCompanyUrl(apiBaseUrl);
+    const res = await api.get(ENDPOINTS.PRINTER.BY_EMP, {
+      params: { empId: employeeId },
+    });
+    const printers = res.data;
 
-    console.log("📦 Printers received from API:", printers);
+    logger.debug("📦 Printers received from API:", printers);
 
     if (!printers || printers.length === 0) {
-      console.log("❌ No printers found for employee:", employeeId);
+      logger.debug("❌ No printers found for employee:", employeeId);
       return null;
     }
 
@@ -409,7 +343,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
         activeValue === "Y" ||
         activeValue === "y";
 
-      console.log(`🔍 Checking printer "${printer.name}":`, {
+      logger.debug(`🔍 Checking printer "${printer.name}":`, {
         active: activeValue,
         type: typeof activeValue,
         isActive: isActive,
@@ -419,7 +353,7 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
     });
 
     if (activePrinter) {
-      console.log("✅ ACTIVE PRINTER FOUND:", {
+      logger.debug("✅ ACTIVE PRINTER FOUND:", {
         name: activePrinter.name,
         ip: activePrinter.ip_address,
         port: activePrinter.port,
@@ -428,11 +362,11 @@ export const getActivePrinter = async (employeeId, apiBaseUrl) => {
       });
       return activePrinter;
     } else {
-      console.log("ℹ️ No active printer found. User needs to set one.");
+      logger.debug("ℹ️ No active printer found. User needs to set one.");
       return null;
     }
   } catch (error) {
-    console.error("❌ Error in getActivePrinter:", error);
+    logger.error("❌ Error in getActivePrinter:", error);
     return null;
   }
 };
@@ -444,12 +378,12 @@ export const checkPrinterConnection = async (
   apiBaseUrl = null
 ) => {
   try {
-    console.log("🔍 Starting printer connectivity check...");
+    logger.debug("🔍 Starting printer connectivity check...");
 
     let activePrinter = printer;
 
     if (!activePrinter && employeeId && apiBaseUrl) {
-      console.log(
+      logger.debug(
         "🔄 No printer provided, fetching active printer for employee:",
         employeeId
       );
@@ -457,7 +391,7 @@ export const checkPrinterConnection = async (
     }
 
     if (!activePrinter) {
-      console.log("❌ No printer configured for connectivity check");
+      logger.debug("❌ No printer configured for connectivity check");
       return {
         connected: false,
         error: "No printer configured",
@@ -471,15 +405,15 @@ export const checkPrinterConnection = async (
       timeout: 5000,
     };
 
-    console.log(
+    logger.debug(
       `🔍 Checking printer connection: ${activePrinter.ip_address}:${activePrinter.port}`
     );
 
     return new Promise((resolve) => {
-      console.log("🔄 Creating TCP connection for printer check...");
+      logger.debug("🔄 Creating TCP connection for printer check...");
 
       const client = TcpSocket.createConnection(options, () => {
-        console.log("✅ Printer connection successful - printer is online");
+        logger.debug("✅ Printer connection successful - printer is online");
         client.destroy();
         resolve({
           connected: true,
@@ -489,7 +423,7 @@ export const checkPrinterConnection = async (
       });
 
       client.on("error", (error) => {
-        console.log("❌ Printer connection error:", error.message);
+        logger.debug("❌ Printer connection error:", error.message);
         client.destroy();
         resolve({
           connected: false,
@@ -499,7 +433,7 @@ export const checkPrinterConnection = async (
       });
 
       client.on("timeout", () => {
-        console.log("⏰ Printer connection timeout - printer may be offline");
+        logger.debug("⏰ Printer connection timeout - printer may be offline");
         client.destroy();
         resolve({
           connected: false,
@@ -510,7 +444,7 @@ export const checkPrinterConnection = async (
 
       setTimeout(() => {
         if (client && client.writable) {
-          console.log("⏰ Fallback timeout reached for printer check");
+          logger.debug("⏰ Fallback timeout reached for printer check");
           client.destroy();
           resolve({
             connected: false,
@@ -521,7 +455,7 @@ export const checkPrinterConnection = async (
       }, 6000);
     });
   } catch (error) {
-    console.error("❌ Printer check setup error:", error);
+    logger.error("❌ Printer check setup error:", error);
     return {
       connected: false,
       error: error.message || "Failed to check printer connection",
@@ -537,13 +471,13 @@ export const printEstimationToPrinter = async (
   apiBaseUrl = null
 ) => {
   try {
-    console.log("🖨️ Starting print process...");
+    logger.debug("🖨️ Starting print process...");
 
     // Get active printer
     let activePrinter = currentPrinter;
 
     if (!activePrinter && employeeId && apiBaseUrl) {
-      console.log(
+      logger.debug(
         "🔄 No printer provided, fetching active printer for employee:",
         employeeId
       );
@@ -551,7 +485,7 @@ export const printEstimationToPrinter = async (
     }
 
     if (!activePrinter) {
-      console.log("❌ No active printer selected - stopping print process");
+      logger.debug("❌ No active printer selected - stopping print process");
       throw new Error(
         "No active printer selected. Please select a printer in Printer Settings."
       );
@@ -564,22 +498,22 @@ export const printEstimationToPrinter = async (
         activePrinter.active === 1
       )
     ) {
-      console.log("❌ Printer is not marked as active:", activePrinter);
+      logger.debug("❌ Printer is not marked as active:", activePrinter);
       throw new Error(
         "Selected printer is not active. Please set a current printer in Printer Settings."
       );
     }
 
     // Check printer connectivity
-    console.log("🔍 Checking printer connectivity before printing...");
+    logger.debug("🔍 Checking printer connectivity before printing...");
     const connectivityStatus = await checkPrinterConnection(activePrinter);
 
     if (!connectivityStatus.connected) {
-      console.log("❌ Printer is not connected, aborting print");
+      logger.debug("❌ Printer is not connected, aborting print");
       throw new Error(`Printer is offline: ${connectivityStatus.error}`);
     }
 
-    console.log("✅ Printer is connected, proceeding with print...");
+    logger.debug("✅ Printer is connected, proceeding with print...");
 
     const options = {
       port: activePrinter.port || 9100,
@@ -588,7 +522,7 @@ export const printEstimationToPrinter = async (
       timeout: 10000,
     };
 
-    console.log(
+    logger.debug(
       `🖨️ Printing to: ${activePrinter.ip_address}:${activePrinter.port}`
     );
 
@@ -608,10 +542,10 @@ export const printEstimationToPrinter = async (
     } = slipData;
 
     return new Promise((resolve, reject) => {
-      console.log("🔄 Creating TCP connection for printing...");
+      logger.debug("🔄 Creating TCP connection for printing...");
 
       const client = TcpSocket.createConnection(options, () => {
-        console.log("✅ Connected to printer:", activePrinter.ip_address);
+        logger.debug("✅ Connected to printer:", activePrinter.ip_address);
 
         const offerWeight = offer.netwt || 0;
         const offerBoardRate = offer.board_rate || 0;
@@ -753,7 +687,7 @@ export const printEstimationToPrinter = async (
         printContent += FONTS.ALIGN_CENTER;
 
         const estNo = sample?.tranno || "NA";
-        console.log("Printing QR Code for Estimation No:", estNo);
+        logger.debug("Printing QR Code for Estimation No:", estNo);
 
         printContent += `Est.No: ${estNo}\n`;
         printContent += printQRCode(estNo);
@@ -761,56 +695,56 @@ export const printEstimationToPrinter = async (
         printContent += PRINTER_COMMANDS.FEED_LINES(3);
         printContent += PRINTER_COMMANDS.CUT;
 
-        console.log("📝 Sending print data to printer...");
+        logger.debug("📝 Sending print data to printer...");
 
         try {
           client.write(printContent, "binary", (error) => {
             if (error) {
-              console.log("❌ Write error:", error);
+              logger.debug("❌ Write error:", error);
               reject(error);
               return;
             }
 
-            console.log("✅ Print data sent successfully");
+            logger.debug("✅ Print data sent successfully");
             setTimeout(() => {
               client.destroy();
-              console.log("✅ Print completed successfully");
+              logger.debug("✅ Print completed successfully");
               resolve();
             }, 1000);
           });
         } catch (error) {
-          console.log("❌ Write exception:", error);
+          logger.debug("❌ Write exception:", error);
           client.destroy();
           reject(error);
         }
       });
 
       client.on("error", (error) => {
-        console.log("❌ Printer connection error during print:", error);
+        logger.debug("❌ Printer connection error during print:", error);
         client.destroy();
         reject(error);
       });
 
       client.on("close", () => {
-        console.log("🔌 Printer connection closed");
+        logger.debug("🔌 Printer connection closed");
       });
 
       client.on("timeout", () => {
-        console.log("⏰ Printer connection timeout during print");
+        logger.debug("⏰ Printer connection timeout during print");
         client.destroy();
         reject(new Error("Connection timeout"));
       });
 
       setTimeout(() => {
         if (client && client.writable) {
-          console.log("⏰ Overall print operation timeout");
+          logger.debug("⏰ Overall print operation timeout");
           client.destroy();
           reject(new Error("Print operation timeout"));
         }
       }, 15000);
     });
   } catch (error) {
-    console.error("❌ Print setup error:", error);
+    logger.error("❌ Print setup error:", error);
     throw error;
   }
 };
@@ -824,5 +758,4 @@ export default {
   printEstimationToPrinter,
   getActivePrinter,
   checkPrinterConnection,
-  createPrinterService,
 };

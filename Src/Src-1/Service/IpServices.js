@@ -1,46 +1,35 @@
-// Src/Services/PrinterService.js
-import axios from "axios";
-import { useApiBaseUrl } from "../../Config/Config";
+// IpServices.js
+// The single printer-CRUD implementation for the app (the duplicate
+// createPrinterService in EstimationPrinterService has been removed).
+// Uses the shared API layer (api + ENDPOINTS.PRINTER) + logger. Same method
+// names, params, payloads and responses as before.
+import { api, ENDPOINTS } from "@api";
+import { logger } from "@core/logger";
 
-// React Hook for Printer APIs
 export const usePrinterService = () => {
-  const baseUrl = useApiBaseUrl();
-  const API_URL = `${baseUrl}/printers`;
-
-  // 1️⃣ Get Printer By ID
   const getPrinterById = async (id) => {
-    const response = await axios.get(`${API_URL}/get`, { params: { id } });
+    const response = await api.get(ENDPOINTS.PRINTER.GET, { params: { id } });
     return response.data;
   };
 
-  // 2️⃣ Get Printers By Employee ID
   const getPrintersByEmployee = async (empId) => {
-    const response = await axios.get(`${API_URL}/by-emp`, {
-      params: { empId },
-    });
-
-    console.log("📦 Printers for employee:", empId, response.data);
-
+    const response = await api.get(ENDPOINTS.PRINTER.BY_EMP, { params: { empId } });
+    logger.debug("Printers for employee:", empId, response.data);
     return response.data;
   };
 
-  // 3️⃣ Create Printer
   const createPrinter = async (printerData) => {
-    const response = await axios.post(`${API_URL}/create`, printerData);
+    const response = await api.post(ENDPOINTS.PRINTER.CREATE, printerData);
     return response.data;
   };
 
-  // 4️⃣ Update Printer
   const updatePrinter = async (printerData) => {
-    const response = await axios.put(`${API_URL}/update`, printerData);
+    const response = await api.put(ENDPOINTS.PRINTER.UPDATE, printerData);
     return response.data;
   };
 
-  // 5️⃣ Delete Printer
   const deletePrinter = async (id) => {
-    const response = await axios.delete(`${API_URL}/delete`, {
-      params: { id },
-    });
+    const response = await api.delete(ENDPOINTS.PRINTER.DELETE, { params: { id } });
     return response.data;
   };
 

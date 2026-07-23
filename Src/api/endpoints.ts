@@ -2,6 +2,7 @@
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: "/company/getByCredentials", // uses the AUTH backend
+    UPDATE_COMPANY: "/company/updateCompany", // uses the AUTH backend
   },
 
   COST: {
@@ -43,11 +44,13 @@ export const ENDPOINTS = {
     METAL_NAMES: "/metalnames",
     COUNTER_NAMES: "/itemctrnames",
     ITEMS_WITH_SUBITEMS: "/itemtag/itemnames-with-subitems",
+    UPDATE_CHECK: "/itemtag/updateCheck",
   },
 
   PRINTER: {
     GET: "/printers/get",
     BY_EMP: "/printers/by-emp",
+    PRINT_DETAILS: "/printDetails", // + `/${estBatchNo}`
     CREATE: "/printers/create",
     UPDATE: "/printers/update",
     DELETE: "/printers/delete",

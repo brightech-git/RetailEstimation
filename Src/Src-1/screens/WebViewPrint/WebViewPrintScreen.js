@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { logger } from "@core/logger";
 import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -65,10 +66,10 @@ const WebViewPrintScreen = () => {
         style={styles.webview}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          console.warn('WebView error: ', nativeEvent);
+          logger.warn('WebView error: ', nativeEvent);
         }}
         onLoadEnd={() => {
-          console.log('WebView loaded successfully');
+          logger.debug('WebView loaded successfully');
         }}
         originWhitelist={['*']}
       />

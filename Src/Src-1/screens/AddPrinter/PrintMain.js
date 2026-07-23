@@ -19,7 +19,8 @@ import { useToast } from "../../Context/ToastContext";
 import { createPrinterSettingsStyles } from "./PrinterStyles";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { storage } from "@shared/utils";
+import { logger } from "@core/logger";
 
 // Constants
 const DEFAULT_PORT = "9100";
@@ -109,12 +110,14 @@ const PrinterSettings = () => {
   // Load employee ID from AsyncStorage
   const loadEmployeeId = useCallback(async () => {
     try {
-      let storedEmployeeId = await AsyncStorage.getItem(STORAGE_KEY_EMPLOYEE);
-      
+      let storedEmployeeId = await storage.get(STORAGE_KEY_EMPLOYEE);
+
       if (!storedEmployeeId) {
-        const userData = await AsyncStorage.getItem(STORAGE_KEY_USERDATA);
+        // storage.get auto-parses JSON; guard in case it returns a raw string.
+        const userData = await storage.get(STORAGE_KEY_USERDATA);
         if (userData) {
-          const parsedUser = JSON.parse(userData);
+          const parsedUser =
+            typeof userData === "string" ? JSON.parse(userData) : userData;
           storedEmployeeId = parsedUser.employeeId || parsedUser.id || "";
         }
       }
@@ -125,7 +128,7 @@ const PrinterSettings = () => {
         showToast("Employee ID not found. Please login again.", "error");
       }
     } catch (error) {
-      console.error("Error loading employee ID:", error);
+      logger.error("Error loading employee ID:", error);
       showToast("Failed to load employee data", "error");
     }
   }, [showToast]);
@@ -135,13 +138,13 @@ const PrinterSettings = () => {
     if (!employeeId) return;
     
     try {
-      console.log("🖨️ Loading printers for employee:", employeeId);
+      logger.debug("🖨️ Loading printers for employee:", employeeId);
       
       const employeePrinters = await printerService.getPrintersByEmployee(employeeId);
 
       if (!isMountedRef.current) return;
 
-      console.log("📦 Printers loaded:", employeePrinters?.length || 0);
+      logger.debug("📦 Printers loaded:", employeePrinters?.length || 0);
 
       setPrinterList(employeePrinters || []);
 
@@ -150,7 +153,7 @@ const PrinterSettings = () => {
       );
       setCurrentPrinterState(activePrinter || null);
     } catch (error) {
-      console.error("Error loading printer data:", error);
+      logger.error("Error loading printer data:", error);
       if (isMountedRef.current) {
         showToast("Failed to load printer settings", "error");
       }
@@ -235,7 +238,7 @@ const PrinterSettings = () => {
     } catch (error) {
       const errorMessage = error.message || "Failed to save printer";
       showToast(errorMessage, "error");
-      console.error("Save printer error:", error);
+      logger.error("Save printer error:", error);
     } finally {
       if (isMountedRef.current) {
         setIsSaving(false);
@@ -258,7 +261,7 @@ const PrinterSettings = () => {
   const handleSetCurrentPrinter = useCallback(
     async (printer) => {
       try {
-        console.log("🎯 Setting printer as active:", printer.name);
+        logger.debug("🎯 Setting printer as active:", printer.name);
         
         // First, deactivate all other printers for this employee
         const employeePrinters = printerList.filter(
@@ -290,7 +293,7 @@ const PrinterSettings = () => {
           showToast(`${printer.name} is now active`, "success");
         }
       } catch (error) {
-        console.error("Error setting current printer:", error);
+        logger.error("Error setting current printer:", error);
         showToast(error.message || "Failed to set active printer", "error");
       }
     },
@@ -328,7 +331,7 @@ const PrinterSettings = () => {
         showToast("Active printer cleared", "info");
       }
     } catch (error) {
-      console.error("Error clearing current printer:", error);
+      logger.error("Error clearing current printer:", error);
       showToast("Failed to clear active printer", "error");
     }
   }, [printerList, printerService, loadPrinterData, showToast, employeeId]);
@@ -366,7 +369,7 @@ const PrinterSettings = () => {
               } catch (error) {
                 const errorMessage = error.message || "Failed to delete printer";
                 showToast(errorMessage, "error");
-                console.error("Delete printer error:", error);
+                logger.error("Delete printer error:", error);
               }
             },
           },
@@ -407,7 +410,7 @@ const PrinterSettings = () => {
         showToast(`${employeePrinters.length} printer(s) deleted`, "success");
       }
     } catch (error) {
-      console.error("Error clearing printers:", error);
+      logger.error("Error clearing printers:", error);
       showToast("Failed to clear printers", "error");
     }
   }, [printerList, printerService, loadPrinterData, showToast, employeeId]);

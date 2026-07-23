@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { logger } from "@core/logger";
 import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "react-native";
 import DropdownInput from "./DropDown";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,7 +44,7 @@ const FiltersComponent = ({
               label="Metal"
               selectedValue={filters.metalId}
               onSelect={(id) => {
-                console.log("Selected Metal ID:", id);
+                logger.debug("Selected Metal ID:", id);
                 setFilters((prev) => ({
                   ...prev,
                   metalId: id,
@@ -61,7 +62,7 @@ const FiltersComponent = ({
               label="Counter"
               selectedValue={filters.itemCtrId}
               onSelect={(id) => {
-                console.log("Selected Counter ID:", id);
+                logger.debug("Selected Counter ID:", id);
                 setFilters((prev) => ({
                   ...prev,
                   itemCtrId: id,
@@ -85,7 +86,7 @@ const FiltersComponent = ({
                 label="Item Name"
                 selectedValue={filters.itemId}
                 onSelect={(id) => {
-                  console.log("Selected Item ID:", id);
+                  logger.debug("Selected Item ID:", id);
                   setFilters((prev) => ({
                     ...prev,
                     itemId: id,
@@ -110,7 +111,7 @@ const FiltersComponent = ({
                 label="Sub Item"
                 selectedValue={filters.subItemId}
                 onSelect={(id) => {
-                  console.log("Selected SubItem ID:", id);
+                  logger.debug("Selected SubItem ID:", id);
                   setFilters((prev) => ({
                     ...prev,
                     subItemId: id,

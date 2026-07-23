@@ -1,28 +1,20 @@
 // Service/StockPasswordUpdateService.js
-const BASE_URL = "https://app.bmgjewellers.com/api/v1/company";
+// Migrated to the shared API layer. The stock-password update targets the AUTH
+// backend (same host used for login), so the request is flagged { auth: true }.
+// No hardcoded URL, no fetch, no console. Payload (stockPassword + id as query
+// params), method (PUT), and response handling are preserved.
+import { api, ENDPOINTS } from "@api";
+import { logger } from "@core/logger";
 
 export const updateCompanyStockPassword = async ({ stockPassword, id }) => {
   try {
-    const response = await fetch(
-      `${BASE_URL}/updateCompany?stockPassword=${encodeURIComponent(
-        stockPassword
-      )}&id=${id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Failed to update stock password");
-    }
-
-    return await response.json();
+    const response = await api.put(ENDPOINTS.AUTH.UPDATE_COMPANY, null, {
+      auth: true,
+      params: { stockPassword, id },
+    });
+    return response.data;
   } catch (error) {
-    console.error("Update Company Stock Password Error:", error);
+    logger.error("Update Company Stock Password Error:", error);
     throw error;
   }
 };

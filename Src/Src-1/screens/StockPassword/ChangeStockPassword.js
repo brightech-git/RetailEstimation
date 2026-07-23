@@ -16,7 +16,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../../Context/ThemeContext";
 import { LoginContext } from "../../../Context/LoginContext";
 import { updateCompanyStockPassword } from "../../Service/StockPasswordUpdateService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 const ChangeStockPassword = ({ navigation }) => {

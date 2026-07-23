@@ -216,11 +216,6 @@ export const useEstimation = (apiBaseUrl) => {
     try {
       setLoading(true);
 
-      // Get transaction number
-      const TRANNO = await service.getTransactionNumber();
-      logger.debug("[TRANNO] Response:", TRANNO);
-      if (!TRANNO) throw new Error("Failed to get TRANNO");
-
       // Get COSTID and COMPANYID from the first item, falling back to the
       // logged-in user's selected cost centre / company - some callers
       // (e.g. Homescreen1's raw API data) never had COSTID/COMPANYID on
@@ -229,16 +224,20 @@ export const useEstimation = (apiBaseUrl) => {
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
       const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
 
-      // Get estimation batch number
-      // companyId from LoginContext is a numeric ID; /estbatchno needs the
-      // string company code (e.g. "SFH"). Resolve it from costOptions first,
-      // then fall back to companyData fields.
+      // Resolve string company code (e.g. "SFL") for APIs that need it
       const companyCode =
         costOptions?.find((o) => o.COSTID === costId)?.COMPANYID ||
         companyData?.COMPANYCODE ||
         companyData?.COMPANYID ||
         companyId ||
         "";
+
+      // Get transaction number
+      const TRANNO = await service.getTransactionNumber(costId, companyCode);
+      logger.debug("[TRANNO] Response:", TRANNO);
+      if (!TRANNO) throw new Error("Failed to get TRANNO");
+
+      // Get estimation batch number
       logger.debug("[EstBatchNo] Payload:", { costId, companyId: companyCode });
       const batchNo = await service.getEstimationBatchNo(costId, companyCode);
       logger.debug("[EstBatchNo] Response:", batchNo);

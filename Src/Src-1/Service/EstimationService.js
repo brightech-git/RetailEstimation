@@ -36,8 +36,13 @@ export class EstimationService {
   }
 
   // Data fetching methods
-  async fetchItemList() {
-    const response = await this.request({ method: "get", url: ENDPOINTS.ESTIMATION.ITEM_LIST });
+  async fetchItemList(costId) {
+    const resolvedCostId = costId || (await this.getCostId());
+    const response = await this.request({
+      method: "get",
+      url: ENDPOINTS.ESTIMATION.ITEM_LIST,
+      params: { costId: resolvedCostId || undefined },
+    });
     const data = response.data;
     const uniqueItemIds = Array.from(new Set(data.map((item) => item.ITEMID)));
     return uniqueItemIds;
@@ -78,8 +83,14 @@ export class EstimationService {
     }
   }
 
-  async getTransactionNumber() {
-    const response = await this.request({ method: "get", url: ENDPOINTS.ESTIMATION.TRAN_NO });
+  async getTransactionNumber(costId, companyId) {
+    const response = await this.request({
+      method: "get",
+      url: ENDPOINTS.ESTIMATION.TRAN_NO,
+      params: { costId, companyId },
+     
+    });
+     console.log("params", { costId, companyId });
     return response.data;
   }
 
@@ -144,12 +155,13 @@ export class EstimationService {
     }
   }
 
-  async getTransactionDate(ITEMID, TAGNO) {
+  async getTransactionDate(ITEMID, TAGNO, costId) {
     try {
+      const resolvedCostId = costId || (await this.getCostId());
       const response = await this.request({
         method: "get",
         url: ENDPOINTS.ESTIMATION.TRAN_DATE,
-        params: { ITEMID, TAGNO },
+        params: { ITEMID, TAGNO, costId: resolvedCostId || undefined },
       });
       return response.data?.trandate;
     } catch (err) {
@@ -186,11 +198,13 @@ export class EstimationService {
     }
   }
 
-  async getTaxDetails(itemId) {
+  async getTaxDetails(itemId, costId) {
     try {
+      const resolvedCostId = costId || (await this.getCostId());
       const response = await this.request({
         method: "get",
         url: `${ENDPOINTS.ESTIMATION.TAX_DETAILS}/${itemId}`,
+        params: { costId: resolvedCostId || undefined },
       });
       return response?.data?.[0] || {};
     } catch (err) {
@@ -230,16 +244,23 @@ export class EstimationService {
     return response.data;
   }
 
-  async updateTransactionNumber() {
+  async updateTransactionNumber(costId) {
+    const resolvedCostId = costId || (await this.getCostId());
     const response = await this.request({
       method: "post",
       url: ENDPOINTS.ESTIMATION.UPDATE_TRAN_NO,
+      params: { costId: resolvedCostId || undefined },
     });
     return response.data;
   }
 
-  async getIPAddress() {
-    const response = await this.request({ method: "get", url: ENDPOINTS.ESTIMATION.IP_ADDRESS });
+  async getIPAddress(costId) {
+    const resolvedCostId = costId || (await this.getCostId());
+    const response = await this.request({
+      method: "get",
+      url: ENDPOINTS.ESTIMATION.IP_ADDRESS,
+      params: { costId: resolvedCostId || undefined },
+    });
     return response.data?.ip || response.data || "";
   }
 
@@ -253,16 +274,22 @@ export class EstimationService {
     return response.data?.[0] || {};
   }
 
-  async getTodayRates() {
-    const response = await this.request({ method: "get", url: ENDPOINTS.RATE.TODAY_RATE });
+  async getTodayRates(costId) {
+    const resolvedCostId = costId || (await this.getCostId());
+    const response = await this.request({
+      method: "get",
+      url: ENDPOINTS.RATE.TODAY_RATE,
+      params: { costId: resolvedCostId || undefined },
+    });
     return response.data;
   }
 
-  async submitPrintData(data) {
+  async submitPrintData(data, costId) {
+    const resolvedCostId = costId || (await this.getCostId());
     const response = await this.request({
       method: "post",
       url: ENDPOINTS.ESTIMATION.PRINT,
-      data,
+      data: { ...data, costId: resolvedCostId || undefined },
     });
     return response.data;
   }

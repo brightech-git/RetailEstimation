@@ -1,27 +1,39 @@
+// ItemTagService.js
+// Migrated to the shared API layer (Src/api): single axios instance +
+// backendManager (per-company base URL) + ENDPOINTS + logger + shared storage.
+// No fetch, no manual URL building, no direct AsyncStorage, no console.
+// Every endpoint, param, payload, response mapping, timeout and business rule
+// (costId required, API base URL required) is preserved.
+import { api, ENDPOINTS, backendManager } from "@api";
+import { logger } from "@core/logger";
+import { storage } from "@shared/utils";
 import { useApiBaseUrl } from "../../Config/Config";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 class ItemTagService {
   constructor(apiBaseUrl) {
-    // No hardcoded fallback: each company has its own backend, resolved
-    // at login (LoginContext.companyUrl / useApiBaseUrl). If it's not
-    // available yet, calls should fail loudly rather than silently hit
-    // another company's server.
+    // The shared axios instance resolves its base URL from backendManager
+    // (set at login). Seed it here too so a service constructed with an
+    // explicit company URL still targets the correct backend. Kept for the
+    // "not logged in yet" guard below.
     this.API_BASE_URL = apiBaseUrl || null;
+    if (apiBaseUrl) backendManager.setCompanyUrl(apiBaseUrl);
   }
 
   // ===================== COMMON =====================
 
   async getCostId() {
     try {
-      return await AsyncStorage.getItem("SELECTED_COST_ID");
+      return await storage.get("SELECTED_COST_ID");
     } catch (e) {
-      console.log("CostId error:", e);
+      logger.warn("CostId error:", e);
       return null;
     }
   }
 
-  async buildUrl(endpoint, params = {}) {
+  // Builds the query params every request needs. Preserves the original rules:
+  // API base URL must be present, costId must be present, and only
+  // defined/non-null extra params are appended.
+  async buildParams(params = {}) {
     if (!this.API_BASE_URL) {
       throw new Error(
         "API base URL missing - user is not logged in yet (or company URL failed to load)"
@@ -29,45 +41,40 @@ class ItemTagService {
     }
 
     const costId = await this.getCostId();
-
     if (!costId) throw new Error("costId missing");
 
-    const url = new URL(`${this.API_BASE_URL}${endpoint}`);
-    url.searchParams.append("costId", costId);
-
+    const out = { costId };
     Object.keys(params).forEach((key) => {
       if (params[key] !== undefined && params[key] !== null) {
-        url.searchParams.append(key, params[key]);
+        out[key] = params[key];
       }
     });
-
-    return url;
+    return out;
   }
 
   log(label, url, data) {
     const length = Array.isArray(data)
       ? data.length
       : data?.itemTags?.length || 0;
-
-    // console.log(`🔹 ${label}`);
-    // console.log("URL:", url);
-    // console.log("Length:", length);
+    // (tracing kept off, as before)
+    void label;
+    void url;
+    void length;
   }
 
   // ===================== STATS =====================
 
   async fetchStats(filters = {}) {
     try {
-      const url = await this.buildUrl("/itemtag/filter", filters);
-      const res = await fetch(url.toString());
-      const data = await res.json();
+      const params = await this.buildParams(filters);
+      const res = await api.get(ENDPOINTS.STOCK.SEARCH, { params });
+      const data = res.data;
 
-      this.log("Stats", url.toString(), data);
+      this.log("Stats", ENDPOINTS.STOCK.SEARCH, data);
 
       const total = data.total || data.totalCount || 0;
       const totalUnchecked = data.totalUnchecked || 0;
-      const totalChecked =
-        data.totalChecked ?? total - totalUnchecked;
+      const totalChecked = data.totalChecked ?? total - totalUnchecked;
 
       return {
         totalCount: total,
@@ -75,7 +82,7 @@ class ItemTagService {
         totalUnchecked,
       };
     } catch (err) {
-      console.log("Stats error:", err);
+      logger.warn("Stats error:", err);
       return { totalCount: 0, totalChecked: 0, totalUnchecked: 0 };
     }
   }
@@ -84,16 +91,11 @@ class ItemTagService {
 
   async fetchItemTags(filters = {}, page = 0, pageSize = 20) {
     try {
-      const url = await this.buildUrl("/itemtag/filter", {
-        ...filters,
-        page,
-        pageSize,
-      });
+      const params = await this.buildParams({ ...filters, page, pageSize });
+      const res = await api.get(ENDPOINTS.STOCK.SEARCH, { params });
+      const data = res.data;
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
-
-      this.log("ItemTags", url.toString(), data);
+      this.log("ItemTags", ENDPOINTS.STOCK.SEARCH, data);
 
       const total = data.total || 0;
 
@@ -105,7 +107,7 @@ class ItemTagService {
         hasMore: data.hasMore || false,
       };
     } catch (err) {
-      console.log("ItemTags error:", err);
+      logger.warn("ItemTags error:", err);
       return {
         itemTags: [],
         totalCount: 0,
@@ -120,30 +122,30 @@ class ItemTagService {
 
   async fetchMetalNames() {
     try {
-      const url = await this.buildUrl("/metalnames");
-      const res = await fetch(url.toString());
-      const data = await res.json();
+      const params = await this.buildParams();
+      const res = await api.get(ENDPOINTS.STOCK.METAL_NAMES, { params });
+      const data = res.data;
 
-      this.log("Metals", url.toString(), data);
+      this.log("Metals", ENDPOINTS.STOCK.METAL_NAMES, data);
 
       return data || [];
     } catch (err) {
-      console.log("Metals error:", err);
+      logger.warn("Metals error:", err);
       return [];
     }
   }
 
   async fetchCounterNames() {
     try {
-      const url = await this.buildUrl("/itemctrnames");
-      const res = await fetch(url.toString());
-      const data = await res.json();
+      const params = await this.buildParams();
+      const res = await api.get(ENDPOINTS.STOCK.COUNTER_NAMES, { params });
+      const data = res.data;
 
-      this.log("Counters", url.toString(), data);
+      this.log("Counters", ENDPOINTS.STOCK.COUNTER_NAMES, data);
 
       return data || [];
     } catch (err) {
-      console.log("Counters error:", err);
+      logger.warn("Counters error:", err);
       return [];
     }
   }
@@ -152,15 +154,11 @@ class ItemTagService {
     try {
       if (!metalId) return [];
 
-      const url = await this.buildUrl(
-        "/itemtag/itemnames-with-subitems",
-        { metalId }
-      );
+      const params = await this.buildParams({ metalId });
+      const res = await api.get(ENDPOINTS.STOCK.ITEMS_WITH_SUBITEMS, { params });
+      const data = res.data;
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
-
-      this.log("Items", url.toString(), data);
+      this.log("Items", ENDPOINTS.STOCK.ITEMS_WITH_SUBITEMS, data);
 
       if (Array.isArray(data)) {
         return data.map((item) => ({
@@ -172,7 +170,7 @@ class ItemTagService {
 
       return [];
     } catch (err) {
-      console.log("Items error:", err);
+      logger.warn("Items error:", err);
       return [];
     }
   }
@@ -181,21 +179,16 @@ class ItemTagService {
     try {
       if (!itemId || !metalId) return [];
 
-      const url = await this.buildUrl(
-        "/itemtag/itemnames-with-subitems",
-        { itemId, metalId }
-      );
+      const params = await this.buildParams({ itemId, metalId });
+      const res = await api.get(ENDPOINTS.STOCK.ITEMS_WITH_SUBITEMS, { params });
+      const data = res.data;
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
-
-      this.log("SubItems", url.toString(), data);
+      this.log("SubItems", ENDPOINTS.STOCK.ITEMS_WITH_SUBITEMS, data);
 
       if (Array.isArray(data)) {
         const match = data.find(
           (i) =>
-            (i.id?.toString() ?? i.item_id?.toString()) ===
-            itemId.toString()
+            (i.id?.toString() ?? i.item_id?.toString()) === itemId.toString()
         );
 
         return match?.subitems || [];
@@ -203,40 +196,35 @@ class ItemTagService {
 
       return data?.subitems || [];
     } catch (err) {
-      console.log("SubItems error:", err);
+      logger.warn("SubItems error:", err);
       return [];
     }
   }
 
-
   // ===================== UPDATE ITEM =====================
-async updateItemCheck(itemId, tagNo, subItemId, metalName, itemCtrId) {
-  try {
-    const url = await this.buildUrl("/itemtag/updateCheck", {
-      itemId,
-      tagNo,
-      metalName,
-      subItemId,
-      itemCtrId,
-    });
+  async updateItemCheck(itemId, tagNo, subItemId, metalName, itemCtrId) {
+    try {
+      const params = await this.buildParams({
+        itemId,
+        tagNo,
+        metalName,
+        subItemId,
+        itemCtrId,
+      });
 
-    console.log("🔹 Update API");
-    console.log("URL:", url.toString());
+      logger.debug("Update API", ENDPOINTS.STOCK.UPDATE_CHECK);
 
-    const res = await fetch(url.toString(), {
-      method: "PUT", // ✅ MUST be PUT
-    });
+      const res = await api.put(ENDPOINTS.STOCK.UPDATE_CHECK, null, { params });
+      const data = res.data;
 
-    const data = await res.json();
+      logger.debug("Update response:", data);
 
-    console.log("RESPONSE:", data);
-
-    return data;
-  } catch (err) {
-    console.log("Update error:", err);
-    throw err;
+      return data;
+    } catch (err) {
+      logger.warn("Update error:", err);
+      throw err;
+    }
   }
-}
 
   // ===================== INITIAL LOAD =====================
 
@@ -254,7 +242,7 @@ async updateItemCheck(itemId, tagNo, subItemId, metalName, itemCtrId) {
         subItems: [],
       };
     } catch (err) {
-      console.log("Dropdown load error:", err);
+      logger.warn("Dropdown load error:", err);
       return {
         metals: [],
         counters: [],
