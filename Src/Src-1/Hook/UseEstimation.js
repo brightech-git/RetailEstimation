@@ -164,20 +164,26 @@ export const useEstimation = (apiBaseUrl) => {
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
       const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
 
-      const newData = data.map((d) => ({
-        ...d,
-        ITEMID: itemIdInt,
-        TAGNO,
-        EMPID: emp,
-        EMP: emp,
-        METALID: d.METALID || 0,
-        COSTID: costId,
-        COMPANYID: companyId,
-        MAXMCGRM: d.MAXMCGRM || 0,
-        MC_FROM_API: d.MC || 0,
-        GrossAmount: d.GrossAmount || "0",
-        GSTAmount: d.GSTAmount || "0",
-        GrandTotal: d.GrandTotal || "0",
+      const newData = await Promise.all(data.map(async (d) => {
+        const offer = await service.getOffer(TAGNO);
+        const discount = (offer.netwt || 0) * (offer.board_rate || 0);
+        return {
+          ...d,
+          ITEMID: itemIdInt,
+          TAGNO,
+          EMPID: emp,
+          EMP: emp,
+          METALID: d.METALID || 0,
+          COSTID: costId,
+          COMPANYID: companyId,
+          MAXMCGRM: d.MAXMCGRM || 0,
+          MC_FROM_API: d.MC || 0,
+          GrossAmount: d.GrossAmount || "0",
+          GSTAmount: d.GSTAmount || "0",
+          GrandTotal: d.GrandTotal || "0",
+          DISCOUNT: discount,
+          BOARD_RATE: offer.board_rate || 0,
+        };
       }));
 
       setTableData((prev) => [...prev, ...newData]);
@@ -198,6 +204,25 @@ export const useEstimation = (apiBaseUrl) => {
     fetchData(); // your API calling logic
     console.log("Refreshed");
   };
+
+  // Per-row: gross after discount (taxable base)
+  const calculateDiscountedGross = (row) => {
+    const gross = calculateGrossAmount(row);
+    const discount = parseFloat(row.DISCOUNT) || 0;
+    return gross - discount;
+  };
+
+  // Per-row: GST on discounted gross
+  const calculateDiscountedGST = (row) => {
+    const taxable = calculateDiscountedGross(row);
+    let gstPer = parseFloat(row.GSTPer);
+    if (isNaN(gstPer)) gstPer = 3; // 1.5% CGST + 1.5% SGST
+    return (taxable * gstPer) / 100;
+  };
+
+  // Per-row: grand total on discounted gross
+  const calculateDiscountedGrandTotal = (row) =>
+    calculateDiscountedGross(row) + calculateDiscountedGST(row);
 
   const submitData = async (overrideData) => {
     const data = overrideData || tableData;
@@ -222,17 +247,13 @@ export const useEstimation = (apiBaseUrl) => {
       // the row to begin with, since /estimationTotal doesn't return them.
       const firstItem = data[0];
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
-      const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
 
-      // Get estimation batch number
-      // companyId from LoginContext is a numeric ID; /estbatchno needs the
-      // string company code (e.g. "SFH"). Resolve it from costOptions first,
-      // then fall back to companyData fields.
+      // Resolve the string company code (e.g. "SFH") — used everywhere,
+      // including /estissue companyid. loggedInCompanyId is a numeric ID.
       const companyCode =
         costOptions?.find((o) => o.COSTID === costId)?.COMPANYID ||
         companyData?.COMPANYCODE ||
         companyData?.COMPANYID ||
-        companyId ||
         "";
       console.log("[EstBatchNo] Payload:", { costId, companyId: companyCode });
       const batchNo = await service.getEstimationBatchNo(costId, companyCode);
@@ -241,6 +262,10 @@ export const useEstimation = (apiBaseUrl) => {
         Alert.alert("Error", "Could not retrieve ESTBATCHNO");
         return null;
       }
+
+      // Fetch today's rates before building payloads
+      const todayRates = await service.getTodayRates();
+      console.log("[TodayRates] Response:", todayRates);
 
       // Enrich items with additional data
       const enrichedData = await Promise.all(
@@ -264,6 +289,15 @@ export const useEstimation = (apiBaseUrl) => {
           console.log("[TagDetails] Payload:", { TAGNO: item.TAGNO, costId: item.COSTID || costId });
           const tagDetails = await service.getTagDetails(item.TAGNO);
           console.log("[TagDetails] Response:", tagDetails);
+
+          // Fetch offer for this item
+          console.log("[Offer] Payload:", { tagno: item.TAGNO });
+          const offerData = await service.getOffer(item.TAGNO);
+          console.log("[Offer] Response:", offerData);
+
+          console.log("[TaxDetails] Payload:", { itemid: item.ITEMID });
+          const itemTaxDetails = await service.getTaxDetails(item.ITEMID);
+          console.log("[TaxDetails] Response:", itemTaxDetails);
 
           // Get transaction date
           let trandateString = formatDateToSqlDateTime();
@@ -289,21 +323,16 @@ export const useEstimation = (apiBaseUrl) => {
             tagno: item.TAGNO || "",
             itemid: item.ITEMID || 0,
             wastper: tagDetails?.wastper,
-            wastage: parseFloat(item.Wastage) || 0,
+            wastage: tagDetails?.wastage || 0,
             mcgrm:
-              parseFloat(item.MAXMCGRM) ||
-              parseFloat(item.MC_FROM_API) ||
               parseFloat(tagDetails?.mcgram) ||
               0,
-            mcharge: parseFloat(item.MC_FROM_API) || tagDetails?.mcharge || 0,
-            amount: parseFloat(calculateGrossAmount(item).toFixed(2)) || 0,
-            rate:
-              item.SALEMODE === "R"
-                ? parseFloat(item.RATE) || 0
-                : parseFloat(item.Rate) || 0,
-            boardrate: parseFloat(item.Rate) || 0,
+            mcharge: tagDetails?.mccharge || 0,
+            amount: parseFloat((calculateGrossAmount(item) - (parseFloat(item.DISCOUNT) || 0)).toFixed(2)) || 0,
+            rate: parseFloat(offerData?.board_rate) || parseFloat(item.BOARD_RATE) || 0,
+            boardrate: parseFloat(offerData?.board_rate) || parseFloat(item.BOARD_RATE) ||  0,
             costid: item.COSTID || costId,
-            companyid: item.COMPANYID || companyId,
+            companyid: companyCode,
             empid: Number(item.EMP) || 0,
             stnamt: parseFloat(item.StoneAmount) || 0,
             miscamt: parseFloat(item.MiscAmount) || 0,
@@ -326,7 +355,7 @@ export const useEstimation = (apiBaseUrl) => {
             tablecode: "",
             incentive: "",
             weightunit: "",
-            catcode: item.CATCODE ? String(item.CATCODE) : "",
+            catcode: itemTaxDetails?.CATCODE ? String(itemTaxDetails.CATCODE) : (item.CATCODE ? String(item.CATCODE) : ""),
             ocatcode: "",
             accode: "",
             alloy: "0.000",
@@ -337,7 +366,7 @@ export const useEstimation = (apiBaseUrl) => {
             updated: formatDateToMidnightSql(new Date()),
             uptime: "",
             systemid: "",
-            discount: "0.00",
+            discount: parseFloat((parseFloat(item.DISCOUNT) || 0).toFixed(2)),
             runno: "",
             cancel: "",
             cashid: "",
@@ -347,7 +376,7 @@ export const useEstimation = (apiBaseUrl) => {
             stoneunit: "",
             protype: "0",
             metalid: item.METALID ? String(item.METALID) : "G",
-            tax: parseFloat(calculateGST(item).toFixed(2)) || 0,
+            tax: parseFloat(calculateDiscountedGST(item).toFixed(2)) || 0,
             sc: "0.00",
             adsc: "0.00",
             appver: "",
@@ -412,12 +441,12 @@ export const useEstimation = (apiBaseUrl) => {
         const estSNO = snoMap[tagno];
         const generatedSNO = await service.generateEstissStoneSno(
           item.costid || costId,
-          item.companyid || companyId
+          item.companyid || companyCode
         );
 
         if (!Array.isArray(stoneInputs) || stoneInputs.length === 0) continue;
 
-        console.log("[EstIssStoneSno] Payload:", { costId: item.costid || costId, companyId: item.companyid || companyId });
+        console.log("[EstIssStoneSno] Payload:", { costId: item.costid || costId, companyId: item.companyid || companyCode });
         console.log("[EstIssStoneSno] Response:", generatedSNO);
 
         const stonePayloads = stoneInputs.map((stone) => ({
@@ -438,7 +467,7 @@ export const useEstimation = (apiBaseUrl) => {
           stonemode: "",
           transtatus: "",
           costid: stone.costid || item.costid || costId,
-          companyid: stone.companyid || item.companyid || companyId,
+          companyid: stone.companyid || item.companyid || companyCode,
           batchno: "",
           systemid: "",
           vatexm: "",
@@ -490,10 +519,10 @@ export const useEstimation = (apiBaseUrl) => {
           continue;
         }
 
-        console.log("[EstTaxTranSno] Payload:", { costId: rawItem.costid || costId, companyId: rawItem.companyid || companyId });
+        console.log("[EstTaxTranSno] Payload:", { costId: rawItem.costid || costId, companyId: rawItem.companyid || companyCode });
         const estTaxTranSno = await service.generateEstTaxTranSno(
           rawItem.costid || costId,
-          rawItem.companyid || companyId
+          rawItem.companyid || companyCode
         );
         console.log("[EstTaxTranSno] Response:", estTaxTranSno);
 
@@ -511,7 +540,7 @@ export const useEstimation = (apiBaseUrl) => {
           amount: parseFloat(amount.toFixed(2)),
           taxtype: null,
           costid: String(rawItem.costid || costId),
-          companyid: String(rawItem.companyid || companyId),
+          companyid: String(rawItem.companyid || companyCode),
           studded: null,
         };
 
@@ -568,14 +597,12 @@ export const useEstimation = (apiBaseUrl) => {
 
       // Get final details for printing
       console.log("[EstDetails] Payload:", { TRANNO, costId });
-      const [ipAddress, estDetails, rateResponse] = await Promise.all([
+      const [ipAddress, estDetails] = await Promise.all([
         service.getIPAddress(),
         service.getEstimationDetails(TRANNO),
-        service.getTodayRates(),
       ]);
       console.log("[IPAddress] Response:", ipAddress);
       console.log("[EstDetails] Response:", estDetails);
-      console.log("[TodayRates] Response:", rateResponse);
 
       let rawBillDate = estDetails?.billDate;
       let billDate =
@@ -587,8 +614,8 @@ export const useEstimation = (apiBaseUrl) => {
       const estPrintPayload = {
         brefno: TRANNO,
         billdate: billDate,
-        goldrate: rateResponse?.GOLDRATE || 0,
-        silverrate: rateResponse?.SILVERRATE || 0,
+        goldrate: todayRates?.GOLDRATE || 0,
+        silverrate: todayRates?.SILVERRATE || 0,
         billtype: estDetails?.bill_type || "",
         instrument: "X",
         sysipaddress: ipAddress,
@@ -625,16 +652,20 @@ export const useEstimation = (apiBaseUrl) => {
     }
   };
 
-  // Calculate totals
+  // Totals
+  const totalDiscount = tableData.reduce(
+    (acc, row) => acc + (parseFloat(row.DISCOUNT) || 0),
+    0
+  );
   const totalGross = tableData.reduce(
-    (acc, row) => acc + calculateGrossAmount(row),
+    (acc, row) => acc + calculateDiscountedGross(row),
     0
   );
-  const totalGST = tableData.reduce((acc, row) => acc + calculateGST(row), 0);
-  const totalGrand = tableData.reduce(
-    (acc, row) => acc + calculateGrandTotal(row),
+  const totalGST = tableData.reduce(
+    (acc, row) => acc + calculateDiscountedGST(row),
     0
   );
+  const totalGrand = totalGross + totalGST;
 
   return {
     // State
@@ -681,9 +712,13 @@ export const useEstimation = (apiBaseUrl) => {
     // Calculations
     totalGross,
     totalGST,
+    totalDiscount,
     totalGrand,
     calculateGrossAmount,
     calculateGST,
     calculateGrandTotal,
+    calculateDiscountedGross,
+    calculateDiscountedGST,
+    calculateDiscountedGrandTotal,
   };
 };

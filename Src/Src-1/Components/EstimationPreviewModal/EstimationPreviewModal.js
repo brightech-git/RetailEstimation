@@ -105,12 +105,15 @@ const EstimationPreviewModal = ({
     silverRate,
     totalpcs,
     totalGrossWeight,
+    grossAmount,
     baseAmount,
+    offerDiscount,
     cgstAmount,
     sgstAmount,
     grandTotal,
     offer,
-    itemsWithStones, // Use this for display as it contains stones data
+    offerName,
+    itemsWithStones,
   } = slipData;
 
   // Use itemsWithStones if available, otherwise fall back to items
@@ -118,7 +121,6 @@ const EstimationPreviewModal = ({
 
   const offerWeight = offer.netwt || 0;
   const offerBoardRate = offer.board_rate || 0;
-  const offerDiscount = offerWeight * offerBoardRate;
 
   // Get printer status display
   const getPrinterStatusDisplay = () => {
@@ -238,163 +240,7 @@ const EstimationPreviewModal = ({
     }
   };
 
-  // Show only printer status when not connected
-  if (!printerStatus.connected && !printerStatus.checking) {
-    return (
-      <Modal
-        visible={visible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={onClose}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Estimation Slip Preview</Text>
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <MaterialIcons
-                  name="close"
-                  size={24}
-                  color={theme.COLORS.text}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Printer Status Display */}
-            <View style={styles.printerStatusContainer}>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  { backgroundColor: statusDisplay.color },
-                ]}
-              />
-              <View style={styles.statusTextContainer}>
-                <Text
-                  style={[
-                    styles.printerStatusText,
-                    { color: statusDisplay.color },
-                  ]}
-                >
-                  {statusDisplay.text}
-                </Text>
-                <Text style={styles.statusDescription}>
-                  {currentPrinter
-                    ? "Printer is offline or not reachable"
-                    : "No printer configured for your account"}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.refreshButton}
-                onPress={handleRefreshPrinter}
-              >
-                <MaterialIcons
-                  name="refresh"
-                  size={20}
-                  color={theme.COLORS.primary}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Error State Content */}
-            <View style={styles.errorStateContainer}>
-              <MaterialIcons
-                name="print-disabled"
-                size={80}
-                color={theme.COLORS.textLight}
-                style={styles.errorIcon}
-              />
-
-              <Text style={styles.errorTitle}>
-                {currentPrinter
-                  ? "Printer Connection Issue"
-                  : "Printer Not Configured"}
-              </Text>
-
-              <Text style={styles.errorDescription}>
-                {currentPrinter
-                  ? `Unable to connect to "${currentPrinter.name}". Please check the printer configuration and network connection.`
-                  : "You need to set up a printer before you can print estimation slips."}
-              </Text>
-
-              {currentPrinter && (
-                <View style={styles.printerDetails}>
-                  <View style={styles.detailRow}>
-                    <MaterialIcons
-                      name="dns"
-                      size={16}
-                      color={theme.COLORS.textLight}
-                    />
-                    <Text style={styles.detailText}>
-                      {currentPrinter.ip_address}:{currentPrinter.port}
-                    </Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <MaterialIcons
-                      name="wifi"
-                      size={16}
-                      color={theme.COLORS.textLight}
-                    />
-                    <Text style={styles.detailText}>
-                      Network: {currentPrinter.ip_address.split(".")[0]}.x.x.x
-                    </Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Action Buttons */}
-              <View style={styles.actionButtons}>
-                {currentPrinter && (
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={onCheckConnection}
-                  >
-                    <MaterialIcons
-                      name="wifi-tethering"
-                      size={18}
-                      color={theme.COLORS.primary}
-                    />
-                    <Text style={styles.secondaryButtonText}>
-                      Check Connection
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={handleSetupPrinter}
-                >
-                  <MaterialIcons
-                    name={currentPrinter ? "settings" : "add"}
-                    size={18}
-                    color={theme.COLORS.buttonText}
-                  />
-                  <Text style={styles.primaryButtonText}>
-                    {currentPrinter ? "Change Printer" : "Setup Printer"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Quick Preview */}
-            <View style={styles.quickPreview}>
-              <Text style={styles.previewTitle}>Slip Preview</Text>
-              <View style={styles.previewContent}>
-                <Text style={styles.previewText}>
-                  Est.No: {sample?.tranno || ""} • Items: {displayItems.length}
-                </Text>
-                <Text style={styles.previewText}>
-                  Total: ₹{grandTotal.toFixed(0)} • Pcs: {totalpcs}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-
-  // Show full preview when printer is connected or checking
+  // Show full preview always (print button disabled when not connected)
   return (
     <Modal
       visible={visible}
@@ -661,21 +507,31 @@ const EstimationPreviewModal = ({
                   </Text>
                   <Text style={[styles.text, styles.colVA]}></Text>
                   <Text style={[styles.boldText, styles.colAmount]}>
-                    {baseAmount.toFixed(0)}
+                    {grossAmount.toFixed(0)}
                   </Text>
                 </View>
 
                 {offerDiscount > 0 && (
-                  <View style={styles.row}>
-                    <Text style={[styles.text, styles.colDesc]}>
-                      Offer ({offerWeight.toFixed(3)} * {offerBoardRate})
-                    </Text>
-                    <Text style={[styles.text, styles.colWeight]}></Text>
-                    <Text style={[styles.text, styles.colVA]}></Text>
-                    <Text style={[styles.text, styles.colAmount]}>
-                      {offerDiscount.toFixed(1)}
-                    </Text>
-                  </View>
+                  <>
+                    <View style={styles.row}>
+                      <Text style={[styles.text, styles.colDesc]}>
+                        {offerName}
+                      </Text>
+                      <Text style={[styles.text, styles.colWeight]}>({offerWeight.toFixed(3)}*{offerBoardRate})</Text>
+                      <Text style={[styles.text, styles.colVA]}></Text>
+                      <Text style={[styles.text, styles.colAmount]}>
+                        {offerDiscount.toFixed(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.row}>
+                      <Text style={[styles.boldText, styles.colDesc]}>TOTAL</Text>
+                      <Text style={[styles.text, styles.colWeight]}></Text>
+                      <Text style={[styles.text, styles.colVA]}></Text>
+                      <Text style={[styles.boldText, styles.colAmount]}>
+                        {baseAmount.toFixed(0)}
+                      </Text>
+                    </View>
+                  </>
                 )}
 
                 <View style={styles.row}>
@@ -731,7 +587,6 @@ const EstimationPreviewModal = ({
                     styles.printButtonDisabled,
                 ]}
                 onPress={handlePrintPress}
-                disabled={!printerStatus.connected || printerStatus.checking}
               >
                 {printerStatus.checking ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />

@@ -24,6 +24,7 @@ const ENDPOINTS = {
   EST_TAX_TRAN:             "/estTaxTran",
   UPDATE_TRANNO:            "/updateTranno",
   OFFER:                    "/offer",
+  OFFER_NAME:               "/offer/offerName",
   EST_PRINT:                "/estprint",
 
   // PRINTERS

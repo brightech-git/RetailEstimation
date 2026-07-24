@@ -169,6 +169,13 @@ const HomeScreen = () => {
                 </View>
 
                 <View style={styles.totalItem}>
+                  <Text style={styles.totalLabel}>Discount</Text>
+                  <Text style={styles.totalValue}>
+                    ₹{estimation.totalDiscount.toFixed(2)}
+                  </Text>
+                </View>
+
+                <View style={styles.totalItem}>
                   <Text style={styles.totalLabel}>GST Amount</Text>
                   <Text style={styles.totalValue}>
                     ₹{estimation.totalGST.toFixed(2)}
@@ -308,6 +315,7 @@ const HomeScreen = () => {
                     "Stone",
                     "Misc",
                     "Gross",
+                    "Discount",
                     "GST",
                     "GrandTotal",
                     "Emp",
@@ -360,17 +368,22 @@ const HomeScreen = () => {
                     </View>
                     <View style={styles.column}>
                       <Text style={styles.cell}>
-                        {estimation.calculateGrossAmount(item).toFixed(2)}
+                        {estimation.calculateDiscountedGross(item).toFixed(2)}
                       </Text>
                     </View>
                     <View style={styles.column}>
                       <Text style={styles.cell}>
-                        {estimation.calculateGST(item).toFixed(2)}
+                        {(parseFloat(item.DISCOUNT) || 0).toFixed(2)}
                       </Text>
                     </View>
                     <View style={styles.column}>
                       <Text style={styles.cell}>
-                        {estimation.calculateGrandTotal(item).toFixed(2)}
+                        {estimation.calculateDiscountedGST(item).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.column}>
+                      <Text style={styles.cell}>
+                        {estimation.calculateDiscountedGrandTotal(item).toFixed(2)}
                       </Text>
                     </View>
                     <View style={styles.column}>

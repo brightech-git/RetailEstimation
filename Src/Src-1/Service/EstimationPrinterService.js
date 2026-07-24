@@ -204,8 +204,9 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     const sample = items[0];
     console.log("📋 Sample item:", sample);
 
-    // Fetch offer
+    // Fetch offer once (same offer applies to all items)
     let offer = { discount: 0, netwt: 0, board_rate: 0 };
+    let offerName = "";
     try {
       console.log("📡 Fetching offer data...");
       const offerRes = await api.post(ENDPOINTS.OFFER, null, {
@@ -213,6 +214,16 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
       });
       offer = offerRes.data || offer;
       console.log("✅ Offer data:", offer);
+
+      // estBatchNo format: EBSFH2769 → costId=EB, companyId=SFH
+      const batchMatch = estBatchNo.match(/^([A-Z]{2})([A-Z]+)\d+$/);
+      const costId = batchMatch?.[1] || "";
+      const companyId = batchMatch?.[2] || "";
+      const offerNameRes = await api.get(ENDPOINTS.OFFER_NAME, {
+        params: { companyId, costId },
+      });
+      offerName = offerNameRes.data || "";
+      console.log("✅ Offer name:", offerName);
     } catch (err) {
       console.warn("Failed to fetch offer:", err);
     }
@@ -241,29 +252,24 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     // const { username, companyName, companyLogo, companyLogoUrl } =
     //   useContext(LoginContext);
 
-    // Get GST values from FIRST ITEM only
-    let cgstAmount = 0;
-    let sgstAmount = 0;
-    let totalTaxAmount = 0;
-
+    // Get GST % from items (use first item's tax rates)
+    let cgstPer = 1.5;
+    let sgstPer = 1.5;
     if (items.length > 0 && items[0].taxes) {
       items[0].taxes.forEach((tax) => {
-        const taxAmount = tax.tax_amount || 0;
-        totalTaxAmount += taxAmount;
-
         const taxId = (tax.tax_id || "").toUpperCase();
-        if (taxId === "CG") {
-          cgstAmount += taxAmount;
-        } else if (taxId === "SG") {
-          sgstAmount += taxAmount;
-        } else {
-          cgstAmount += taxAmount / 2;
-          sgstAmount += taxAmount / 2;
-        }
+        if (taxId === "CG") cgstPer = tax.tax_perc || 1.5;
+        else if (taxId === "SG") sgstPer = tax.tax_perc || 1.5;
       });
     }
 
-    const grandTotal = baseAmount + totalTaxAmount;
+    const offerDiscount = (offer.netwt || 0) * (offer.board_rate || 0);
+    const grossAmount = baseAmount + offerDiscount;  // original before discount
+    const taxableAmount = baseAmount;                // already discounted
+    const cgstAmount = parseFloat(((taxableAmount * cgstPer) / 100).toFixed(2));
+    const sgstAmount = parseFloat(((taxableAmount * sgstPer) / 100).toFixed(2));
+    const totalTaxAmount = cgstAmount + sgstAmount;
+    const grandTotal = parseFloat((taxableAmount + totalTaxAmount).toFixed(2));
 
     console.log("💰 Totals:", {
       totalpcs,
@@ -310,7 +316,9 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
       silverRate,
       totalpcs,
       totalGrossWeight,
+      grossAmount,
       baseAmount,
+      offerDiscount,
       totalWastage,
       totalMcharge,
       cgstAmount,
@@ -318,6 +326,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
       totalTaxAmount,
       grandTotal,
       offer,
+      offerName,
       itemsWithStones,
     };
 
@@ -576,11 +585,14 @@ export const printEstimationToPrinter = async (
       silverRate,
       totalpcs,
       totalGrossWeight,
+      grossAmount,
       baseAmount,
+      offerDiscount,
       cgstAmount,
       sgstAmount,
       grandTotal,
       offer,
+      offerName,
       itemsWithStones,
     } = slipData;
 
@@ -693,14 +705,21 @@ export const printEstimationToPrinter = async (
         printContent += "-----------------------------------------\n";
         printContent += formatStyledLine(
           `Tot.Pcs: ${totalpcs}`,
-          `${totalGrossWeight.toFixed(3)}        ${baseAmount.toFixed(0)}`,
+          `${totalGrossWeight.toFixed(3)}        ${grossAmount.toFixed(0)}`,
           FONTS.BOLD_ON
         );
 
         if (offerDiscount > 0) {
+          const offerWeight = offer.netwt || 0;
+          const offerBoardRate = offer.board_rate || 0;
           printContent += formatStyledLine(
-            `Offer (${offerWeight.toFixed(3)} * ${offerBoardRate})`,
-            `${offerDiscount.toFixed(1)}`
+            `${offerName}`,
+            `(${offerWeight.toFixed(3)}*${offerBoardRate})  ${offerDiscount.toFixed(0)}`
+          );
+          printContent += formatStyledLine(
+            "TOTAL",
+            `${baseAmount.toFixed(0)}`,
+            FONTS.BOLD_ON
           );
         }
 

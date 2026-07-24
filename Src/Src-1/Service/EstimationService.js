@@ -158,6 +158,18 @@ export class EstimationService {
 
   // ── POST ─────────────────────────────────────────────────────────────
 
+  async getOffer(tagNo) {
+    try {
+      const response = await this.api.post(ENDPOINTS.OFFER, null, {
+        params: { tagno: tagNo },
+      });
+      return response.data || {};
+    } catch (err) {
+      console.warn("Failed to fetch offer", err);
+      return {};
+    }
+  }
+
   async submitEstimationData(data) {
     const response = await this.api.post(ENDPOINTS.EST_ISSUE, data);
     console.log("Save response:", response.data);
