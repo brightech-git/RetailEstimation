@@ -446,7 +446,7 @@ const EstimationPreviewModal = ({
                           : ""}
                       </Text>
                       <Text style={[styles.text, styles.colAmount]}>
-                        {item.amount?.toFixed(0) || "0"}
+                        {(item.displayAmount ?? item.amount)?.toFixed(0) || "0"}
                       </Text>
                     </View>
 

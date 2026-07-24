@@ -1,16 +1,16 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { createItemDetailsStyles } from "./ItemDetailsStyles";
+import { calcDiscountedGross, calcGST, calcGrandTotal } from "../../../shared/EstimationCalculations";
 
 const ItemDetailsCard = ({ item, index, theme }) => {
   const styles = createItemDetailsStyles(theme);
 
-  const grossAmount = parseFloat(item.GrossAmount) || 0;  // original gross from API
+  const grossAmount = parseFloat(item.GrossAmount) || 0;
   const discount = parseFloat(item.DISCOUNT) || 0;
-  const taxableAmount = grossAmount - discount;             // gross after discount
-  const gstPer = parseFloat(item.GSTPer) || 3;             // 1.5% CGST + 1.5% SGST
-  const gstAmount = parseFloat(((taxableAmount * gstPer) / 100).toFixed(2));
-  const grandTotal = parseFloat((taxableAmount + gstAmount).toFixed(2));
+  const taxableAmount = parseFloat(calcDiscountedGross(item).toFixed(2));
+  const gstAmount = parseFloat(calcGST(item).toFixed(2));
+  const grandTotal = parseFloat(calcGrandTotal(item).toFixed(2));
   const GRSWT = parseFloat(item.GRSWT) || 0;
 
   // Function to get fallback icon based on item name or type

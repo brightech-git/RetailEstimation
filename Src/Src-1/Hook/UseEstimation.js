@@ -7,11 +7,15 @@ import {
   EstimationService,
   formatDateToSqlDateTime,
   formatDateToMidnightSql,
-  parseValue,
-  calculateGrossAmount,
-  calculateGST,
-  calculateGrandTotal,
 } from "../Service/EstimationService";
+import {
+  parseValue,
+  calcGross as calculateGrossAmount,
+  calcDiscountedGross,
+  calcGST as calculateDiscountedGST,
+  calcGrandTotal as calculateDiscountedGrandTotal,
+  calcTotals,
+} from "../../shared/EstimationCalculations";
 
 export const useEstimation = (apiBaseUrl) => {
   const [ITEMID, setITEMID] = useState("");
@@ -205,24 +209,7 @@ export const useEstimation = (apiBaseUrl) => {
     console.log("Refreshed");
   };
 
-  // Per-row: gross after discount (taxable base)
-  const calculateDiscountedGross = (row) => {
-    const gross = calculateGrossAmount(row);
-    const discount = parseFloat(row.DISCOUNT) || 0;
-    return gross - discount;
-  };
-
-  // Per-row: GST on discounted gross
-  const calculateDiscountedGST = (row) => {
-    const taxable = calculateDiscountedGross(row);
-    let gstPer = parseFloat(row.GSTPer);
-    if (isNaN(gstPer)) gstPer = 3; // 1.5% CGST + 1.5% SGST
-    return (taxable * gstPer) / 100;
-  };
-
-  // Per-row: grand total on discounted gross
-  const calculateDiscountedGrandTotal = (row) =>
-    calculateDiscountedGross(row) + calculateDiscountedGST(row);
+  const calculateDiscountedGross = calcDiscountedGross;
 
   const submitData = async (overrideData) => {
     const data = overrideData || tableData;
@@ -652,20 +639,7 @@ export const useEstimation = (apiBaseUrl) => {
     }
   };
 
-  // Totals
-  const totalDiscount = tableData.reduce(
-    (acc, row) => acc + (parseFloat(row.DISCOUNT) || 0),
-    0
-  );
-  const totalGross = tableData.reduce(
-    (acc, row) => acc + calculateDiscountedGross(row),
-    0
-  );
-  const totalGST = tableData.reduce(
-    (acc, row) => acc + calculateDiscountedGST(row),
-    0
-  );
-  const totalGrand = totalGross + totalGST;
+  const { totalDiscount, totalGross, totalGST, totalGrand } = calcTotals(tableData);
 
   return {
     // State
@@ -715,8 +689,6 @@ export const useEstimation = (apiBaseUrl) => {
     totalDiscount,
     totalGrand,
     calculateGrossAmount,
-    calculateGST,
-    calculateGrandTotal,
     calculateDiscountedGross,
     calculateDiscountedGST,
     calculateDiscountedGrandTotal,

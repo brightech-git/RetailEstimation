@@ -24,6 +24,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard";
 import createApiInstance from "../../../Api/axiosInstance";
 import ENDPOINTS from "../../../Api/endpoints";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeScreen1 = () => {
   const { theme } = useTheme();

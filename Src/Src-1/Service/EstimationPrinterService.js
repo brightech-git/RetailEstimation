@@ -305,7 +305,10 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     const itemsWithStones = await Promise.all(
       items.map(async (item) => {
         const stones = await fetchStonesForItem(item.itemid, item.tagno);
-        return { ...item, stones };
+        // Reconstruct pre-discount gross per item for display
+        // offerDiscount is for the whole batch; distribute proportionally by amount
+        const itemShare = baseAmount > 0 ? (item.amount / baseAmount) * offerDiscount : offerDiscount / items.length;
+        return { ...item, stones, displayAmount: item.amount + itemShare };
       })
     );
 
@@ -681,7 +684,7 @@ export const printEstimationToPrinter = async (
             `Rate:${rateValue} `,
             `${(item.grswt || 0).toFixed(3)}    ${
               item.wastper && item.wastper > 0 ? item.wastper.toFixed(1) : ""
-            }    ${(item.amount || 0).toFixed(0)}`
+            }    ${((item.displayAmount ?? item.amount) || 0).toFixed(0)}`
           );
 
           if (item.grswt !== item.netwt) {
