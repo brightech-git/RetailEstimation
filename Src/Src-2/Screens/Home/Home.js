@@ -152,7 +152,22 @@ const fetchApiData = async () => {
     });
     console.log("🔵 Estimation API URL:", response.config?.url);
 
-    setDisplayData(response.data || []);
+    const rawData = response.data || [];
+
+    // Fetch offer for discount
+    let discount = 0;
+    let boardRate = 0;
+    try {
+      const offerRes = await api.post(ENDPOINTS.OFFER, null, { params: { tagno: tagNo } });
+      const offer = offerRes.data || {};
+      boardRate = offer.board_rate || 0;
+      discount = (offer.netwt || 0) * boardRate;
+    } catch (err) {
+      console.warn("Offer fetch failed:", err);
+    }
+
+    const enriched = rawData.map((d) => ({ ...d, DISCOUNT: discount, BOARD_RATE: boardRate }));
+    setDisplayData(enriched);
     estimation.setITEMID(itemId);
     estimation.setTAGNO(tagNo);
     setValidationError("");

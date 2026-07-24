@@ -5,9 +5,12 @@ import { createItemDetailsStyles } from "./ItemDetailsStyles";
 const ItemDetailsCard = ({ item, index, theme }) => {
   const styles = createItemDetailsStyles(theme);
 
-  const grossAmount = parseFloat(item.GrossAmount) || 0;
-  const gstAmount = parseFloat(item.GSTAmount) || 0;
-  const grandTotal = parseFloat(item.GrandTotal) || 0;
+  const grossAmount = parseFloat(item.GrossAmount) || 0;  // original gross from API
+  const discount = parseFloat(item.DISCOUNT) || 0;
+  const taxableAmount = grossAmount - discount;             // gross after discount
+  const gstPer = parseFloat(item.GSTPer) || 3;             // 1.5% CGST + 1.5% SGST
+  const gstAmount = parseFloat(((taxableAmount * gstPer) / 100).toFixed(2));
+  const grandTotal = parseFloat((taxableAmount + gstAmount).toFixed(2));
   const GRSWT = parseFloat(item.GRSWT) || 0;
 
   // Function to get fallback icon based on item name or type
@@ -97,6 +100,19 @@ const ItemDetailsCard = ({ item, index, theme }) => {
           <Text style={styles.cardDetailLabel}>Gross Amount</Text>
           <Text style={styles.cardDetailValue}>₹ {grossAmount.toFixed(2)}</Text>
         </View>
+
+        {discount > 0 && (
+          <>
+            <View style={styles.cardDetailRow}>
+              <Text style={styles.cardDetailLabel}>Discount</Text>
+              <Text style={styles.cardDetailValue}>₹ {discount.toFixed(2)}</Text>
+            </View>
+            <View style={styles.cardDetailRow}>
+              <Text style={styles.cardDetailLabel}>After Discount</Text>
+              <Text style={styles.cardDetailValue}>₹ {taxableAmount.toFixed(2)}</Text>
+            </View>
+          </>
+        )}
 
         <View style={styles.cardDetailRow}>
           <Text style={styles.cardDetailLabel}>GST Amount</Text>
