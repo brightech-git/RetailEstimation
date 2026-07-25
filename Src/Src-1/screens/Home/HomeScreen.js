@@ -27,7 +27,7 @@ const HomeScreen = () => {
   const { theme, isDarkMode } = useTheme();
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
-  const { username } = useContext(LoginContext);
+  const { username, selectedCompanyId, selectedCostId } = useContext(LoginContext);
 
   // Check if EstimationPreviewComponent is a valid React element
   const estimationPreview = useEstimationPreview();
@@ -54,8 +54,8 @@ const HomeScreen = () => {
             if (!Array.isArray(data) || data.length === 0) return row; // no new data
 
             const firstItem = data[0];
-            const costId = firstItem.COSTID || "";
-            const companyId = firstItem.COMPANYID || "";
+            const costId = firstItem.COSTID || selectedCostId || "";
+            const companyId = selectedCompanyId || "";
 
             // Merge new data into the existing row
             return {

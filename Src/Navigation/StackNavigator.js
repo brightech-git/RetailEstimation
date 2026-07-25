@@ -43,8 +43,10 @@ const isTablet = width >= 768;
 
 // Inner stack handles proper back navigation between screens
 function AppScreensStack() {
+  const { hasCostCentres } = useContext(LoginContext);
+  const initialRoute = hasCostCentres === false ? "Home" : "SelectCostCenter";
   return (
-    <InnerStack.Navigator screenOptions={{ headerShown: false }}>
+    <InnerStack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
       <InnerStack.Screen name="SelectCostCenter" component={SelectCostCenterScreen} />
       <InnerStack.Screen name="Home" component={HomeScreen} />
       <InnerStack.Screen name="Homescreen1" component={Homescreen1} />

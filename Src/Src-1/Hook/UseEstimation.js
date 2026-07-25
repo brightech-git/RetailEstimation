@@ -33,11 +33,9 @@ export const useEstimation = (apiBaseUrl) => {
   const {
     username,
     userId,
-    companyId: loggedInCompanyId,
-    companyName,
-    companyData,
     costOptions,
     selectedCostId,
+    selectedCompanyId,
   } = useContext(LoginContext);
   const [service, setService] = useState(null);
 
@@ -166,7 +164,7 @@ export const useEstimation = (apiBaseUrl) => {
       // the cost centre the user picked at login (SELECTED_COST_ID).
       const firstItem = data[0];
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
-      const companyId = firstItem.COMPANYID || loggedInCompanyId || "";
+      const companyId = firstItem.COMPANYID || selectedCompanyId || "";
 
       const newData = await Promise.all(data.map(async (d) => {
         const offer = await service.getOffer(TAGNO);
@@ -235,13 +233,8 @@ export const useEstimation = (apiBaseUrl) => {
       const firstItem = data[0];
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
 
-      // Resolve the string company code (e.g. "SFH") — used everywhere,
-      // including /estissue companyid. loggedInCompanyId is a numeric ID.
-      const companyCode =
-        costOptions?.find((o) => o.COSTID === costId)?.COMPANYID ||
-        companyData?.COMPANYCODE ||
-        companyData?.COMPANYID ||
-        "";
+      // Resolve companyId from selected cost centre (single source of truth)
+      const companyCode = selectedCompanyId || "";
       console.log("[EstBatchNo] Payload:", { costId, companyId: companyCode });
       const batchNo = await service.getEstimationBatchNo(costId, companyCode);
       console.log("[EstBatchNo] Response:", batchNo);

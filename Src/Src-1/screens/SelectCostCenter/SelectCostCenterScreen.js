@@ -29,6 +29,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
     setSelectedCostId,
     costLoading,
     fetchCostOptions,
+    hasCostCentres,
     logout,
   } = useContext(LoginContext);
   const { theme, isDarkMode } = useTheme();
@@ -43,9 +44,18 @@ const SelectCostCenterScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (companyUrl) {
-      fetchCostOptions(companyUrl).finally(() => setHasFetched(true));
+      fetchCostOptions(companyUrl).then(() => {
+        setHasFetched(true);
+      });
     }
   }, [companyUrl]);
+
+  // Auto-navigate when hasCostCentres becomes false (no cost centres configured)
+  useEffect(() => {
+    if (hasCostCentres === false) {
+      navigation.navigate("Home");
+    }
+  }, [hasCostCentres]);
 
   // Just highlight the tapped item - selection is only committed when
   // the user presses Continue.

@@ -23,7 +23,9 @@ export const LoginProvider = ({ children, showToast }) => {
 
   // --- new states for cost ID feature ---
   const [costOptions, setCostOptions] = useState([]);      // list of {COSTID, COSTNAME, COMPANYID}
-  const [selectedCostId, setSelectedCostId] = useState(""); // currently selected COSTID (e.g., "BH")
+  const [selectedCostId, setSelectedCostId] = useState(""); // currently selected COSTID (e.g., "FH")
+  const [selectedCompanyId, setSelectedCompanyId] = useState(""); // COMPANYID from selected cost centre
+  const [hasCostCentres, setHasCostCentres] = useState(null); // null=unknown, true/false after fetch
   const [costLoading, setCostLoading] = useState(false);   // loading indicator for fetching options
 
   // --- login function (unchanged, cost ID is NOT sent here) ---
@@ -99,10 +101,29 @@ export const LoginProvider = ({ children, showToast }) => {
       console.log("📦 Cost centre response data:", response.data);
 
       if (response.status === 200 && Array.isArray(response.data)) {
-        setCostOptions(response.data);
-        console.log(
-          `📦 Cost options loaded: ${response.data.length} record(s)`
-        );
+        // Detect if cost centres are actually configured (COSTID non-empty)
+        const validOptions = response.data.filter((o) => o.COSTID?.trim());
+        const companyIdFromCost = response.data[0]?.COMPANYID || "";
+
+        // Always store the COMPANYID from the cost response (e.g. "RTM", "SFH")
+        if (companyIdFromCost) {
+          setSelectedCompanyId(companyIdFromCost);
+          await AsyncStorage.setItem("SELECTED_COMPANY_ID", companyIdFromCost);
+          setCostCache("", companyIdFromCost);
+          console.log("📦 Company ID from cost options:", companyIdFromCost);
+        }
+
+        if (validOptions.length === 0) {
+          setHasCostCentres(false);
+          await AsyncStorage.setItem("HAS_COST_CENTRES", "false");
+          setCostOptions([]);
+          console.log("📦 No cost centres configured, skipping selection");
+        } else {
+          setHasCostCentres(true);
+          await AsyncStorage.setItem("HAS_COST_CENTRES", "true");
+          setCostOptions(validOptions);
+          console.log(`📦 Cost options loaded: ${validOptions.length} record(s)`);
+        }
         return true;
       } else {
         console.warn(
@@ -135,8 +156,10 @@ export const LoginProvider = ({ children, showToast }) => {
       const match = costOptions.find((o) => o.COSTID === costId);
       if (match?.COMPANYID) {
         await AsyncStorage.setItem("SELECTED_COMPANY_ID", match.COMPANYID);
+        setSelectedCompanyId(match.COMPANYID);
         setCostCache(costId, match.COMPANYID);
       } else {
+        setSelectedCompanyId("");
         setCostCache(costId, null);
       }
     } else {
@@ -152,6 +175,7 @@ export const LoginProvider = ({ children, showToast }) => {
       await AsyncStorage.removeItem("COMPANY_DATA");
       await AsyncStorage.removeItem("SELECTED_COST_ID");
       await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
+      await AsyncStorage.removeItem("HAS_COST_CENTRES");
 
       setUsername("");
       setUserId(null);
@@ -168,6 +192,8 @@ export const LoginProvider = ({ children, showToast }) => {
       // clear cost-related states
       setCostOptions([]);
       setSelectedCostId("");
+      setSelectedCompanyId("");
+      setHasCostCentres(null);
       setCostLoading(false);
 
       showToast?.("Logged out successfully", "info", 2000);
@@ -200,12 +226,17 @@ export const LoginProvider = ({ children, showToast }) => {
 
       const storedCostId = await AsyncStorage.getItem("SELECTED_COST_ID");
       const storedCompanyId = await AsyncStorage.getItem("SELECTED_COMPANY_ID");
+      const storedHasCostCentres = await AsyncStorage.getItem("HAS_COST_CENTRES");
       if (storedCostId) {
         setSelectedCostId(storedCostId);
         console.log("📦 Restored selected cost ID:", storedCostId);
       }
       if (storedCompanyId) {
+        setSelectedCompanyId(storedCompanyId);
         console.log("📦 Restored selected company ID:", storedCompanyId);
+      }
+      if (storedHasCostCentres !== null) {
+        setHasCostCentres(storedHasCostCentres === "true");
       }
       // Warm up the sync cache so interceptor works immediately
       await initCostCache();
@@ -255,11 +286,13 @@ export const LoginProvider = ({ children, showToast }) => {
         setStockPassword,
 
         // new cost ID related
-        costOptions,           // array of cost objects
-        selectedCostId,        // currently selected COSTID
-        setSelectedCostId: updateSelectedCostId,  // use setter that persists
-        costLoading,           // loading flag for fetching options
-        fetchCostOptions,      // function to manually fetch options (call after login)
+        costOptions,
+        selectedCostId,
+        selectedCompanyId,
+        hasCostCentres,        // null=unknown, true=show picker, false=skip picker
+        setSelectedCostId: updateSelectedCostId,
+        costLoading,
+        fetchCostOptions,
       }}
     >
       {children}
