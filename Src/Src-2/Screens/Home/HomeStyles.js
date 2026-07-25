@@ -175,10 +175,10 @@ export const createHomeStyles = (theme) => {
 
     itemCard: {
       width: "48%", // Two cards per row
-      backgroundColor: "#FFFFFF",
+      backgroundColor: COLORS.cardBackground,
       borderRadius: moderateScale(12),
       borderWidth: 1,
-      borderColor: "#E0E0E0",
+      borderColor: COLORS.border,
       marginBottom: moderateScale(15),
       overflow: "hidden",
       elevation: 3,
@@ -189,21 +189,21 @@ export const createHomeStyles = (theme) => {
     },
 
     cardImageContainer: {
-      backgroundColor: "#F5F5F5",
+      backgroundColor: COLORS.surfaceVariant,
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: moderateScale(20),
       borderBottomWidth: 1,
-      borderBottomColor: "#E0E0E0",
+      borderBottomColor: COLORS.border,
     },
 
     imagePlaceholder: {
       width: moderateScale(100),
       height: moderateScale(100),
-      backgroundColor: "#FFFFFF",
+      backgroundColor: COLORS.cardBackground,
       borderRadius: moderateScale(8),
       borderWidth: 2,
-      borderColor: "#E0E0E0",
+      borderColor: COLORS.border,
       borderStyle: "dashed",
       justifyContent: "center",
       alignItems: "center",
@@ -216,19 +216,19 @@ export const createHomeStyles = (theme) => {
     cardTagSection: {
       paddingVertical: moderateScale(12),
       alignItems: "center",
-      backgroundColor: "#FAFAFA",
+      backgroundColor: COLORS.surfaceVariant,
     },
 
     cardTagNumber: {
       fontSize: moderateScale(18),
       fontWeight: "bold",
-      color: "#333333",
+      color: COLORS.title,
       ...FONTS.heading,
     },
 
     cardDivider: {
       height: 1,
-      backgroundColor: "#E0E0E0",
+      backgroundColor: COLORS.border,
     },
 
     cardDetailsSection: {
@@ -244,14 +244,14 @@ export const createHomeStyles = (theme) => {
 
     cardDetailLabel: {
       fontSize: moderateScale(12),
-      color: "#666666",
+      color: COLORS.textLight,
       flex: 1,
       ...FONTS.text,
     },
 
     cardDetailValue: {
       fontSize: moderateScale(12),
-      color: "#333333",
+      color: COLORS.title,
       fontWeight: "500",
       flex: 1,
       textAlign: "right",
@@ -266,7 +266,7 @@ export const createHomeStyles = (theme) => {
     cardGrandTotalLabel: {
       fontSize: moderateScale(14),
       fontWeight: "bold",
-      color: "#333333",
+      color: COLORS.title,
       flex: 1,
       ...FONTS.heading,
     },
@@ -274,7 +274,7 @@ export const createHomeStyles = (theme) => {
     cardGrandTotalValue: {
       fontSize: moderateScale(16),
       fontWeight: "bold",
-      color: "#000000",
+      color: COLORS.primary,
       flex: 1,
       textAlign: "right",
       ...FONTS.heading,

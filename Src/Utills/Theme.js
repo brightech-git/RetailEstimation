@@ -14,6 +14,17 @@ export const LIGHT_COLORS = {
   card: "#FFFFFF",
   surface: "#FFFFFF",
   surfaceVariant: "#F5F7FA",
+  cardBackground: "#FFFFFF",
+
+  /* -------------------------------------------------------------------------- */
+  /* ⚪⚫ NEUTRALS (merged from Src-1/Src-2 theme copies)                        */
+  /* -------------------------------------------------------------------------- */
+  white: "#FFFFFF",
+  black: "#000000",
+  gray: "#666666",
+  lightGray: "#F0F0F0",
+  border: "#E0E0E0",
+  error: "#C62828",
 
   /* -------------------------------------------------------------------------- */
   /* 🎨 BRAND COLORS                                                           */
@@ -64,6 +75,11 @@ export const DARK_COLORS = {
   card: "#0A0A0A",
   surface: "#0F0F0F",
   surfaceVariant: "#1A1A1A",
+  cardBackground: "#0F0F0F",
+  gray: "#999999",
+  lightGray: "#2C2C2C",
+  border: "#3A3A3A",
+  error: "#EF5350",
   primary: "#8CBBFF",
   primaryLight: "rgba(140,187,255,0.15)",
   secondary: "#90CAF9",

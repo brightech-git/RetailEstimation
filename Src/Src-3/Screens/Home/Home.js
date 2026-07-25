@@ -7,12 +7,14 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import CommonHeader from "../../Components/Header/Header";
+import StockCheckHeader from "../../Components/Header/StockCheckHeader";
 import ToastMessage from "../../Components/Toast/Toast";
 import { useItemTagService } from "../../Service/ItemTagService";
 import FiltersComponent from "../../Components/MainComponents/Filters";
+import { useTheme } from "../../../Context/ThemeContext";
+import Footer from "../../Components/Footer/Footer";
 
-const InventoryStatsCard = React.memo(({ stats, loading, refreshing }) => {
+const InventoryStatsCard = React.memo(({ stats, loading, refreshing, styles, theme }) => {
   const checkedPct =
     stats.totalCount > 0 ? (stats.totalChecked / stats.totalCount) * 100 : 0;
   const uncheckedPct =
@@ -21,7 +23,7 @@ const InventoryStatsCard = React.memo(({ stats, loading, refreshing }) => {
   if (loading && !refreshing) {
     return (
       <View style={styles.card}>
-        <ActivityIndicator size="large" color="#1C467C" />
+        <ActivityIndicator size="large" color={theme.COLORS.primary} />
         <Text style={styles.loadingText}>Loading inventory...</Text>
       </View>
     );
@@ -55,6 +57,8 @@ const InventoryStatsCard = React.memo(({ stats, loading, refreshing }) => {
 });
 
 const BMGJewellersScreen = ({ navigation }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
   const service = useItemTagService();
   const isMounted = useRef(true);
   const initialLoadDone = useRef(false);
@@ -285,11 +289,9 @@ useEffect(() => {
         {...toast}
         onHide={() => setToast((t) => ({ ...t, visible: false }))}
       />
-      <CommonHeader
+      <StockCheckHeader
         title="Stock Checker"
-        titleColor="#000"
-        onLeftPress={() => navigation.goBack()}
-        leftIcon="arrow-back"
+        onBackPress={() => navigation.goBack()}
       />
       <ScrollView
         refreshControl={
@@ -306,6 +308,8 @@ useEffect(() => {
           stats={stats}
           loading={stats.loading}
           refreshing={stats.refreshing}
+          styles={styles}
+          theme={theme}
         />
         <View style={styles.card}>
           <FiltersComponent
@@ -318,54 +322,56 @@ useEffect(() => {
           />
         </View>
       </ScrollView>
+      <Footer />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f7fa" },
-  card: {
-    backgroundColor: "#fff",
-    margin: 16,
-    borderRadius: 16,
-    padding: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1C467C",
-    marginBottom: 16,
-  },
-  total: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-  totalLabel: { fontSize: 16, color: "#666" },
-  totalNumber: { fontSize: 28, fontWeight: "800", color: "#1C467C" },
-  bar: {
-    height: 14,
-    borderRadius: 7,
-    overflow: "hidden",
-    flexDirection: "row",
-    marginVertical: 16,
-    backgroundColor: "#eee",
-  },
-  barFill: { height: "100%" },
-  checked: { backgroundColor: "#28a745" },
-  unchecked: { backgroundColor: "#dc3545" },
-  legend: { flexDirection: "row", justifyContent: "space-around" },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  label: { fontSize: 16, color: "#444" },
-  loadingText: { marginTop: 12, color: "#666", textAlign: "center" },
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.COLORS.background },
+    card: {
+      backgroundColor: theme.COLORS.cardBackground,
+      margin: 16,
+      borderRadius: 16,
+      padding: 20,
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: theme.COLORS.primary,
+      marginBottom: 16,
+    },
+    total: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderColor: theme.COLORS.border,
+    },
+    totalLabel: { fontSize: 16, color: theme.COLORS.textLight },
+    totalNumber: { fontSize: 28, fontWeight: "800", color: theme.COLORS.primary },
+    bar: {
+      height: 14,
+      borderRadius: 7,
+      overflow: "hidden",
+      flexDirection: "row",
+      marginVertical: 16,
+      backgroundColor: theme.COLORS.lightGray,
+    },
+    barFill: { height: "100%" },
+    checked: { backgroundColor: theme.COLORS.success },
+    unchecked: { backgroundColor: theme.COLORS.danger },
+    legend: { flexDirection: "row", justifyContent: "space-around" },
+    legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
+    dot: { width: 10, height: 10, borderRadius: 5 },
+    label: { fontSize: 16, color: theme.COLORS.text },
+    loadingText: { marginTop: 12, color: theme.COLORS.textLight, textAlign: "center" },
+  });
 
 export default React.memo(BMGJewellersScreen);

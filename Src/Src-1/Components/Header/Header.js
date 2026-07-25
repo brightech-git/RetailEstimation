@@ -4,89 +4,40 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
-  Image,
-  Animated,
   Dimensions,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { LoginContext } from "../../../Context/LoginContext";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { useTheme } from "../../../Context/ThemeContext";
 import getStyles from "./HeaderStyles";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
+// MainHeader renders the top bar (theme toggle, company name, sidebar
+// launcher) and the gold/silver rate info card. The sidebar itself (menu
+// items, admin auth, logout, etc.) lives in Src/Components/Sidebar and is
+// opened via the drawer navigator's own openDrawer() action.
 const MainHeader = () => {
   const [goldRate, setGoldRate] = useState(null);
   const [silverRate, setSilverRate] = useState(null);
   const [loadingRates, setLoadingRates] = useState(true);
   const [error, setError] = useState(false);
   const [rateUpdated, setRateUpdated] = useState(null);
-  const [drawerVisible, setDrawerVisible] = useState(false);
-
-  // 🔒 Admin Authentication States
-  const [showAdminAuth, setShowAdminAuth] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [adminAuthError, setAdminAuthError] = useState(false);
-
-  // 🔒 Change Password Authentication States
-  const [showChangePasswordAuth, setShowChangePasswordAuth] = useState(false);
-  const [contactNumberInput, setContactNumberInput] = useState("");
-  const [changePasswordAuthError, setChangePasswordAuthError] = useState(false);
 
   const API_BASE_URL = useApiBaseUrl();
   const navigation = useNavigation();
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const styles = getStyles(theme);
 
-  // ✅ FIX: Initialize animated value properly
-  const slideAnim = useState(new Animated.Value(width))[0];
-
   const {
     username,
     companyName,
-    companyLogo,
-    companyLogoUrl,
-    logout,
-    contactNumber,
-    stockUsername,
-    stockPassword,
     selectedCostId,
     loading: contextLoading,
   } = useContext(LoginContext);
-
-  const companyLogoFullPath = companyLogoUrl
-    ? `${companyLogoUrl.replace(/\/$/, "")}/${encodeURI(
-        companyLogo?.replace(/^\//, "") || "",
-      )}`
-    : null;
-
-  const handleLogout = async () => {
-    try {
-      // Clear ALL async storage data
-      await AsyncStorage.clear();
-      console.log("AsyncStorage cleared");
-
-      // Call your existing logout (clears context/login state). Once
-      // `username` becomes empty, StackNavigator swaps to the logged-out
-      // stack automatically - no manual navigation.replace needed (and
-      // calling it here would target a screen removed by that swap).
-      await logout();
-      console.log("Logged out - navigator will switch to Login screen");
-    } catch (error) {
-      console.error("Error clearing data:", error);
-      Alert.alert("Error", "Something went wrong while logging out.");
-    }
-  };
 
   const [currentDateTime] = useState(new Date());
   const date = `${String(currentDateTime.getDate()).padStart(2, "0")}-${String(
@@ -116,123 +67,6 @@ const MainHeader = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const openDrawer = () => {
-    setDrawerVisible(true);
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeDrawer = () => {
-    Animated.timing(slideAnim, {
-      toValue: width,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setDrawerVisible(false));
-  };
-
-  // 🔒 Admin Authentication Functions (using stockPassword from context)
-  const handleAdminAuthentication = () => {
-    // Use stockPassword from context instead of hardcoded password
-    if (stockPassword && adminPassword === stockPassword) {
-      setIsAdminAuthenticated(true);
-      setAdminAuthError(false);
-      setShowAdminAuth(false);
-      // Clear password after successful login
-      setAdminPassword("");
-
-      // Navigate to Stock Check after authentication
-      closeDrawer();
-      navigation.navigate("BMGJewellers");
-    } else {
-      setAdminAuthError(true);
-      Alert.alert(
-        "Authentication Failed",
-        "Invalid password. Please try again.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              setAdminPassword("");
-            },
-          },
-        ],
-      );
-    }
-  };
-
-  // 🔒 Contact Number Verification for Change Password
-  const handleContactNumberVerification = () => {
-    if (contactNumberInput === contactNumber) {
-      setChangePasswordAuthError(false);
-      setShowChangePasswordAuth(false);
-      setContactNumberInput("");
-      
-      // Navigate to Change Stock Password Screen
-      closeDrawer();
-      navigation.navigate("ChangeStockPassword");
-    } else {
-      setChangePasswordAuthError(true);
-      Alert.alert(
-        "Verification Failed",
-        "Contact number does not match. Please try again.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              setContactNumberInput("");
-            },
-          },
-        ],
-      );
-    }
-  };
-
-  const handleStockCheckPress = () => {
-    closeDrawer();
-
-    // Check if stockPassword exists in context
-    if (!stockPassword) {
-      Alert.alert(
-        "Access Restricted",
-        "Stock password is not configured. Please contact administrator.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
-    if (isAdminAuthenticated) {
-      // If already authenticated, navigate directly
-      navigation.navigate("BMGJewellers");
-    } else {
-      // Show admin authentication modal
-      setShowAdminAuth(true);
-    }
-  };
-
-  const handleChangePasswordPress = () => {
-    closeDrawer();
-    
-    if (!contactNumber) {
-      Alert.alert(
-        "Information Missing",
-        "Contact number is not available. Please contact administrator.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-    
-    // Show contact number verification modal
-    setShowChangePasswordAuth(true);
-  };
-
-  const handleAdminLogout = () => {
-    setIsAdminAuthenticated(false);
-    Alert.alert("Admin Logout", "You have been logged out from admin access.");
-  };
-
   if (contextLoading) {
     return (
       <View style={styles.loaderContainer}>
@@ -251,12 +85,16 @@ const MainHeader = () => {
         {/* 🔹 HEADER */}
         <View style={styles.topSection}>
           {/* Left: Theme Toggle */}
-          <TouchableOpacity style={styles.iconContainer} onPress={toggleTheme}>
-            {/* <Ionicons
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={toggleTheme}
+            testID="theme-toggle-button"
+          >
+            <Ionicons
               name={isDarkMode ? "sunny-outline" : "moon-outline"}
-              size={styles.iconSize + 2}
+              size={styles.iconSize}
               color={theme.COLORS.warning}
-            /> */}
+            />
           </TouchableOpacity>
 
           {/* Center: Company Logo + Name */}
@@ -266,10 +104,10 @@ const MainHeader = () => {
             </Text>
           </View>
 
-          {/* Right: Drawer Toggle */}
+          {/* Right: Sidebar Toggle */}
           <TouchableOpacity
             style={styles.iconContainer}
-            onPress={openDrawer}
+            onPress={() => navigation.openDrawer()}
             testID="menu-button"
           >
             <Ionicons
@@ -326,290 +164,6 @@ const MainHeader = () => {
           </View>
         </View>
       </View>
-
-      {/* 🔹 Drawer Overlay */}
-      {drawerVisible && (
-        <>
-          {/* 🔹 Background Overlay */}
-          <TouchableOpacity
-            style={styles.drawerOverlay}
-            activeOpacity={1}
-            onPress={closeDrawer}
-          />
-
-          {/* 🔹 Sliding Drawer */}
-          <Animated.View style={styles.drawerContainer}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <TouchableOpacity
-                style={styles.closeDrawer}
-                onPress={closeDrawer}
-              >
-                <Ionicons
-                  name="close-outline"
-                  size={30}
-                  color={theme.COLORS.title}
-                />
-              </TouchableOpacity>
-
-              <View style={styles.drawerHeader}>
-                <Image
-                  source={
-                    companyLogoFullPath
-                      ? { uri: companyLogoFullPath }
-                      : require("../../../../assets/brightechlogo.png")
-                  }
-                  style={styles.drawerLogo}
-                  resizeMode="contain"
-                />
-                <Text style={styles.drawerCompanyName}>
-                  {companyName || "Company Name"}
-                </Text>
-              </View>
-
-              {/* Drawer Items */}
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={() => {
-                  closeDrawer();
-                  navigation.navigate("Print");
-                }}
-              >
-                <MaterialIcons
-                  name="print"
-                  size={26}
-                  color={theme.COLORS.iconPrimary}
-                />
-                <Text style={styles.drawerText}>Print</Text>
-              </TouchableOpacity>
-
-              {/* 🔒 Stock Check with Admin Authentication */}
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={handleStockCheckPress}
-              >
-                <MaterialIcons
-                  name="diamond"
-                  size={26}
-                  color={theme.COLORS.iconPrimary}
-                />
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    flex: 1,
-                  }}
-                >
-                  <Text style={styles.drawerText}>Stock Check</Text>
-                  {isAdminAuthenticated && (
-                    <View
-                      style={{
-                        backgroundColor: theme.COLORS.success,
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: 10,
-                        marginLeft: 8,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: theme.COLORS.white,
-                          fontSize: 10,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Admin
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={() => {
-                  closeDrawer();
-                  navigation.navigate("Homescreen1");
-                }}
-              >
-                <Ionicons
-                  name="home"
-                  size={26}
-                  color={theme.COLORS.iconPrimary}
-                />
-                <Text style={styles.drawerText}>Quick Estimate</Text>
-              </TouchableOpacity>
-
-              {/* 🔒 Change Stock Password */}
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={handleChangePasswordPress}
-              >
-                <MaterialIcons
-                  name="lock-reset"
-                  size={26}
-                  color={theme.COLORS.iconPrimary}
-                />
-                <Text style={styles.drawerText}>Change Stock Password</Text>
-              </TouchableOpacity>
-
-              {/* Admin Logout (only shows when authenticated) */}
-              {isAdminAuthenticated && (
-                <TouchableOpacity
-                  style={[styles.drawerItem, { marginTop: 10 }]}
-                  onPress={handleAdminLogout}
-                >
-                  <MaterialIcons
-                    name="admin-panel-settings"
-                    size={26}
-                    color={theme.COLORS.warning}
-                  />
-                  <Text
-                    style={[styles.drawerText, { color: theme.COLORS.warning }]}
-                  >
-                    Logout Admin
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={() => {
-                  handleLogout();
-                }}
-              >
-                <Ionicons
-                  name="log-out-outline"
-                  size={26}
-                  color={theme.COLORS.danger}
-                />
-                <Text
-                  style={[styles.drawerText, { color: theme.COLORS.danger }]}
-                >
-                  Logout
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </Animated.View>
-        </>
-      )}
-
-      {/* 🔒 Admin Authentication Modal (Password only) */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showAdminAuth}
-        onRequestClose={() => setShowAdminAuth(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🔒 Admin Access Required</Text>
-              <Text style={styles.modalSubtitle}>
-                Enter admin password to access Stock Check
-              </Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Admin Password</Text>
-              <TextInput
-                style={[styles.textInput, adminAuthError && styles.inputError]}
-                placeholder="Enter admin password"
-                value={adminPassword}
-                onChangeText={setAdminPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                placeholderTextColor={theme.COLORS.gray}
-                onSubmitEditing={handleAdminAuthentication}
-              />
-            </View>
-
-            {adminAuthError && (
-              <Text style={styles.errorText}>
-                ❌ Invalid password. Please try again.
-              </Text>
-            )}
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowAdminAuth(false);
-                  setAdminPassword("");
-                  setAdminAuthError(false);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.submitButton]}
-                onPress={handleAdminAuthentication}
-              >
-                <Text style={styles.submitButtonText}>Authenticate</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 🔒 Contact Number Verification Modal for Change Password */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showChangePasswordAuth}
-        onRequestClose={() => setShowChangePasswordAuth(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>📞 Contact Verification</Text>
-              <Text style={styles.modalSubtitle}>
-                Enter your registered contact number to change stock password
-              </Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Contact Number</Text>
-              <TextInput
-                style={[styles.textInput, changePasswordAuthError && styles.inputError]}
-                placeholder="Enter contact number"
-                value={contactNumberInput}
-                onChangeText={setContactNumberInput}
-                keyboardType="phone-pad"
-                autoCapitalize="none"
-                placeholderTextColor={theme.COLORS.gray}
-                onSubmitEditing={handleContactNumberVerification}
-              />
-            </View>
-
-            {changePasswordAuthError && (
-              <Text style={styles.errorText}>
-                ❌ Contact number does not match. Please try again.
-              </Text>
-            )}
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowChangePasswordAuth(false);
-                  setContactNumberInput("");
-                  setChangePasswordAuthError(false);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.submitButton]}
-                onPress={handleContactNumberVerification}
-              >
-                <Text style={styles.submitButtonText}>Verify</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </LinearGradient>
   );
 };

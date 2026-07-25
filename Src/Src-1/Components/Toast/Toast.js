@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { COLORS, FONTS, SIZES } from '../../Utills/Theme';
+import { useTheme } from '../../../Context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => {
+  const { theme } = useTheme();
+  const { COLORS, FONTS, SIZES } = theme;
+  const styles = getStyles(SIZES);
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -130,53 +133,54 @@ const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => 
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 40,
-    left: 20,
-    right: 20,
-    zIndex: 9999,
-    alignItems: 'center',
-  },
-  toast: {
-    width: width - 40,
-    minHeight: 60,
-    borderRadius: SIZES.radius,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const getStyles = (SIZES) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      top: Platform.OS === 'ios' ? 50 : 40,
+      left: 20,
+      right: 20,
+      zIndex: 9999,
+      alignItems: 'center',
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 1,
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  icon: {
-    fontSize: 18,
-    color: COLORS.white,
-    fontWeight: 'bold',
-  },
-  message: {
-    flex: 1,
-    color: COLORS.white,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-});
+    toast: {
+      width: width - 40,
+      minHeight: 60,
+      borderRadius: SIZES.radius,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+      borderWidth: 1,
+    },
+    iconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    icon: {
+      fontSize: 18,
+      color: '#FFFFFF',
+      fontWeight: 'bold',
+    },
+    message: {
+      flex: 1,
+      color: '#FFFFFF',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+  });
 
 export default Toast;

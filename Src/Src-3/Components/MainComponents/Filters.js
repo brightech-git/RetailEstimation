@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "react-native";
 import DropdownInput from "./DropDown";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../../Context/ThemeContext";
 
 const FiltersComponent = ({
   filters,
@@ -11,6 +12,9 @@ const FiltersComponent = ({
   showAll,
   loadingStates = { items: false, subItems: false }
 }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
   const clearFilter = () => {
     setFilters({
       metalId: null,
@@ -29,7 +33,7 @@ const FiltersComponent = ({
         <Text style={styles.formTitle}>FILTERS</Text>
 
         <TouchableOpacity onPress={clearFilter} style={styles.clearButton}>
-          <Ionicons name="close" size={18} color="#ff0000ff" />
+          <Ionicons name="close" size={18} color={theme.COLORS.danger} />
           <Text style={styles.clearText}>Clear</Text>
         </TouchableOpacity>
       </View>
@@ -77,7 +81,7 @@ const FiltersComponent = ({
           <View style={styles.halfWidth}>
             {loadingStates.items ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#D97706" />
+                <ActivityIndicator size="small" color={theme.COLORS.warning} />
                 <Text style={styles.loadingText}>Loading items...</Text>
               </View>
             ) : (
@@ -102,7 +106,7 @@ const FiltersComponent = ({
           <View style={styles.halfWidth}>
             {loadingStates.subItems ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#D97706" />
+                <ActivityIndicator size="small" color={theme.COLORS.warning} />
                 <Text style={styles.loadingText}>Loading subitems...</Text>
               </View>
             ) : (
@@ -147,101 +151,103 @@ const FiltersComponent = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingHorizontal: 10,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  clearButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    backgroundColor: "#f0eeeeff",
-  },
-  clearText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ff0000ff",
-    marginLeft: 4,
-  },
-  filterContainer: {
-    // No flexDirection here as we're using column layout with rows inside
-  },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-    gap: 12,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  loadingContainer: {
-    width: "100%",
-    height: 60,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    backgroundColor: "#fafafa",
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-  },
-  loadingText: {
-    marginLeft: 8,
-    color: "#666",
-    fontSize: 12,
-  },
-  filterButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    gap: 12,
-  },
-  applyButton: {
-    flex: 1,
-    backgroundColor: "#D97706",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    elevation: 2,
-  },
-  applyButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  allButton: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#D97706",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  allButtonText: {
-    color: "#D97706",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      marginTop: 10,
+      paddingTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: theme.COLORS.border,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+      paddingHorizontal: 10,
+    },
+    formTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: theme.COLORS.title,
+    },
+    clearButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 9,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.COLORS.border,
+      backgroundColor: theme.COLORS.surfaceVariant,
+    },
+    clearText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: theme.COLORS.danger,
+      marginLeft: 4,
+    },
+    filterContainer: {
+      // No flexDirection here as we're using column layout with rows inside
+    },
+    rowContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 16,
+      gap: 12,
+    },
+    halfWidth: {
+      flex: 1,
+    },
+    loadingContainer: {
+      width: "100%",
+      height: 60,
+      borderWidth: 1,
+      borderColor: theme.COLORS.border,
+      borderRadius: 8,
+      backgroundColor: theme.COLORS.surfaceVariant,
+      justifyContent: "center",
+      alignItems: "center",
+      flexDirection: "row",
+    },
+    loadingText: {
+      marginLeft: 8,
+      color: theme.COLORS.textLight,
+      fontSize: 12,
+    },
+    filterButtons: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 20,
+      gap: 12,
+    },
+    applyButton: {
+      flex: 1,
+      backgroundColor: theme.COLORS.warning,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: "center",
+      elevation: 2,
+    },
+    applyButtonText: {
+      color: theme.COLORS.white,
+      fontWeight: "600",
+      fontSize: 14,
+    },
+    allButton: {
+      flex: 1,
+      backgroundColor: theme.COLORS.cardBackground,
+      borderWidth: 2,
+      borderColor: theme.COLORS.warning,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: "center",
+    },
+    allButtonText: {
+      color: theme.COLORS.warning,
+      fontWeight: "600",
+      fontSize: 14,
+    },
+  });
 
 export default FiltersComponent;

@@ -1,31 +1,34 @@
+// 📁 Src/Src-2/Components/Header/QuickEstimateHeader.js
+// Dedicated header for the "Quick Estimate" (Src-2 Home) screen. Kept
+// separate from the main Src-1 Home header and the Src-3 Stock Check
+// header so each page's header can evolve independently.
 import React, { useEffect, useState, useRef, useContext } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  StatusBar,
-  Platform,
+  TouchableOpacity,
   Animated,
   Easing,
   Image,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../../Context/ThemeContext";
 import { LoginContext } from "../../../Context/LoginContext";
-import { createHeaderStyles } from "./HeaderStyles";
-import { LinearGradient } from "expo-linear-gradient";
+import { createQuickEstimateHeaderStyles } from "./QuickEstimateHeaderStyles";
 
-const Header = () => {
+const QuickEstimateHeader = () => {
   const { theme } = useTheme();
-  const styles = createHeaderStyles(theme);
+  const styles = createQuickEstimateHeaderStyles(theme);
+  const navigation = useNavigation();
 
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   const {
-    username,
     companyName,
     companyLogo,
     companyLogoUrl,
-    loading: contextLoading,
   } = useContext(LoginContext);
 
   const companyLogoFullPath = companyLogoUrl
@@ -34,7 +37,6 @@ const Header = () => {
       )}`
     : null;
 
-  // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
 
@@ -60,23 +62,15 @@ const Header = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const formatDateTime = () => {
-    const day = String(currentDateTime.getDate()).padStart(2, "0");
-    const month = String(currentDateTime.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-    const year = currentDateTime.getFullYear();
-
-    const date = `${day}-${month}-${year}`;
-
-    const time = currentDateTime.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    return { date, time };
-  };
-
-  const { date, time } = formatDateTime();
+  const day = String(currentDateTime.getDate()).padStart(2, "0");
+  const month = String(currentDateTime.getMonth() + 1).padStart(2, "0");
+  const year = currentDateTime.getFullYear();
+  const date = `${day}-${month}-${year}`;
+  const time = currentDateTime.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   return (
     <LinearGradient
@@ -89,6 +83,15 @@ const Header = () => {
           { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
         ]}
       >
+        {/* Sidebar launcher */}
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.openDrawer()}
+          testID="menu-button"
+        >
+          <Ionicons name="menu-outline" size={26} color={theme.COLORS.buttonText} />
+        </TouchableOpacity>
+
         <View style={styles.companySection}>
           <Image
             source={
@@ -99,8 +102,10 @@ const Header = () => {
             style={styles.companyLogo}
             resizeMode="contain"
           />
-
-          <Text style={styles.companyName}>{companyName}</Text>
+          <View>
+            <Text style={styles.companyName}>{companyName}</Text>
+            {/* <Text style={styles.pageTitle}>Quick Estimate</Text> */}
+          </View>
         </View>
 
         <View style={styles.bottomSection}>
@@ -120,4 +125,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default QuickEstimateHeader;

@@ -13,7 +13,9 @@ import ToastMessage from "../../Components/Toast/Toast";
 import BarcodeScannerModal from "../../Components/Scanner/Scanner3";
 import ScanUpdateComponent from "../../Components/MainComponents/ScanUpdate";
 import TableComponent from "../../Components/MainComponents/Table";
-import styles from "./ResultStyles"; // Import styles from separate file
+import getStyles from "./ResultStyles"; // Import styles from separate file
+import { useTheme } from "../../../Context/ThemeContext";
+import StockCheckHeader from "../../Components/Header/StockCheckHeader";
 
 const PAGE_SIZE = 20;
 const INITIAL_FILTERS = {
@@ -30,6 +32,8 @@ const INITIAL_DROPDOWN_DATA = {
 };
 
 const ResultsScreen = ({ route, navigation }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
   const {
     service,
     initialFilters = INITIAL_FILTERS,
@@ -367,14 +371,14 @@ const itemCtrId = filters.itemCtrId || null;
         </Text>
       </View>
     );
-  }, [activeFilters, totalCount, filters.metalId, getMetalName]);
+  }, [activeFilters, totalCount, filters.metalId, getMetalName, theme]);
 
   const RecentlyUpdatedItem = useMemo(() => {
     if (!recentlyUpdatedItem) return null;
 
     const columns = [
       { key: "ITEMID", label: "ITEMID", width: 100 },
-      { key: "TAGNO", label: "TAG NO", width: 100, color: "#1a73e8" },
+      { key: "TAGNO", label: "TAG NO", width: 100, color: theme.COLORS.info },
       { key: "PCS", label: "PCS", width: 80 },
       { key: "GRSWT", label: "GROSS WT", width: 100 },
       { key: "NETWT", label: "NET WT", width: 100 },
@@ -394,11 +398,11 @@ const itemCtrId = filters.itemCtrId || null;
       <View style={styles.recentUpdateContainer}>
         <View style={styles.recentUpdateHeader}>
           <Text style={styles.recentUpdateTitle}>
-            <Ionicons name="checkmark-circle" size={16} color="#28a745" />{" "}
+            <Ionicons name="checkmark-circle" size={16} color={theme.COLORS.success} />{" "}
             Recently Updated
           </Text>
           <TouchableOpacity onPress={() => setRecentlyUpdatedItem(null)}>
-            <Ionicons name="close-circle" size={22} color="#666" />
+            <Ionicons name="close-circle" size={22} color={theme.COLORS.textLight} />
           </TouchableOpacity>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -436,7 +440,7 @@ const itemCtrId = filters.itemCtrId || null;
         </ScrollView>
       </View>
     );
-  }, [recentlyUpdatedItem]);
+  }, [recentlyUpdatedItem, theme]);
 
   const ModeToggle = useMemo(
     () => (
@@ -458,7 +462,7 @@ const itemCtrId = filters.itemCtrId || null;
                   mode === modeOption ? "radio-button-on" : "radio-button-off"
                 }
                 size={20}
-                color="#1C467C"
+                color={theme.COLORS.primary}
               />
               <Text
                 style={[
@@ -473,7 +477,7 @@ const itemCtrId = filters.itemCtrId || null;
         </View>
       </View>
     ),
-    [mode]
+    [mode, theme]
   );
 
   const StatsComponent = useMemo(
@@ -518,12 +522,17 @@ const itemCtrId = filters.itemCtrId || null;
       uncheckedPercentage,
       totalChecked,
       totalUnchecked,
+      theme,
     ]
   );
 
 
   return (
     <View style={styles.container}>
+      <StockCheckHeader
+        title="Stock Details"
+        onBackPress={() => navigation.goBack()}
+      />
       <ToastMessage
         visible={toastData.visible}
         message={toastData.message}
@@ -540,8 +549,8 @@ const itemCtrId = filters.itemCtrId || null;
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#1C467C"]}
-            tintColor="#1C467C"
+            colors={[theme.COLORS.primary]}
+            tintColor={theme.COLORS.primary}
           />
         }
       >
@@ -562,7 +571,7 @@ const itemCtrId = filters.itemCtrId || null;
 
           {loading && !refreshing ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#1C467C" />
+              <ActivityIndicator size="large" color={theme.COLORS.primary} />
               <Text style={styles.loadingText}>Loading items...</Text>
             </View>
           ) : (

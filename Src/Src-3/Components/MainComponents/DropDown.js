@@ -11,17 +11,20 @@ import {
   Dimensions 
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../../Context/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
-const DropdownInput = ({ 
-  label, 
-  options, 
-  selectedValue, 
-  onSelect, 
+const DropdownInput = ({
+  label,
+  options,
+  selectedValue,
+  onSelect,
   disabled = false,
-  placeholder 
+  placeholder
 }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [localSelectedValue, setLocalSelectedValue] = useState(selectedValue);
@@ -78,10 +81,10 @@ const DropdownInput = ({
         ]} numberOfLines={1}>
           {getDisplayValue()}
         </Text>
-        <Ionicons 
-          name="chevron-down" 
-          size={20} 
-          color={disabled ? "#ccc" : "#666"} 
+        <Ionicons
+          name="chevron-down"
+          size={20}
+          color={disabled ? theme.COLORS.textLight : theme.COLORS.text}
         />
       </TouchableOpacity>
 
@@ -97,35 +100,35 @@ const DropdownInput = ({
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Select {label}</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => {
                       setModalVisible(false);
                       setSearchText("");
                     }}
                     style={styles.closeButton}
                   >
-                    <Ionicons name="close" size={24} color="#666" />
+                    <Ionicons name="close" size={24} color={theme.COLORS.text} />
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.searchContainer}>
-                  <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+                  <Ionicons name="search" size={20} color={theme.COLORS.textLight} style={styles.searchIcon} />
                   <TextInput
                     style={styles.searchInput}
                     placeholder={`Search ${label}...`}
-                    placeholderTextColor="#999"
+                    placeholderTextColor={theme.COLORS.placeholder}
                     value={searchText}
                     onChangeText={setSearchText}
                     autoFocus
                   />
                   {searchText.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchText("")}>
-                      <Ionicons name="close-circle" size={20} color="#ccc" />
+                      <Ionicons name="close-circle" size={20} color={theme.COLORS.textLight} />
                     </TouchableOpacity>
                   )}
                 </View>
-                
-                <ScrollView 
+
+                <ScrollView
                   style={styles.optionsList}
                   showsVerticalScrollIndicator={true}
                 >
@@ -146,13 +149,13 @@ const DropdownInput = ({
                           {opt.name}
                         </Text>
                         {localSelectedValue?.toString() === opt.id?.toString() && (
-                          <Ionicons name="checkmark" size={20} color="#1C467C" />
+                          <Ionicons name="checkmark" size={20} color={theme.COLORS.primary} />
                         )}
                       </TouchableOpacity>
                     ))
                   ) : (
                     <View style={styles.noResults}>
-                      <Ionicons name="search-outline" size={40} color="#ccc" />
+                      <Ionicons name="search-outline" size={40} color={theme.COLORS.textLight} />
                       <Text style={styles.noResultsText}>No results found</Text>
                       {searchText.length > 0 && (
                         <TouchableOpacity 
@@ -186,160 +189,161 @@ const DropdownInput = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 6,
-  },
-  dropdownButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: "#fafafa",
-  },
-  disabledButton: {
-    backgroundColor: "#f0f0f0",
-    borderColor: "#e0e0e0",
-  },
-  dropdownText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
-    marginRight: 8,
-  },
-  disabledText: {
-    color: "#999",
-  },
-  placeholderText: {
-    color: "#999",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    width: width * 0.9,
-    maxHeight: height * 0.7,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      width: "100%",
+      marginBottom: 16,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    margin: 16,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: "#333",
-  },
-  optionsList: {
-    maxHeight: 300,
-  },
-  optionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  selectedOption: {
-    backgroundColor: "#f0f8ff",
-  },
-  optionText: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
-  selectedOptionText: {
-    color: "#1C467C",
-    fontWeight: "500",
-  },
-  noResults: {
-    alignItems: "center",
-    padding: 40,
-  },
-  noResultsText: {
-    marginTop: 12,
-    color: "#999",
-    fontSize: 16,
-  },
-  clearSearchButton: {
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-  },
-  clearSearchText: {
-    color: "#666",
-    fontSize: 14,
-  },
-  modalFooter: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  cancelButton: {
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-  },
-  cancelButtonText: {
-    color: "#666",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-});
+    label: {
+      fontSize: 13,
+      fontWeight: "500",
+      color: theme.COLORS.title,
+      marginBottom: 6,
+    },
+    dropdownButton: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: theme.COLORS.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: theme.COLORS.surfaceVariant,
+    },
+    disabledButton: {
+      backgroundColor: theme.COLORS.lightGray,
+      borderColor: theme.COLORS.border,
+    },
+    dropdownText: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.COLORS.text,
+      marginRight: 8,
+    },
+    disabledText: {
+      color: theme.COLORS.textLight,
+    },
+    placeholderText: {
+      color: theme.COLORS.textLight,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    modalContent: {
+      backgroundColor: theme.COLORS.cardBackground,
+      borderRadius: 16,
+      width: width * 0.9,
+      maxHeight: height * 0.7,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.COLORS.border,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: theme.COLORS.title,
+    },
+    closeButton: {
+      padding: 4,
+    },
+    searchContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      margin: 16,
+      marginTop: 8,
+      borderWidth: 1,
+      borderColor: theme.COLORS.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: theme.COLORS.text,
+    },
+    optionsList: {
+      maxHeight: 300,
+    },
+    optionItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.COLORS.border,
+    },
+    selectedOption: {
+      backgroundColor: theme.COLORS.primaryLight,
+    },
+    optionText: {
+      fontSize: 16,
+      color: theme.COLORS.text,
+      flex: 1,
+    },
+    selectedOptionText: {
+      color: theme.COLORS.primary,
+      fontWeight: "500",
+    },
+    noResults: {
+      alignItems: "center",
+      padding: 40,
+    },
+    noResultsText: {
+      marginTop: 12,
+      color: theme.COLORS.textLight,
+      fontSize: 16,
+    },
+    clearSearchButton: {
+      marginTop: 12,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      backgroundColor: theme.COLORS.lightGray,
+      borderRadius: 8,
+    },
+    clearSearchText: {
+      color: theme.COLORS.textLight,
+      fontSize: 14,
+    },
+    modalFooter: {
+      padding: 16,
+      borderTopWidth: 1,
+      borderTopColor: theme.COLORS.border,
+    },
+    cancelButton: {
+      paddingVertical: 12,
+      alignItems: "center",
+      backgroundColor: theme.COLORS.lightGray,
+      borderRadius: 8,
+    },
+    cancelButtonText: {
+      color: theme.COLORS.textLight,
+      fontSize: 16,
+      fontWeight: "500",
+    },
+  });
 
 export default DropdownInput;

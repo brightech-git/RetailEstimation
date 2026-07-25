@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import MainHeader from "../../Components/Header/Header";
+import QuickEstimateHeader from "../../Components/Header/QuickEstimateHeader";
 import Footer from "../../Components/Footer/Footer";
 import BarcodeScannerModal from "../../Components/Scanner/Scanner";
 import {
@@ -236,7 +236,7 @@ const handleScannedData = (data) => {
   return (
     <>
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
-        <MainHeader />
+        <QuickEstimateHeader />
         <View style={styles.container}>
           {/* Combined Input Field with Camera and Fetch Buttons */}
           <View style={styles.combinedInputContainer}>

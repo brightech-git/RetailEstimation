@@ -61,7 +61,10 @@ const SelectCostCenterScreen = ({ navigation }) => {
       // cost centres at all. Downstream API calls already handle a
       // missing/empty cost id gracefully.
       await setSelectedCostId(costIdToUse || "");
-      navigation.replace("Home");
+      // Drawer navigator doesn't support `replace` (that's a stack-only
+      // action) — `navigate` is equivalent here since there's nothing to
+      // go "back" to from the drawer's home screen anyway.
+      navigation.navigate("Home");
     } finally {
       setContinuing(false);
     }

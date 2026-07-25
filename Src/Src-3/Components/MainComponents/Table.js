@@ -8,17 +8,20 @@ import {
   TouchableOpacity,
   Modal
 } from "react-native";
-import styles from "./TableStyles";
+import getStyles from "./TableStyles";
+import { useTheme } from "../../../Context/ThemeContext";
 
 const { width } = Dimensions.get('window');
 
-const TableComponent = ({ 
-  itemTags, 
-  onLoadMore, 
-  loadingMore, 
+const TableComponent = ({
+  itemTags,
+  onLoadMore,
+  loadingMore,
   hasMore,
   totalCount = 0
 }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
   const [filter, setFilter] = useState("all"); // "all", "checked", "unchecked"
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   
