@@ -115,17 +115,18 @@ export const createHomeStyles = (theme) => {
       ...FONTS.text,
     },
     actionButtonsContainer: {
-      flexDirection: "row",
-      justifyContent: "center",
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       marginTop: moderateScale(20),
-      gap: moderateScale(10),
+      marginBottom: moderateScale(30),
+      gap: moderateScale(8),
     },
     submitButton: {
       backgroundColor: COLORS.primary,
-      paddingVertical: SIZES.padding,
       borderRadius: SIZES.radius,
-      alignItems: "center",
-      width: "40%",
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
       height: moderateScale(50),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
@@ -144,6 +145,10 @@ export const createHomeStyles = (theme) => {
     disabledButton: {
       backgroundColor: COLORS.placeholder,
       opacity: 0.6,
+    },
+    printButtonsContainer: {
+      flexDirection: 'column',
+      gap: moderateScale(10),
     },
 
     // ===== NEW CARD STYLES (MATCHING THE IMAGE) =====
@@ -275,18 +280,17 @@ export const createHomeStyles = (theme) => {
       ...FONTS.heading,
     },
 
-    // ===== MODAL STYLES (Keep existing ones) =====
     modalContainer: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 20,
+      padding: moderateScale(20),
     },
 
     modalContent: {
       backgroundColor: COLORS.cardBackground,
-      borderRadius: 15,
+      borderRadius: moderateScale(15),
       width: '100%',
       maxWidth: 400,
       maxHeight: '80%',
@@ -299,112 +303,112 @@ export const createHomeStyles = (theme) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: 20,
+      padding: moderateScale(20),
       borderBottomWidth: 1,
       borderBottomColor: COLORS.border,
       backgroundColor: COLORS.primary,
     },
 
     modalTitle: {
-      fontSize: 20,
+      fontSize: moderateScale(20),
       fontWeight: 'bold',
       color: '#FFFFFF',
     },
 
     closeButton: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: moderateScale(30),
+      height: moderateScale(30),
+      borderRadius: moderateScale(15),
       backgroundColor: 'rgba(255, 255, 255, 0.2)',
       justifyContent: 'center',
       alignItems: 'center',
     },
 
     closeButtonText: {
-      fontSize: 20,
+      fontSize: moderateScale(20),
       color: '#FFFFFF',
       fontWeight: 'bold',
     },
-     // Employee ID display
-  employeeIdContainer: {
+     employeeIdContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 10,
+    marginBottom: moderateScale(15),
+    paddingHorizontal: moderateScale(10),
   },
   employeeIdLabel: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
     color: theme.COLORS.text,
-    marginRight: 8,
+    marginRight: moderateScale(8),
   },
   employeeIdValue: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '700',
     color: theme.COLORS.primary,
   },
 
   // Combined input container
   combinedInputContainer: {
-    marginBottom: 20,
+    marginBottom: moderateScale(20),
   },
   combinedInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: moderateScale(5),
   },
   combinedInput: {
     flex: 1,
-    height: 50,
+    height: moderateScale(50),
     borderWidth: 1,
     borderColor: theme.COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
+    borderRadius: moderateScale(8),
+    paddingHorizontal: moderateScale(15),
+    fontSize: moderateScale(16),
     color: theme.COLORS.text,
     backgroundColor: theme.COLORS.cardBackground,
   },
   scannerButton: {
-    height: 50,
-    width: 50,
+    height: moderateScale(50),
+    width: moderateScale(50),
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
+    marginLeft: moderateScale(10),
     backgroundColor: theme.COLORS.cardBackground,
     borderWidth: 1,
     borderColor: theme.COLORS.border,
-    borderRadius: 8,
+    borderRadius: moderateScale(8),
   },
 
   // Error and helper text
   errorText: {
     color: theme.COLORS.error,
-    fontSize: 14,
-    marginLeft: 10,
-    marginBottom: 5,
+    fontSize: moderateScale(14),
+    marginLeft: moderateScale(10),
+    marginBottom: moderateScale(5),
   },
   helperText: {
     color: theme.COLORS.placeholder,
-    fontSize: 12,
-    marginLeft: 10,
+    fontSize: moderateScale(12),
+    marginLeft: moderateScale(10),
     fontStyle: 'italic',
   },
   fetchButton: {
-  backgroundColor: theme.COLORS.primary,
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 10,
-  marginLeft: 8,
-  justifyContent: 'center',
-  alignItems: 'center',
-  height:moderateScale(50),
-  width:moderateScale(80),
-},
-fetchButtonText: {
-  color: '#fff',
-  fontWeight: 'bold',
-  textAlign:"center"
-},
+    backgroundColor: theme.COLORS.primary,
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(6),
+    borderRadius: moderateScale(10),
+    marginLeft: moderateScale(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: moderateScale(50),
+    width: moderateScale(80),
+  },
+  fetchButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: moderateScale(14),
+    textAlign: "center",
+  },
 
   });
 };

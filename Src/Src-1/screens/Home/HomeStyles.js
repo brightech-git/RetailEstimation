@@ -12,6 +12,7 @@ export const createHomeStyles = (theme) => {
     container: {
       flex: 1,
       padding: SIZES.padding,
+      paddingBottom: moderateScale(80),
       backgroundColor: COLORS.background,
     },
     inputRow: {
@@ -49,9 +50,7 @@ export const createHomeStyles = (theme) => {
       ...FONTS.font,
     },
     scanButton: {
-      position: 'absolute',
-      right: moderateScale(10),
-      zIndex: 1,
+      paddingLeft: moderateScale(6),
     },
     scanIcon: {
       fontSize: moderateScale(15),
@@ -163,13 +162,14 @@ export const createHomeStyles = (theme) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginTop: moderateScale(20),
+      marginBottom: moderateScale(30),
       gap: moderateScale(8),
     },
     submitButton: {
       backgroundColor: COLORS.primary,
-      paddingVertical: SIZES.padding,
       borderRadius: SIZES.radius,
       alignItems: 'center',
+      justifyContent: 'center',
       flex: 1,
       height: moderateScale(50),
       shadowColor: COLORS.shadow,
@@ -216,97 +216,36 @@ export const createHomeStyles = (theme) => {
       fontSize: moderateScale(14),
       fontWeight: 'bold',
     },
+        clearButton: {
+      backgroundColor: "#444",
+    },
     deleteButton: {
-  backgroundColor: "red",
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 5,
-  marginLeft: 5,
-},
-deleteButtonText: {
-  color: "white",
-  fontWeight: "bold",
-},
-
-clearButton: {
-  backgroundColor: "#444",
-  marginLeft: 10,
-},
-deleteButton: {
-  backgroundColor: "red",
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 5,
-  marginRight: 5,
-},
-deleteButtonText: {
-  color: "white",
-  fontWeight: "bold",
-},
-column: {
-  width: 120,    // adjust as needed
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-deleteCol: {
-  width: 80,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-deleteCol: {
-  width: 80,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-
-column: {
-  width: 120,   // you can adjust
-  justifyContent: "center",
-  alignItems: "center",
-  paddingVertical: 8,
-  borderRightWidth: 1,
-  borderColor: "#ccc",
-},
-
-headerRow: {
-  flexDirection: "row",
-  backgroundColor: "#e8e8e8",
-},
-
-dataRow: {
-  flexDirection: "row",
-  backgroundColor: "white",
-},
-
-headerCell: {
-  fontWeight: "bold",
-  textAlign: "center",
-},
-
-cell: {
-  textAlign: "center",
-},
-
-deleteButton: {
-  backgroundColor: "red",
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 5,
-},
-
-deleteButtonText: {
-  color: "white",
-  fontWeight: "bold",
-},
+      backgroundColor: COLORS.danger,
+      paddingHorizontal: moderateScale(10),
+      paddingVertical: moderateScale(4),
+      borderRadius: moderateScale(5),
+    },
+    deleteButtonText: {
+      color: COLORS.buttonText,
+      fontWeight: "bold",
+      fontSize: moderateScale(SIZES.fontXs),
+    },
+    column: {
+      width: moderateScale(120),
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: moderateScale(8),
+      borderRightWidth: 1,
+      borderColor: COLORS.borderColor,
+    },
+    deleteCol: {
+      width: moderateScale(80),
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: moderateScale(8),
+      borderRightWidth: 1,
+      borderColor: COLORS.borderColor,
+    },
 
   });
 };

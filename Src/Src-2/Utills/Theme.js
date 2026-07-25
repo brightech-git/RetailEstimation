@@ -7,64 +7,60 @@ const { width, height } = Dimensions.get("screen");
 /* 🎨 PURE WHITE & TRUE BLACK COLOR SCHEMES                                   */
 /* -------------------------------------------------------------------------- */
 export const LIGHT_COLORS = {
-  /* -------------------------------------------------------------------------- */
-  /* 🎨 BASE COLORS                                                            */
-  /* -------------------------------------------------------------------------- */
-  background: "#FFFFFF",          // Clean white background
+  background: "#FFFFFF",
   card: "#FFFFFF",
   surface: "#FFFFFF",
   surfaceVariant: "#F5F7FA",
+  white: "#FFFFFF",
+  black: "#000000",
+  gray: "#666666",
+  lightGray: "#F0F0F0",
+  h2: "#1A1A1A",
+  border: "#E0E0E0",
+  cardBackground: "#FFFFFF",
+  error: "#C62828",
 
-  /* -------------------------------------------------------------------------- */
-  /* 🎨 BRAND COLORS                                                           */
-  /* -------------------------------------------------------------------------- */
-  primary: "#1C467C",             // Main brand blue
+  primary: "#1C467C",
   primaryLight: "rgba(28,70,124,0.15)",
-  secondary: "#3A6EA5",           // Complementary blue
+  secondary: "#3A6EA5",
   notification: "#C98900",
   success: "#1B9721",
   danger: "#C62828",
   warning: "#FFA000",
   info: "#1565C0",
-
-  /* -------------------------------------------------------------------------- */
-  /* 📝 TEXT COLORS                                                            */
-  /* -------------------------------------------------------------------------- */
-  title: "#0D1B2A",               // Slightly tinted dark for better contrast
-  text: "#1A1A1A",                // Smooth readable text
+  title: "#0D1B2A",
+  text: "#1A1A1A",
   textLight: "#4A4A4A",
   label: "#666666",
   placeholder: "rgba(0,0,0,0.35)",
-
-  /* -------------------------------------------------------------------------- */
-  /* 🎨 MISC COLORS                                                            */
-  /* -------------------------------------------------------------------------- */
   borderColor: "#8a8a8aff",
   outline: "#E5E5E5",
-  shadow: "rgba(28,70,124,0.08)",  // Soft shadow tinted with theme color
+  shadow: "rgba(28,70,124,0.08)",
   overlay: "rgba(0,0,0,0.2)",
   input: "#F7F9FC",
   darkInput: "#EFF2F7",
   buttonText: "#FFFFFF",
-
-  /* -------------------------------------------------------------------------- */
-  /* 🔵 ICONS & GRADIENTS                                                      */
-  /* -------------------------------------------------------------------------- */
   iconPrimary: "#1C467C",
   iconSecondary: "#6C757D",
-  
-
-  gradientPrimary: ["#1C467C", "#3A6EA5"],  // Brand gradient
+  gradientPrimary: ["#1C467C", "#3A6EA5"],
   gradientSecondary: ["#ffffffff", "#ffffffff"],
   gradientText: ["#ffffffff", "#3A6EA5"],
 };
 
 
 export const DARK_COLORS = {
-  background: "#000000",         // True black
+  background: "#000000",
   card: "#0A0A0A",
   surface: "#0F0F0F",
   surfaceVariant: "#1A1A1A",
+  white: "#FFFFFF",
+  black: "#000000",
+  gray: "#999999",
+  lightGray: "#2C2C2C",
+  h2: "#EDEDED",
+  border: "#3A3A3A",
+  cardBackground: "#0F0F0F",
+  error: "#EF5350",
   primary: "#8CBBFF",
   primaryLight: "rgba(140,187,255,0.15)",
   secondary: "#90CAF9",
