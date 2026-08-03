@@ -121,46 +121,44 @@ const MainHeader = () => {
         {/* 🔹 INFO CARD */}
         <View style={styles.infoCard}>
           <View style={styles.infoSection}>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>📅 Date :</Text>
-              <Text style={styles.value}>{date}</Text>
+            {/* Left Column */}
+            <View style={styles.infoColumn}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>📅 Date :</Text>
+                <Text style={styles.value}>{date}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>👤 User :</Text>
+                <Text style={styles.value} numberOfLines={1}>{username || "N/A"}</Text>
+              </View>
+              <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
+                <Text style={styles.label}>💰 Cost ID :</Text>
+                <Text style={styles.value}>{selectedCostId || "N/A"}</Text>
+              </View>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>🏅 Gold Rate :</Text>
-              <Text style={styles.value}>
-                ₹{" "}
-                {loadingRates
-                  ? "Loading..."
-                  : error
-                    ? "Error"
-                    : (goldRate?.toLocaleString() ?? "N/A")}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.infoSection}>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>👤 User Name :</Text>
-              <Text style={styles.value}>{username || "N/A"}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>🥈 Silver Rate :</Text>
-              <Text style={styles.value}>
-                ₹{" "}
-                {loadingRates
-                  ? "Loading..."
-                  : error
-                    ? "Error"
-                    : (silverRate?.toLocaleString() ?? "N/A")}
-              </Text>
-            </View>
-          </View>
+            {/* Divider */}
+            <View style={styles.columnDivider} /> 
 
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>💰 Cost ID : <Text style={styles.value}>{selectedCostId || "N/A"}</Text></Text>
-            {rateUpdated && (
-              <Text style={styles.updatedText}>🕒 Last updated: {rateUpdated}</Text>
-            )}
+            {/* Right Column */}
+            <View style={styles.infoColumn}>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>🏅 Gold :</Text>
+                <Text style={styles.value}>
+                  ₹ {loadingRates ? "..." : error ? "Err" : (goldRate?.toLocaleString() ?? "N/A")}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>🥈 Silver :</Text>
+                <Text style={styles.value}>
+                  ₹ {loadingRates ? "..." : error ? "Err" : (silverRate?.toLocaleString() ?? "N/A")}
+                </Text>
+              </View>
+              <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
+                <Text style={styles.label}>🕒 Updated :</Text>
+                <Text style={styles.value} numberOfLines={1}>{rateUpdated || "--"}</Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>

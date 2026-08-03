@@ -114,12 +114,19 @@ export default function getStyles(theme) {
     },
     infoSection: {
       flexDirection: "row",
-      justifyContent: "space-between",
+    },
+    infoColumn: {
+      flex: 1,
+    },
+    columnDivider: {
+      width: 1,
+      // backgroundColor: COLORS.borderColor,
+      marginHorizontal: scale(8),
     },
     infoRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
+      justifyContent: "space-between",
       paddingVertical: verticalScale(6),
       borderBottomWidth: 0.3,
       borderBottomColor: COLORS.borderColor,
@@ -127,20 +134,23 @@ export default function getStyles(theme) {
     label: {
       ...FONTS.subheading,
       color: COLORS.text,
-      marginRight: scale(8),
       fontSize: SIZES.h6,
+      flexShrink: 1,
     },
     value: {
       ...FONTS.text,
       color: COLORS.primary,
       fontWeight: "600",
+      flexShrink: 1,
+      textAlign: "right",
     },
     updatedText: {
-      marginTop: verticalScale(8),
+      marginTop: verticalScale(4),
       textAlign: "right",
       color: COLORS.textLight,
       fontSize: FONT_SIZES.small,
       ...FONTS.text,
+      flexShrink: 1,
     },
   });
 }
