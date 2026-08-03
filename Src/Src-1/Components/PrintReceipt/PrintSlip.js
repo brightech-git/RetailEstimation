@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { usePrinterService } from "../../Service/IpServices";
@@ -6,10 +6,13 @@ import { useApiBaseUrl } from "../../../Config/Config";
 import {
   fetchEstimationData,
   printEstimationToPrinter,
+  printEstimationToPrinterAsImage,
   checkPrinterConnection,
   getActivePrinter,
 } from "../../Service/EstimationPrinterService";
 import EstimationPreviewModal from "../EstimationPreviewModal/EstimationPreviewModal";
+import ImageBitmapProcessor from "../../../Utills/ImageBitmapProcessor";
+import { LoginContext } from "../../../Context/LoginContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Preview management for estimation slips
@@ -25,7 +28,7 @@ export const showEstimationPreview = (slipData) => {
 };
 
 // Main function to print estimation slip with preview
-export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl) => {
+export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empId) => {
   try {
     console.log("🖨️ Starting print process for batch:", estBatchNo);
 
@@ -34,10 +37,7 @@ export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl) => {
       return;
     }
 
-const slipData = await fetchEstimationData(
-  estBatchNo,
-  apiBaseUrl
-);
+    const slipData = await fetchEstimationData(estBatchNo, apiBaseUrl, empId);
 
     if (slipData) {
       console.log("✅ Slip data fetched successfully, showing preview");
@@ -69,6 +69,21 @@ export const useEstimationPreview = (employeeId) => {
   const printerService = usePrinterService();
   const isMounted = useRef(true);
   const isLoading = useRef(false);
+  const imageProcessorRef = useRef(null);
+
+  const {
+    username: loggedInUsername,
+    companyName,
+    companyLogo,
+    companyLogoUrl,
+    selectedCostId,
+  } = useContext(LoginContext);
+
+  const companyLogoFullPath = companyLogoUrl
+    ? `${companyLogoUrl.replace(/\/$/, "")}/${encodeURI(
+        companyLogo?.replace(/^\//, "") || "",
+      )}`
+    : null;
 
   // Load employee ID from storage if not provided
   const loadEmployeeId = useCallback(async () => {
@@ -356,7 +371,31 @@ const executePrint = useCallback(async (printCount = 1) => {
         console.log(`🖨️ Printing copy ${i + 1} of ${printCount}`);
         
         try {
-       await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, printCount);
+          try {
+            // Preferred: render the receipt as HTML (real Trajan Pro
+            // headings, logo, QR) and print it as an image.
+            await printEstimationToPrinterAsImage(
+              slipData,
+              currentPrinter,
+              currentEmployeeId,
+              API_BASE_URL,
+              imageProcessorRef,
+              {
+                companyName,
+                companyLogoUri: companyLogoFullPath,
+                username: loggedInUsername,
+                costId: selectedCostId,
+              }
+            );
+          } catch (imageError) {
+            // Fall back to the plain ESC/POS text receipt if the WebView
+            // render/capture fails (e.g. no network for the CDN scripts).
+            console.warn(
+              "⚠️ Image receipt print failed, falling back to text receipt:",
+              imageError
+            );
+            await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, printCount);
+          }
           console.log(`✅ Copy ${i + 1} printed successfully`);
           
           // Add a small delay between prints to avoid printer buffer overflow
@@ -405,6 +444,10 @@ const executePrint = useCallback(async (printCount = 1) => {
   checkPrinterConnectivity,
   API_BASE_URL,
   loadEmployeeId,
+  companyName,
+  companyLogoFullPath,
+  loggedInUsername,
+  selectedCostId,
 ]);
 
   // Manual connectivity check function
@@ -457,17 +500,22 @@ const executePrint = useCallback(async (printCount = 1) => {
 
   const EstimationPreviewComponent = React.useMemo(
     () => (
-      <EstimationPreviewModal
-        visible={previewVisible}
-        onClose={hidePreview}
-        onPrint={executePrint}
-        slipData={slipData}
-        currentPrinter={currentPrinter}
-        printerStatus={printerStatus}
-        onCheckConnection={manualConnectivityCheck}
-        onRefreshPrinter={refreshPrinter}
-        navigation={navigation}
-      />
+      <>
+        <EstimationPreviewModal
+          visible={previewVisible}
+          onClose={hidePreview}
+          onPrint={executePrint}
+          slipData={slipData}
+          currentPrinter={currentPrinter}
+          printerStatus={printerStatus}
+          onCheckConnection={manualConnectivityCheck}
+          onRefreshPrinter={refreshPrinter}
+          navigation={navigation}
+        />
+        {/* Hidden WebView that renders the Trajan-Pro receipt HTML and
+            captures it to a 1-bit bitmap for printing. */}
+        <ImageBitmapProcessor ref={imageProcessorRef} />
+      </>
     ),
     [
       previewVisible,

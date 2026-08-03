@@ -8,6 +8,8 @@ import {
   formatDateToSqlDateTime,
   formatDateToMidnightSql,
 } from "../Service/EstimationService";
+import createApiInstance from "../../Api/axiosInstance";
+import ENDPOINTS from "../../Api/endpoints";
 import {
   parseValue,
   calcGross as calculateGrossAmount,
@@ -21,12 +23,14 @@ export const useEstimation = (apiBaseUrl) => {
   const [ITEMID, setITEMID] = useState("");
   const [TAGNO, setTAGNO] = useState("");
   const [emp, setEmp] = useState("");
+  const [empName, setEmpName] = useState("");
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [itemList, setItemList] = useState([]);
   const [showList, setShowList] = useState(false);
   const [tranno, setTranno] = useState(null);
   const [estBatchNo, setEstBatchNo] = useState(null);
+  const [lastEmpId, setLastEmpId] = useState("");
   const [scanningField, setScanningField] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
 
@@ -46,6 +50,32 @@ export const useEstimation = (apiBaseUrl) => {
   const removeRow = (index) => {
     setTableData((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // Fetch employee name when emp ID changes
+  useEffect(() => {
+    if (!emp.trim() || !service || !selectedCostId) {
+      setEmpName("");
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        const api = createApiInstance(service.baseUrl || apiBaseUrl);
+        const url = ENDPOINTS.EMPLOYEES(selectedCostId, emp.trim());
+        console.log("[Employees] Request URL:", url);
+        console.log("[Employees] selectedCostId:", selectedCostId, "emp:", emp.trim());
+        const res = await api.get(url);
+        console.log("[Employees] Response:", res.data);
+        const empIdNum = Number(emp.trim());
+        const found = Array.isArray(res.data)
+          ? res.data.find((e) => Number(e.emp_id) === empIdNum) || null
+          : null;
+        setEmpName(found ? found.emp_name : "");
+      } catch {
+        setEmpName("");
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [emp, service, selectedCostId]);
 
   // Expose the logged-in user's currently selected cost ID (from
   // AsyncStorage, kept in sync by LoginContext) so screens can build
@@ -175,11 +205,14 @@ export const useEstimation = (apiBaseUrl) => {
           TAGNO,
           EMPID: emp,
           EMP: emp,
+          EMP_NAME: empName,
           METALID: d.METALID || 0,
           COSTID: costId,
           COMPANYID: companyId,
           MAXMCGRM: d.MAXMCGRM || 0,
           MC_FROM_API: d.MC || 0,
+          Rate: d.RATE || d.Rate || 0,
+          Wastage: d.WASTAGE || d.Wastage || 0,
           GrossAmount: d.GrossAmount || "0",
           GSTAmount: d.GSTAmount || "0",
           GrandTotal: d.GrandTotal || "0",
@@ -610,6 +643,7 @@ export const useEstimation = (apiBaseUrl) => {
       setTranno(TRANNO);
       setEstBatchNo(batchNo);
       setTableData([]);
+      setLastEmpId(rawItems[0]?.empid ? String(rawItems[0].empid) : "");
 
       return batchNo;
     } catch (error) {
@@ -639,6 +673,7 @@ export const useEstimation = (apiBaseUrl) => {
     ITEMID,
     TAGNO,
     emp,
+    empName,
     tableData,
     loading,
     itemList,
@@ -653,6 +688,7 @@ export const useEstimation = (apiBaseUrl) => {
     tagInputRef,
     empInputRef,
 
+    lastEmpId,
     // Setters
     setITEMID,
     setTAGNO,

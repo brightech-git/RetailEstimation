@@ -55,6 +55,9 @@ export const LoginProvider = ({ children, showToast }) => {
         setStockPassword(data.STOCKPASSWORD || "");
 
         await AsyncStorage.setItem("COMPANY_DATA", JSON.stringify(data));
+        if (data.USERID) {
+          await AsyncStorage.setItem("EMPLOYEE_ID", String(data.USERID));
+        }
 
         console.log("✅ Login stored:", data);
 
@@ -176,6 +179,7 @@ export const LoginProvider = ({ children, showToast }) => {
       await AsyncStorage.removeItem("SELECTED_COST_ID");
       await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
       await AsyncStorage.removeItem("HAS_COST_CENTRES");
+      await AsyncStorage.removeItem("EMPLOYEE_ID");
 
       setUsername("");
       setUserId(null);
@@ -221,6 +225,9 @@ export const LoginProvider = ({ children, showToast }) => {
         setContactNumber(data.CONTACTNUMBER || "");
         setStockUsername(data.STOCKUSERNAME || "");
         setStockPassword(data.STOCKPASSWORD || "");
+        if (data.USERID) {
+          await AsyncStorage.setItem("EMPLOYEE_ID", String(data.USERID));
+        }
         console.log("📦 Restored company data:", data);
       }
 

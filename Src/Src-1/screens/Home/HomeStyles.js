@@ -19,8 +19,8 @@ export const createHomeStyles = (theme) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: moderateScale(14),
-      gap: moderateScale(8), // Add gap between inputs
+      marginBottom: moderateScale(20),
+      gap: moderateScale(8),
     },
     inputWrapper: {
       flexDirection: 'row',
@@ -35,7 +35,15 @@ export const createHomeStyles = (theme) => {
       flex: 0.45, // 45% width for Tag No
     },
     empIdWrapper: {
-      flex: 0.25, // 25% width for Emp ID
+      flex: 0.25,
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+    },
+    empNameText: {
+      fontSize: moderateScale(10),
+      color: COLORS.primary,
+      fontWeight: '600',
+      marginTop: moderateScale(2),
     },
     input: {
       flex: 1,
@@ -114,6 +122,7 @@ export const createHomeStyles = (theme) => {
       marginVertical: moderateScale(20),
     },
     tableContainer: {
+      marginTop: moderateScale(10),
       marginBottom: moderateScale(10),
       borderRadius: SIZES.radius_sm,
       overflow: 'hidden',

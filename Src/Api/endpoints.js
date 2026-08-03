@@ -27,7 +27,7 @@ const ENDPOINTS = {
   OFFER_NAME:               "/offer/offerName",
   EST_PRINT:                "/estprint",
 
-  // PRINTERS
+  EMPLOYEES:               (search) => `/employees?search=${search}`,
   PRINTER_GET:              "/printers/get",
   PRINTER_BY_EMP:           "/printers/by-emp",
   PRINTER_CREATE:           "/printers/create",

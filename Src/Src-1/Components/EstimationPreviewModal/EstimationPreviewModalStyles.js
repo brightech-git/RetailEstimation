@@ -272,9 +272,12 @@ export const createEstimationPreviewModalStyles = (theme) => {
       borderWidth: 1,
       borderColor: COLORS.borderColor,
       borderRadius: SIZES.radius_sm,
-      padding: SIZES.padding,
       marginBottom: moderateScale(15),
-      backgroundColor: COLORS.surfaceVariant,
+      backgroundColor: "#e0e0e0",
+    },
+    previewWebView: {
+      flex: 1,
+      backgroundColor: "#fff",
     },
     previewContentContainer: {
       paddingBottom: moderateScale(20),

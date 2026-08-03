@@ -171,7 +171,7 @@ export const createPrinterService = (baseUrl) => {
   };
 };
 
-export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
+export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
   console.log("🔍 fetchEstimationData called with:", { estBatchNo, apiBaseUrl });
 
   if (!estBatchNo) {
@@ -201,7 +201,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl) => {
     }
 
     const items = mergeItems(itemsRaw);
-    const sample = items[0];
+    const sample = { ...items[0], empid: empId || items[0]?.empid };
     console.log("📋 Sample item:", sample);
 
     // Fetch offer once (same offer applies to all items)
@@ -814,6 +814,196 @@ export const printEstimationToPrinter = async (
   }
 };
 
+// ─── Image-based (Trajan Pro) receipt printing ─────────────────────────────
+// Renders the receipt as HTML (real Trajan Pro headings, company logo, QR)
+// via the hidden ImageBitmapProcessor WebView, converts it to a 1-bit
+// bitmap, and prints it as an ESC/POS raster image instead of the printer's
+// built-in monospace font. See Src/Utills/ImageBitmapProcessor.js.
+
+// Pack raw bytes into a "binary string" (one char per byte, 0-255) so it can
+// be sent with client.write(str, "binary", cb) — same pattern already used
+// for the ESC/POS text commands above.
+const bytesToBinaryString = (bytes) => {
+  let s = "";
+  const CHUNK = 8192;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    const slice = bytes.subarray ? bytes.subarray(i, i + CHUNK) : bytes.slice(i, i + CHUNK);
+    s += String.fromCharCode.apply(null, Array.from(slice));
+  }
+  return s;
+};
+
+// ESC/POS "GS v 0" raster bit image command.
+const buildRasterImageString = ({ data, widthBytes, heightLines }) => {
+  const xL = widthBytes & 0xff;
+  const xH = (widthBytes >> 8) & 0xff;
+  const yL = heightLines & 0xff;
+  const yH = (heightLines >> 8) & 0xff;
+  const header = String.fromCharCode(0x1d, 0x76, 0x30, 0x00, xL, xH, yL, yH);
+  return header + bytesToBinaryString(data);
+};
+
+// Build the params the ImageBitmapProcessor's HTML template expects out of
+// the slipData shape returned by fetchEstimationData().
+const buildReceiptImageParams = (slipData, companyInfo = {}) => {
+  const {
+    items,
+    sample,
+    goldRate,
+    silverRate,
+    totalpcs,
+    totalGrossWeight,
+    grossAmount,
+    baseAmount,
+    offerDiscount,
+    cgstAmount,
+    sgstAmount,
+    grandTotal,
+    offerName,
+    itemsWithStones,
+  } = slipData;
+
+  const trandate =
+    sample?.trandate && sample.trandate.includes("-")
+      ? sample.trandate
+      : formatDate(sample?.trandate);
+
+  return {
+    companyName: companyInfo.companyName || "",
+    companyLogoUri: companyInfo.companyLogoUri || null,
+    costId: companyInfo.costId || "",
+    empDisplay: companyInfo.empDisplay || "",
+    estNo: sample?.tranno || "NA",
+    billDate: trandate,
+    billTime: getCurrentTime(),
+    username: companyInfo.username || "",
+    goldRate,
+    silverRate,
+    items: (itemsWithStones || items || []).map((item) => ({
+      itemid: item.itemid,
+      tagno: item.tagno,
+      itemname: item.itemname,
+      pcs: item.pcs,
+      grswt: item.grswt,
+      netwt: item.netwt,
+      wastper: item.wastper,
+      amount: item.amount,
+      displayAmount: item.displayAmount,
+      stones: (item.stones || []).map((s) => ({
+        stnwt: s.stnwt,
+        stnamt: s.stnamt,
+        stoneunit: s.stoneunit,
+      })),
+    })),
+    totals: {
+      totalpcs,
+      totalGrossWeight,
+      grossAmount,
+      baseAmount,
+      offerDiscount,
+      offerName,
+      cgstAmount,
+      sgstAmount,
+      grandTotal,
+    },
+  };
+};
+
+// Print the estimation slip as a Trajan-Pro-styled image instead of plain
+// ESC/POS text. `processorRef` must point at a mounted <ImageBitmapProcessor />.
+export const printEstimationToPrinterAsImage = async (
+  slipData,
+  currentPrinter = null,
+  employeeId = null,
+  apiBaseUrl = null,
+  processorRef = null,
+  companyInfo = {},
+  printerWidthPx = 576 // 80mm thermal printer (576 dots at 203dpi)
+) => {
+  if (!processorRef || !processorRef.current) {
+    throw new Error(
+      "Image receipt renderer is not ready. Make sure <ImageBitmapProcessor /> is mounted."
+    );
+  }
+
+  console.log("🖼️ Starting image-based print process...");
+
+  let activePrinter = currentPrinter;
+  if (!activePrinter && employeeId && apiBaseUrl) {
+    activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
+  }
+  if (!activePrinter) {
+    throw new Error(
+      "No active printer selected. Please select a printer in Printer Settings."
+    );
+  }
+
+  const connectivityStatus = await checkPrinterConnection(activePrinter);
+  if (!connectivityStatus.connected) {
+    throw new Error(`Printer is offline: ${connectivityStatus.error}`);
+  }
+
+  console.log("🎨 Rendering receipt HTML → bitmap...");
+  const params = buildReceiptImageParams(slipData, companyInfo);
+  const bitmap = await processorRef.current.process(params, printerWidthPx);
+  console.log(
+    `✅ Receipt bitmap ready: ${bitmap.widthBytes * 8}x${bitmap.heightLines}px`
+  );
+
+  const options = {
+    port: activePrinter.port || 9100,
+    host: activePrinter.ip_address,
+    reuseAddress: true,
+    timeout: 10000,
+  };
+
+  return new Promise((resolve, reject) => {
+    const client = TcpSocket.createConnection(options, () => {
+      console.log("✅ Connected to printer:", activePrinter.ip_address);
+
+      let printContent = PRINTER_COMMANDS.INIT;
+      printContent += FONTS.ALIGN_CENTER;
+      printContent += buildRasterImageString(bitmap);
+      printContent += PRINTER_COMMANDS.FEED_LINES(3);
+      printContent += PRINTER_COMMANDS.CUT;
+
+      try {
+        client.write(printContent, "binary", (error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          setTimeout(() => {
+            client.destroy();
+            console.log("✅ Image print completed successfully");
+            resolve();
+          }, 1000);
+        });
+      } catch (error) {
+        client.destroy();
+        reject(error);
+      }
+    });
+
+    client.on("error", (error) => {
+      client.destroy();
+      reject(error);
+    });
+
+    client.on("timeout", () => {
+      client.destroy();
+      reject(new Error("Connection timeout"));
+    });
+
+    setTimeout(() => {
+      if (client && client.writable) {
+        client.destroy();
+        reject(new Error("Print operation timeout"));
+      }
+    }, 20000);
+  });
+};
+
 // Export all functions
 export default {
   formatDate,
@@ -821,6 +1011,7 @@ export default {
   mergeItems,
   fetchEstimationData,
   printEstimationToPrinter,
+  printEstimationToPrinterAsImage,
   getActivePrinter,
   checkPrinterConnection,
   createPrinterService,

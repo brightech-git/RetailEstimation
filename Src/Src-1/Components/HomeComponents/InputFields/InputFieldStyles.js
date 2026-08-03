@@ -48,6 +48,13 @@ export const createInputStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.COLORS.inputBackground,
   },
 
+  empNameText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: theme.COLORS.text,
+    fontWeight: "600",
+  },
+
   scanButton: {
     position: "absolute",
     right: 10,

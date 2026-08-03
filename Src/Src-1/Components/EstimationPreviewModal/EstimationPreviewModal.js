@@ -1,49 +1,32 @@
-import React, { useState,useEffect,useContext } from "react";
+import React, { useState, useContext, useMemo, useCallback, useEffect } from "react";
 import {
   Modal,
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   TextInput,
-  Platform,
   TouchableWithoutFeedback,
+  Dimensions,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { useTheme } from "../../../Context/ThemeContext";
 import { createEstimationPreviewModalStyles } from "./EstimationPreviewModalStyles";
 import { MaterialIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {LoginContext} from '../../../Context/LoginContext'
+import { LoginContext } from "../../../Context/LoginContext";
+import { buildHtml } from "../../../Utills/buildReceiptHtml";
+import { formatDate, getCurrentTime } from "../../Service/EstimationPrinterService";
+import createApiInstance from "../../../Api/axiosInstance";
+import ENDPOINTS from "../../../Api/endpoints";
+import { useApiBaseUrl } from "../../../Config/Config";
 
-// Common utility functions
 export const formatDateSafe = (dateString) => {
   if (!dateString) return "";
-
-  // If already in DD-MM-YYYY, return as is
-  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
-    return dateString;
-  }
-
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) return dateString;
   const date = new Date(dateString);
   if (isNaN(date)) return dateString;
-
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-
-  return `${day}-${month}-${year}`;
-};
-
-const getCurrentTime = () => {
-  const now = new Date();
-  return now.toLocaleTimeString("en-IN", {
-    hour12: true,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  return `${String(date.getDate()).padStart(2,"0")}-${String(date.getMonth()+1).padStart(2,"0")}-${date.getFullYear()}`;
 };
 
 // Preview Modal Component for Estimation Slip
@@ -63,12 +46,65 @@ const EstimationPreviewModal = ({
   const [printCount, setPrintCount] = useState(1);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   const [customPrintCount, setCustomPrintCount] = useState("");
-  const {
-    username,
-    companyName,
-    companyLogo,
-    companyLogoUrl
-  } = useContext(LoginContext);
+  const { username, companyName, selectedCostId, userId } = useContext(LoginContext);
+  const API_BASE_URL = useApiBaseUrl();
+  const [empDisplay, setEmpDisplay] = useState("");
+
+  useEffect(() => {
+    if (!slipData?.sample?.empid || !selectedCostId || !API_BASE_URL) {
+      // console.log("[EmpDisplay] Missing:", { empid: slipData?.sample?.empid, selectedCostId, API_BASE_URL: !!API_BASE_URL });
+      // console.log("[EmpDisplay] slipData.sample keys:", slipData?.sample ? Object.keys(slipData.sample) : "no sample");
+      // console.log("[EmpDisplay] slipData.sample:", JSON.stringify(slipData?.sample));
+      return;
+    }
+    const empId = slipData.sample.empid;
+    console.log("[EmpDisplay] Fetching for empId:", empId, "costId:", selectedCostId);
+    createApiInstance(API_BASE_URL)
+      .get(ENDPOINTS.EMPLOYEES(selectedCostId, empId))
+      .then((res) => {
+     
+        const found = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
+        setEmpDisplay(found ? `E${found.emp_id}-${found.emp_name}` : `E${empId}`);
+      })
+      .catch((err) => {
+        console.log("[EmpDisplay] Error:", err.message);
+        setEmpDisplay(`E${empId}`);
+      });
+  }, [slipData, selectedCostId, API_BASE_URL]);
+
+  const [previewWidth, setPreviewWidth] = useState(
+    Math.round(Dimensions.get("window").width * 0.95) - 32
+  );
+  const onPreviewLayout = useCallback((e) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    if (w > 0) setPreviewWidth(w);
+  }, []);
+
+  const previewHtml = useMemo(() => {
+    if (!slipData) return null;
+    const { items, sample, goldRate, silverRate, totalpcs, totalGrossWeight,
+      grossAmount, baseAmount, offerDiscount, cgstAmount, sgstAmount, grandTotal,
+      offerName, itemsWithStones } = slipData;
+    const params = {
+      companyName,
+      costId: selectedCostId || "",
+      empDisplay,
+      estNo: sample?.tranno || "NA",
+      billDate: formatDateSafe(sample?.trandate),
+      billTime: getCurrentTime(),
+      goldRate,
+      silverRate,
+      userId,
+      items: (itemsWithStones || items || []).map((item) => ({
+        itemid: item.itemid, tagno: item.tagno, itemname: item.itemname,
+        pcs: item.pcs, grswt: item.grswt, netwt: item.netwt,
+        wastper: item.wastper, amount: item.amount, displayAmount: item.displayAmount,
+        stones: (item.stones || []).map((s) => ({ stnwt: s.stnwt, stnamt: s.stnamt, stoneunit: s.stoneunit })),
+      })),
+      totals: { totalpcs, totalGrossWeight, grossAmount, baseAmount, offerDiscount, offerName, cgstAmount, sgstAmount, grandTotal },
+    };
+    return buildHtml(params, previewWidth);
+  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, userId]);
 
   if (!slipData) {
     return (
@@ -98,31 +134,6 @@ const EstimationPreviewModal = ({
     );
   }
 
-  const {
-    items,
-    sample,
-    goldRate,
-    silverRate,
-    totalpcs,
-    totalGrossWeight,
-    grossAmount,
-    baseAmount,
-    offerDiscount,
-    cgstAmount,
-    sgstAmount,
-    grandTotal,
-    offer,
-    offerName,
-    itemsWithStones,
-  } = slipData;
-
-  // Use itemsWithStones if available, otherwise fall back to items
-  const displayItems = itemsWithStones && itemsWithStones.length > 0 ? itemsWithStones : items;
-
-  const offerWeight = offer.netwt || 0;
-  const offerBoardRate = offer.board_rate || 0;
-
-  // Get printer status display
   const getPrinterStatusDisplay = () => {
     if (printerStatus.checking) {
       return {
@@ -364,210 +375,18 @@ const EstimationPreviewModal = ({
               )}
             </View>
 
-            {/* Full Slip Preview */}
-            <ScrollView
-              style={styles.previewContainer}
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={styles.previewContentContainer}
-            >
-              {/* Header Section */}
-              <View style={styles.section}>
-                <Text style={styles.label}>NAME</Text>
-                <View style={styles.underline} />
-                <Text style={styles.label}>MOBILE</Text>
-                <View style={styles.underline} />
-              </View>
-
-              <View style={styles.dashedLine} />
-
-              {/* Estimation Info */}
-              <View style={styles.row}>
-                <Text style={styles.boldText}>ESTIMATION SLIP</Text>
-                <Text style={styles.boldText}>
-                  Est.No: {sample?.tranno || ""} - {username}
-                </Text>
-              </View>
-
-              <View style={styles.row}>
-                <Text style={styles.text}>
-                  Date: {formatDateSafe(sample?.trandate)}
-                </Text>
-                <Text style={styles.text}>Gold: {goldRate.toFixed(0)}/Gm</Text>
-              </View>
-
-              <View style={styles.row}>
-                <Text style={styles.text}>Time: {getCurrentTime()}</Text>
-                <Text style={styles.text}>
-                  Silver: {silverRate.toFixed(2)}/Gm
-                </Text>
-              </View>
-
-              <View style={styles.dashedLine} />
-
-              {/* Table Header */}
-              <View style={[styles.row, styles.tableHeader]}>
-                <Text style={[styles.boldText, styles.colDesc]}>Description</Text>
-                <Text style={[styles.boldText, styles.colWeight]}>Weight</Text>
-                <Text style={[styles.boldText, styles.colVA]}>V.A</Text>
-                <Text style={[styles.boldText, styles.colAmount]}>Amount</Text>
-              </View>
-
-              <View style={styles.dashedLine} />
-
-              {/* Items List */}
-              {displayItems.map((item, idx) => {
-                const itemName = (item.itemname || "").toUpperCase();
-                const itemNumber = idx + 1;
-                const stones = item.stones || [];
-
-                return (
-                  <View
-                    key={`${item.itemid}-${item.tagno}-${idx}`}
-                    style={styles.itemContainer}
-                  >
-                    {/* Main Item */}
-                    <View style={styles.itemRow}>
-                      <Text style={[styles.boldText, styles.colDesc]}>
-                        {itemNumber} {itemName} ({item.pcs} Pcs) [{item.itemid}-
-                        {item.tagno}]
-                      </Text>
-                    </View>
-
-                    <View style={styles.itemRow}>
-                      <Text style={[styles.text, styles.colDesc]}>
-                        Rate:{getRateValue(item)}
-                      </Text>
-                      <Text style={[styles.text, styles.colWeight]}>
-                        {item.grswt?.toFixed(3) || "0.000"}
-                      </Text>
-                      <Text style={[styles.text, styles.colVA]}>
-                        {item.wastper && item.wastper > 0
-                          ? item.wastper.toFixed(1)
-                          : ""}
-                      </Text>
-                      <Text style={[styles.text, styles.colAmount]}>
-                        {(item.displayAmount ?? item.amount)?.toFixed(0) || "0"}
-                      </Text>
-                    </View>
-
-                    {/* Net Weight */}
-                    {item.grswt !== item.netwt && (
-                      <View style={styles.itemRow}>
-                        <Text style={[styles.text, styles.colDesc]}>Netwt:</Text>
-                        <Text style={[styles.text, styles.colWeight]}>
-                          {item.netwt?.toFixed(3) || "0.000"}
-                        </Text>
-                        <Text style={[styles.text, styles.colVA]}></Text>
-                        <Text style={[styles.text, styles.colAmount]}></Text>
-                      </View>
-                    )}
-
-                    {/* Stones */}
-                    {stones.map((stone, stoneIdx) => (
-                      <View key={`stone-${stoneIdx}`} style={styles.itemRow}>
-                        <Text style={[styles.text, styles.colDesc]}>STUDDED</Text>
-                        <Text style={[styles.text, styles.colWeight]}>
-                          {stone.stnwt?.toFixed(3) || "0.000"}
-                          {stone.stoneunit || ""}
-                        </Text>
-                        <Text style={[styles.text, styles.colVA]}></Text>
-                        <Text style={[styles.text, styles.colAmount]}>
-                          {stone.stnamt?.toFixed(0) || "0"}
-                        </Text>
-                      </View>
-                    ))}
-
-                    {/* Subitem Names */}
-                    {stones.map((stone, stoneIdx) =>
-                      item.subitemname ? (
-                        <View key={`subitem-${stoneIdx}`} style={styles.itemRow}>
-                          <Text style={[styles.text, styles.colDesc]}>
-                            {item.subitemname?.toUpperCase() || ""}
-                          </Text>
-                          <Text style={[styles.text, styles.colWeight]}></Text>
-                          <Text style={[styles.text, styles.colVA]}></Text>
-                          <Text style={[styles.text, styles.colAmount]}></Text>
-                        </View>
-                      ) : null
-                    )}
-                  </View>
-                );
-              })}
-
-              <View style={styles.dashedLine} />
-
-              {/* Totals Section */}
-              <View style={styles.totalsSection}>
-                <View style={styles.row}>
-                  <Text style={[styles.boldText, styles.colDesc]}>
-                    Tot.Pcs: {totalpcs}
-                  </Text>
-                  <Text style={[styles.boldText, styles.colWeight]}>
-                    {totalGrossWeight.toFixed(3)}
-                  </Text>
-                  <Text style={[styles.text, styles.colVA]}></Text>
-                  <Text style={[styles.boldText, styles.colAmount]}>
-                    {grossAmount.toFixed(0)}
-                  </Text>
-                </View>
-
-                {offerDiscount > 0 && (
-                  <>
-                    <View style={styles.row}>
-                      <Text style={[styles.text, styles.colDesc]}>
-                        {offerName}
-                      </Text>
-                      <Text style={[styles.text, styles.colWeight]}>({offerWeight.toFixed(3)}*{offerBoardRate})</Text>
-                      <Text style={[styles.text, styles.colVA]}></Text>
-                      <Text style={[styles.text, styles.colAmount]}>
-                        {offerDiscount.toFixed(0)}
-                      </Text>
-                    </View>
-                    <View style={styles.row}>
-                      <Text style={[styles.boldText, styles.colDesc]}>TOTAL</Text>
-                      <Text style={[styles.text, styles.colWeight]}></Text>
-                      <Text style={[styles.text, styles.colVA]}></Text>
-                      <Text style={[styles.boldText, styles.colAmount]}>
-                        {baseAmount.toFixed(0)}
-                      </Text>
-                    </View>
-                  </>
-                )}
-
-                <View style={styles.row}>
-                  <Text style={[styles.text, styles.colDesc]}>CGST (1.5%)</Text>
-                  <Text style={[styles.text, styles.colWeight]}></Text>
-                  <Text style={[styles.text, styles.colVA]}></Text>
-                  <Text style={[styles.text, styles.colAmount]}>
-                    {cgstAmount.toFixed(0)}
-                  </Text>
-                </View>
-
-                <View style={styles.row}>
-                  <Text style={[styles.text, styles.colDesc]}>SGST (1.5%)</Text>
-                  <Text style={[styles.text, styles.colWeight]}></Text>
-                  <Text style={[styles.text, styles.colVA]}></Text>
-                  <Text style={[styles.text, styles.colAmount]}>
-                    {sgstAmount.toFixed(0)}
-                  </Text>
-                </View>
-
-                <View style={styles.dashedLine} />
-
-                <View style={styles.grandTotalRow}>
-                  <Text style={[styles.grandTotalText, styles.colDesc]}>
-                    Sales TOTAL:
-                  </Text>
-                  <Text style={[styles.text, styles.colWeight]}></Text>
-                  <Text style={[styles.text, styles.colVA]}></Text>
-                  <Text style={[styles.grandTotalText, styles.colAmount]}>
-                    {grandTotal.toFixed(0)}
-                  </Text>
-                </View>
-
-                <View style={styles.dashedLine} />
-              </View>
-            </ScrollView>
+            {/* Full Slip Preview — same HTML as print */}
+            <View style={styles.previewContainer} onLayout={onPreviewLayout}>
+              <WebView
+                source={{ html: previewHtml || "<html><body></body></html>" }}
+                style={styles.previewWebView}
+                originWhitelist={["*"]}
+                scrollEnabled={true}
+                nestedScrollEnabled={true}
+                javaScriptEnabled
+                domStorageEnabled
+              />
+            </View>
 
             {/* Action Buttons */}
             <View style={styles.buttonContainer}>

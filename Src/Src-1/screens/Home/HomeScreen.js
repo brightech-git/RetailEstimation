@@ -101,7 +101,7 @@ const HomeScreen = () => {
 
     try {
       console.log("📞 Calling printEstimationSlip...");
-      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL);
+      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL, estimation.lastEmpId);
     } catch (err) {
       console.error("❌ Print error:", err);
       Alert.alert("Print Failed", err.message || "Unable to generate slip");
@@ -250,13 +250,16 @@ const HomeScreen = () => {
               <TextInput
                 ref={estimation.empInputRef}
                 style={styles.input}
-                placeholder="ID"
+                placeholder="Emp ID"
                 placeholderTextColor={theme.COLORS.placeholder}
                 value={estimation.emp}
                 onChangeText={estimation.setEmp}
                 onSubmitEditing={estimation.fetchData}
                 returnKeyType="done"
               />
+              {!!estimation.empName && (
+                <Text style={styles.empNameText}>{estimation.empName}</Text>
+              )}
             </View>
           </View>
 
@@ -352,10 +355,10 @@ const HomeScreen = () => {
                       <Text style={styles.cell}>{item.NETWT}</Text>
                     </View>
                     <View style={styles.column}>
-                      <Text style={styles.cell}>{item.Rate}</Text>
+                      <Text style={styles.cell}>{item.RATE ?? item.Rate}</Text>
                     </View>
                     <View style={styles.column}>
-                      <Text style={styles.cell}>{item.Wastage}</Text>
+                      <Text style={styles.cell}>{item.WASTAGE ?? item.Wastage}</Text>
                     </View>
                     <View style={styles.column}>
                       <Text style={styles.cell}>{item.MC}</Text>

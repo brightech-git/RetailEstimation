@@ -12,6 +12,7 @@ const InputFields = ({
   setTAGNO,
   emp,
   setEmp,
+  empName,
   fetchData,
   setScanningField,
   setScannerVisible,
@@ -84,6 +85,9 @@ const InputFields = ({
           onSubmitEditing={fetchData}
           returnKeyType="done"
         />
+        {!!empName && (
+          <Text style={styles.empNameText}>{empName}</Text>
+        )}
       </View>
     </View>
   );

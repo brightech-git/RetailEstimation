@@ -76,7 +76,6 @@ const LoginScreen = ({ navigation }) => {
 
       if (success) {
         await AsyncStorage.setItem("EMPLOYEE_ID", employeeId);
-        console.log("Employee ID saved:", employeeId);
         setUsername("");
         setPassword("");
         setEmployeeId("");
@@ -151,6 +150,7 @@ const LoginScreen = ({ navigation }) => {
                     style={styles.input}
                     placeholder="Employee ID"
                     placeholderTextColor={theme.COLORS.placeholder}
+                    keyboardType="numeric"
                     value={employeeId}
                     onChangeText={setEmployeeId}
                   />
