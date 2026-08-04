@@ -6,7 +6,8 @@ import { useApiBaseUrl } from "../../../Config/Config";
 import {
   fetchEstimationData,
   printEstimationToPrinter,
-  printEstimationToPrinterAsImage,
+  renderReceiptBitmap,
+  sendReceiptBitmapToPrinter,
   checkPrinterConnection,
   getActivePrinter,
 } from "../../Service/EstimationPrinterService";
@@ -14,6 +15,8 @@ import EstimationPreviewModal from "../EstimationPreviewModal/EstimationPreviewM
 import ImageBitmapProcessor from "../../../Utills/ImageBitmapProcessor";
 import { LoginContext } from "../../../Context/LoginContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import createApiInstance from "../../../Api/axiosInstance";
+import ENDPOINTS from "../../../Api/endpoints";
 
 // Preview management for estimation slips
 let estimationPreviewCallback = null;
@@ -55,6 +58,7 @@ export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empI
 export const useEstimationPreview = (employeeId) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [slipData, setSlipData] = useState(null);
+  const [empDisplay, setEmpDisplay] = useState("");
   const [currentPrinter, setCurrentPrinter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [printerStatus, setPrinterStatus] = useState({
@@ -70,6 +74,11 @@ export const useEstimationPreview = (employeeId) => {
   const isMounted = useRef(true);
   const isLoading = useRef(false);
   const imageProcessorRef = useRef(null);
+  // Pre-warmed bitmap render, kicked off as soon as the preview modal opens
+  // so html2canvas/CDN/font work happens while the user is still looking at
+  // the preview instead of after they tap Print.
+  const bitmapPromiseRef = useRef(null);
+  const bitmapForSlipRef = useRef(null);
 
   const {
     username: loggedInUsername,
@@ -301,6 +310,49 @@ const loadActivePrinter = useCallback(async () => {
     setPreviewVisible(false);
   }, []);
 
+  // Resolve empDisplay whenever slipData changes
+  useEffect(() => {
+    if (!slipData?.sample?.empid || !API_BASE_URL) { setEmpDisplay(""); return; }
+    const empId = slipData.sample.empid;
+    createApiInstance(API_BASE_URL)
+      .get(ENDPOINTS.EMPLOYEES(empId))
+      .then((res) => {
+        const found = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
+        setEmpDisplay(found ? `E${found.emp_id}-${found.emp_name}` : `E${empId}`);
+      })
+      .catch(() => setEmpDisplay(`E${empId}`));
+  }, [slipData, API_BASE_URL]);
+
+  // Pre-warm the receipt bitmap render as soon as the preview is shown, so
+  // the ~40s html2canvas/CDN/font pipeline runs while the user is reviewing
+  // the slip instead of after they tap Print. executePrint just awaits this
+  // cached promise instead of starting the render from scratch.
+  useEffect(() => {
+    if (!previewVisible || !slipData || !empDisplay) return;
+
+    // Keyed to the slip currently on screen so a stale render from a
+    // previous slip is never sent for a different one.
+    bitmapForSlipRef.current = slipData;
+
+    const companyInfo = {
+      companyName,
+      companyLogoUri: companyLogoFullPath,
+      username: loggedInUsername,
+      costId: selectedCostId,
+      empDisplay,
+    };
+
+    console.log("🔥 Pre-warming receipt bitmap render...");
+    bitmapPromiseRef.current = renderReceiptBitmap(
+      slipData,
+      imageProcessorRef,
+      companyInfo
+    ).catch((err) => {
+      console.warn("⚠️ Pre-warm bitmap render failed:", err);
+      return null;
+    });
+  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay]);
+
 const executePrint = useCallback(async (printCount = 1) => {
   try {
     console.log(`🖨️ Execute print called for ${printCount} copies, current printer:`, currentPrinter?.name);
@@ -363,64 +415,49 @@ const executePrint = useCallback(async (printCount = 1) => {
 
     if (slipData) {
       console.log(`📄 Printing ${printCount} copies with printer:`, currentPrinter.name);
-      
+
       const currentEmployeeId = await loadEmployeeId();
-      
-      // Print multiple copies
-      for (let i = 0; i < printCount; i++) {
-        console.log(`🖨️ Printing copy ${i + 1} of ${printCount}`);
-        
-        try {
-          try {
-            // Preferred: render the receipt as HTML (real Trajan Pro
-            // headings, logo, QR) and print it as an image.
-            await printEstimationToPrinterAsImage(
-              slipData,
-              currentPrinter,
-              currentEmployeeId,
-              API_BASE_URL,
-              imageProcessorRef,
-              {
-                companyName,
-                companyLogoUri: companyLogoFullPath,
-                username: loggedInUsername,
-                costId: selectedCostId,
-              }
-            );
-          } catch (imageError) {
-            // Fall back to the plain ESC/POS text receipt if the WebView
-            // render/capture fails (e.g. no network for the CDN scripts).
-            console.warn(
-              "⚠️ Image receipt print failed, falling back to text receipt:",
-              imageError
-            );
-            await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, printCount);
-          }
-          console.log(`✅ Copy ${i + 1} printed successfully`);
-          
-          // Add a small delay between prints to avoid printer buffer overflow
-          if (i < printCount - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
-          }
-        } catch (copyError) {
-          console.error(`❌ Error printing copy ${i + 1}:`, copyError);
-          
-          // If first copy fails, show error
-          if (i === 0) {
-            throw copyError;
-          }
-          
-          // For subsequent copies, show partial success
-          Alert.alert(
-            "Partial Success",
-            `Printed ${i} of ${printCount} copies successfully.\n\nError on copy ${i + 1}: ${copyError.message}`
-          );
-          return;
+      const companyInfo = {
+        companyName,
+        companyLogoUri: companyLogoFullPath,
+        username: loggedInUsername,
+        costId: selectedCostId,
+        empDisplay,
+      };
+
+      try {
+        // Use the pre-warmed bitmap (kicked off when the preview opened)
+        // if it's still for the slip currently being printed, so the
+        // ~40s render/CDN/font work has already happened by the time the
+        // user taps Print. Otherwise render fresh as a fallback.
+        let bitmap = null;
+        if (bitmapForSlipRef.current === slipData && bitmapPromiseRef.current) {
+          console.log("⚡ Using pre-warmed receipt bitmap...");
+          bitmap = await bitmapPromiseRef.current;
         }
+        if (!bitmap) {
+          console.log("🖼️ No pre-warmed bitmap available, rendering now...");
+          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo);
+        }
+
+        // Send every copy over a single TCP connection instead of
+        // reconnecting/re-rendering per copy.
+        await sendReceiptBitmapToPrinter(bitmap, currentPrinter, printCount);
+        console.log(`✅ All ${printCount} copies printed successfully (image)`);
+      } catch (imageError) {
+        // Fall back to the plain ESC/POS text receipt if the WebView
+        // render/capture/send fails (e.g. no network for the CDN scripts).
+        console.warn(
+          "⚠️ Image receipt print failed, falling back to text receipt:",
+          imageError
+        );
+        await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, printCount);
+        console.log(`✅ All ${printCount} copies printed successfully (text fallback)`);
+      } finally {
+        bitmapPromiseRef.current = null;
+        bitmapForSlipRef.current = null;
       }
-      
-      console.log(`✅ All ${printCount} copies printed successfully`);
-      
+
       if (printCount > 1) {
         Alert.alert("Success", `${printCount} copies printed successfully!`);
       } else {
@@ -448,6 +485,7 @@ const executePrint = useCallback(async (printCount = 1) => {
   companyLogoFullPath,
   loggedInUsername,
   selectedCostId,
+  empDisplay,
 ]);
 
   // Manual connectivity check function

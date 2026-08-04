@@ -586,6 +586,17 @@ export const createPrinterSettingsStyles = (theme) => {
     editButton: {
       backgroundColor: COLORS.info || "#2196F3",
     },
+
+    connButton: {
+      backgroundColor: COLORS.success || "#4CAF50",
+    },
+
+    connStatusText: {
+      fontSize: moderateScale(SIZES.fontXs),
+      marginTop: moderateScale(2),
+      fontWeight: '600',
+      ...FONTS.fontXs,
+    },
     
     deleteButton: {
       backgroundColor: COLORS.danger,

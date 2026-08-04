@@ -131,7 +131,7 @@ export const createPrinterService = (baseUrl) => {
     getPrintersByEmployee: async (empId) => {
       try {
         const response = await api.get(ENDPOINTS.PRINTER_BY_EMP, { params: { empId } });
-        console.log("📦 Printers for employee:", empId, response.data);
+        // console.log("📦 Printers for employee:", empId, response.data);
         return response.data;
       } catch (error) {
         console.error("❌ Error getting printers by employee:", error);
@@ -305,10 +305,9 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
     const itemsWithStones = await Promise.all(
       items.map(async (item) => {
         const stones = await fetchStonesForItem(item.itemid, item.tagno);
-        // Reconstruct pre-discount gross per item for display
-        // offerDiscount is for the whole batch; distribute proportionally by amount
         const itemShare = baseAmount > 0 ? (item.amount / baseAmount) * offerDiscount : offerDiscount / items.length;
-        return { ...item, stones, displayAmount: item.amount + itemShare };
+        const itemRate = parseFloat(item.rate) || goldRate;
+        return { ...item, stones, displayAmount: item.amount + itemShare, rate: itemRate };
       })
     );
 
@@ -362,7 +361,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
 // Function to get active printer from API
 export const getActivePrinter = async (employeeId, apiBaseUrl) => {
   try {
-    console.log("🖨️ Fetching printers for employee:", employeeId);
+    // console.log("🖨️ Fetching printers for employee:", employeeId);
 
     if (!apiBaseUrl) {
       throw new Error("API base URL is required to fetch printers");
@@ -844,8 +843,10 @@ const buildRasterImageString = ({ data, widthBytes, heightLines }) => {
 };
 
 // Build the params the ImageBitmapProcessor's HTML template expects out of
-// the slipData shape returned by fetchEstimationData().
-const buildReceiptImageParams = (slipData, companyInfo = {}) => {
+// the slipData shape returned by fetchEstimationData(). Exported so the
+// caller can kick off rendering early (e.g. as soon as the preview modal
+// opens) instead of waiting until the Print button is pressed.
+export const buildReceiptImageParams = (slipData, companyInfo = {}) => {
   const {
     items,
     sample,
@@ -861,6 +862,7 @@ const buildReceiptImageParams = (slipData, companyInfo = {}) => {
     grandTotal,
     offerName,
     itemsWithStones,
+    offer,
   } = slipData;
 
   const trandate =
@@ -877,6 +879,8 @@ const buildReceiptImageParams = (slipData, companyInfo = {}) => {
     billDate: trandate,
     billTime: getCurrentTime(),
     username: companyInfo.username || "",
+    boardRate: offer?.board_rate || 0,
+    offerNetwt: offer?.netwt || 0,
     goldRate,
     silverRate,
     items: (itemsWithStones || items || []).map((item) => ({
@@ -889,6 +893,7 @@ const buildReceiptImageParams = (slipData, companyInfo = {}) => {
       wastper: item.wastper,
       amount: item.amount,
       displayAmount: item.displayAmount,
+      rate: item.rate,
       stones: (item.stones || []).map((s) => ({
         stnwt: s.stnwt,
         stnamt: s.stnamt,
@@ -909,14 +914,14 @@ const buildReceiptImageParams = (slipData, companyInfo = {}) => {
   };
 };
 
-// Print the estimation slip as a Trajan-Pro-styled image instead of plain
-// ESC/POS text. `processorRef` must point at a mounted <ImageBitmapProcessor />.
-export const printEstimationToPrinterAsImage = async (
+// Render the receipt HTML → 1-bit bitmap only (no printer I/O). Call this
+// as soon as the preview modal opens (in parallel with the user reviewing
+// the slip) so the slow part — WebView load + CDN scripts + font parsing +
+// html2canvas capture — is already done by the time they press Print.
+// `processorRef` must point at a mounted <ImageBitmapProcessor />.
+export const renderReceiptBitmap = async (
   slipData,
-  currentPrinter = null,
-  employeeId = null,
-  apiBaseUrl = null,
-  processorRef = null,
+  processorRef,
   companyInfo = {},
   printerWidthPx = 576 // 80mm thermal printer (576 dots at 203dpi)
 ) => {
@@ -925,47 +930,48 @@ export const printEstimationToPrinterAsImage = async (
       "Image receipt renderer is not ready. Make sure <ImageBitmapProcessor /> is mounted."
     );
   }
+  const params = buildReceiptImageParams(slipData, companyInfo);
+  return processorRef.current.process(params, printerWidthPx);
+};
 
-  console.log("🖼️ Starting image-based print process...");
-
-  let activePrinter = currentPrinter;
-  if (!activePrinter && employeeId && apiBaseUrl) {
-    activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
-  }
-  if (!activePrinter) {
+// Send an already-rendered bitmap to the printer, optionally repeated
+// `copies` times over a single TCP connection (much faster than
+// reconnecting per copy — the connection handshake is the expensive part).
+export const sendReceiptBitmapToPrinter = async (
+  bitmap,
+  currentPrinter,
+  copies = 1
+) => {
+  if (!currentPrinter) {
     throw new Error(
       "No active printer selected. Please select a printer in Printer Settings."
     );
   }
 
-  const connectivityStatus = await checkPrinterConnection(activePrinter);
-  if (!connectivityStatus.connected) {
-    throw new Error(`Printer is offline: ${connectivityStatus.error}`);
-  }
-
-  console.log("🎨 Rendering receipt HTML → bitmap...");
-  const params = buildReceiptImageParams(slipData, companyInfo);
-  const bitmap = await processorRef.current.process(params, printerWidthPx);
-  console.log(
-    `✅ Receipt bitmap ready: ${bitmap.widthBytes * 8}x${bitmap.heightLines}px`
-  );
-
   const options = {
-    port: activePrinter.port || 9100,
-    host: activePrinter.ip_address,
+    port: currentPrinter.port || 9100,
+    host: currentPrinter.ip_address,
     reuseAddress: true,
     timeout: 10000,
   };
 
+  const imageString = buildRasterImageString(bitmap);
+  const count = Math.max(1, copies);
+
   return new Promise((resolve, reject) => {
     const client = TcpSocket.createConnection(options, () => {
-      console.log("✅ Connected to printer:", activePrinter.ip_address);
+      console.log(
+        `✅ Connected to printer: ${currentPrinter.ip_address} — sending ${count} cop${count === 1 ? "y" : "ies"}`
+      );
 
-      let printContent = PRINTER_COMMANDS.INIT;
-      printContent += FONTS.ALIGN_CENTER;
-      printContent += buildRasterImageString(bitmap);
-      printContent += PRINTER_COMMANDS.FEED_LINES(3);
-      printContent += PRINTER_COMMANDS.CUT;
+      let printContent = "";
+      for (let i = 0; i < count; i++) {
+        printContent += PRINTER_COMMANDS.INIT;
+        printContent += FONTS.ALIGN_CENTER;
+        printContent += imageString;
+        printContent += PRINTER_COMMANDS.FEED_LINES(3);
+        printContent += PRINTER_COMMANDS.CUT;
+      }
 
       try {
         client.write(printContent, "binary", (error) => {
@@ -977,7 +983,7 @@ export const printEstimationToPrinterAsImage = async (
             client.destroy();
             console.log("✅ Image print completed successfully");
             resolve();
-          }, 1000);
+          }, 300);
         });
       } catch (error) {
         client.destroy();
@@ -1004,6 +1010,43 @@ export const printEstimationToPrinterAsImage = async (
   });
 };
 
+// Convenience one-shot version (render + send) for callers that don't
+// pre-warm the bitmap. Prefer renderReceiptBitmap() ahead of time +
+// sendReceiptBitmapToPrinter() when possible — it's much faster since the
+// WebView render doesn't block the moment the user presses Print.
+export const printEstimationToPrinterAsImage = async (
+  slipData,
+  currentPrinter = null,
+  employeeId = null,
+  apiBaseUrl = null,
+  processorRef = null,
+  companyInfo = {},
+  printerWidthPx = 576
+) => {
+  let activePrinter = currentPrinter;
+  if (!activePrinter && employeeId && apiBaseUrl) {
+    activePrinter = await getActivePrinter(employeeId, apiBaseUrl);
+  }
+  if (!activePrinter) {
+    throw new Error(
+      "No active printer selected. Please select a printer in Printer Settings."
+    );
+  }
+
+  console.log("🎨 Rendering receipt HTML → bitmap...");
+  const bitmap = await renderReceiptBitmap(
+    slipData,
+    processorRef,
+    companyInfo,
+    printerWidthPx
+  );
+  console.log(
+    `✅ Receipt bitmap ready: ${bitmap.widthBytes * 8}x${bitmap.heightLines}px`
+  );
+
+  return sendReceiptBitmapToPrinter(bitmap, activePrinter, 1);
+};
+
 // Export all functions
 export default {
   formatDate,
@@ -1012,6 +1055,9 @@ export default {
   fetchEstimationData,
   printEstimationToPrinter,
   printEstimationToPrinterAsImage,
+  renderReceiptBitmap,
+  sendReceiptBitmapToPrinter,
+  buildReceiptImageParams,
   getActivePrinter,
   checkPrinterConnection,
   createPrinterService,

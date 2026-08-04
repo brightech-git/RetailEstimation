@@ -20,6 +20,7 @@ import { createPrinterSettingsStyles } from "./PrinterStyles";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { checkPrinterConnection } from "../../Service/EstimationPrinterService";
 
 // Constants
 const DEFAULT_PORT = "9100";
@@ -74,6 +75,7 @@ const PrinterSettings = () => {
   const [editingPrinter, setEditingPrinter] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [connStatus, setConnStatus] = useState({}); // { [printerId]: null | 'checking' | 'connected' | 'offline' }
 
   // Cleanup on unmount
   useEffect(() => {
@@ -135,7 +137,7 @@ const PrinterSettings = () => {
     if (!employeeId) return;
     
     try {
-      console.log("🖨️ Loading printers for employee:", employeeId);
+      // console.log("🖨️ Loading printers for employee:", employeeId);
       
       const employeePrinters = await printerService.getPrintersByEmployee(employeeId);
 
@@ -376,6 +378,14 @@ const PrinterSettings = () => {
     [printerService, loadPrinterData, showToast]
   );
 
+  // Check connection for a printer
+  const handleCheckConnection = useCallback(async (printer) => {
+    if (connStatus[printer.id] === 'checking') return;
+    setConnStatus(prev => ({ ...prev, [printer.id]: 'checking' }));
+    const result = await checkPrinterConnection(printer);
+    setConnStatus(prev => ({ ...prev, [printer.id]: result.connected ? 'connected' : 'offline' }));
+  }, [connStatus]);
+
   // Reset form
   const resetForm = useCallback(() => {
     setHost("");
@@ -449,6 +459,7 @@ const PrinterSettings = () => {
   const renderPrinterItem = useCallback(
     ({ item }) => {
       const isCurrent = item.active === true;
+      const status = connStatus[item.id] || null;
 
       return (
         <View
@@ -467,6 +478,16 @@ const PrinterSettings = () => {
             <Text style={styles.printerAddress}>
               {item.ip_address}:{item.port}
             </Text>
+            {status && (
+              <Text style={[
+                styles.connStatusText,
+                status === 'connected' && { color: '#1B9721' },
+                status === 'offline' && { color: theme.COLORS.danger },
+                status === 'checking' && { color: theme.COLORS.textLight },
+              ]}>
+                {status === 'connected' ? `✓ ${item.name} is connected` : status === 'offline' ? `✗ ${item.name} is not connected` : 'Checking...'}
+              </Text>
+            )}
           </View>
           <View style={styles.printerActions}>
             {!isCurrent && (
@@ -484,6 +505,20 @@ const PrinterSettings = () => {
               <MaterialIcons name="edit" size={16} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
+              style={[styles.actionButton, styles.connButton]}
+              onPress={() => handleCheckConnection(item)}
+            >
+              {status === 'checking' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : status === 'connected' ? (
+                <MaterialIcons name="wifi" size={16} color="#fff" />
+              ) : status === 'offline' ? (
+                <MaterialIcons name="wifi-off" size={16} color="#fff" />
+              ) : (
+                <MaterialIcons name="wifi" size={16} color="#fff" />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
               onPress={() => handleDeletePrinter(item)}
             >
@@ -493,7 +528,7 @@ const PrinterSettings = () => {
         </View>
       );
     },
-    [handleSetCurrentPrinter, handleEditPrinter, handleDeletePrinter, styles]
+    [handleSetCurrentPrinter, handleEditPrinter, handleDeletePrinter, handleCheckConnection, connStatus, styles]
   );
 
   // Key extractor
@@ -552,7 +587,7 @@ const PrinterSettings = () => {
       </View>
 
       {/* Compact Current Printer */}
-      {currentPrinter && (
+      {/* {currentPrinter && (
         <View style={styles.compactCurrentPrinter}>
           <View style={styles.compactPrinterInfo}>
             <View style={styles.compactPrinterIcon}>
@@ -578,7 +613,7 @@ const PrinterSettings = () => {
             <MaterialIcons name="close" size={18} color={theme.COLORS.danger} />
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
 
       {/* Add/Edit Form */}
       <View style={styles.formSection}>
@@ -651,9 +686,10 @@ const PrinterSettings = () => {
               value={port}
               onChangeText={setPort}
               placeholder={DEFAULT_PORT}
+
               keyboardType="numeric"
               placeholderTextColor={theme.COLORS.placeholder}
-              editable={!isSaving}
+              editable={false}
               maxLength={5}
             />
           </View>

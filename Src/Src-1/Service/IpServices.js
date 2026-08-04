@@ -13,7 +13,7 @@ export const usePrinterService = () => {
 
   const getPrintersByEmployee = async (empId) => {
     const response = await api.get(ENDPOINTS.PRINTER_BY_EMP, { params: { empId } });
-    console.log("📦 Printers for employee:", empId, response.data);
+    // console.log("📦 Printers for employee:", empId, response.data);
     return response.data;
   };
 

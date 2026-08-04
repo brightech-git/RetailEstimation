@@ -36,10 +36,11 @@ body {
   width:${W}px;
   background:#fff;
   font-family: 'TimesNewRoman', serif;
-  font-weight: 400;
+  font-weight: 700;
   font-size: ${F}px;
   color: #000;
   -webkit-print-color-adjust: exact;
+  -webkit-text-stroke: 0.4px #000;
 }
 b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
 
@@ -72,6 +73,7 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
 .items-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: ${F}px;
 }
 .items-table th {
@@ -79,12 +81,19 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
   text-align: left;
   padding: ${Math.round(F * 0.14)}px 2px;
   white-space: nowrap;
+  overflow: hidden;
 }
 .items-table th.r,
 .items-table td.r { text-align: right; }
 .items-table td {
   padding: ${Math.round(F * 0.1)}px 2px;
   vertical-align: top;
+  overflow: hidden;
+}
+.items-table td.r {
+  font-weight: 400;
+  -webkit-text-stroke: 0;
+  white-space: nowrap;
 }
 .item-name-row td {
   font-weight: 700;
@@ -93,12 +102,6 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
 .sub-row td {
   padding-left: ${Math.round(F * 1.2)}px;
 }
-.totals-row {
-  display: flex;
-  justify-content: space-between;
-  padding: ${Math.round(F * 0.1)}px 0;
-}
-.totals-row .indent { padding-left: ${Math.round(F * 6)}px; }
 .grand-total-row {
   display: flex;
   justify-content: space-between;
@@ -136,12 +139,18 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
   <hr class="sep">
 
   <table class="items-table">
+    <colgroup>
+      <col style="width:auto">
+      <col style="width:${Math.round(F * 4.4)}px">
+      <col style="width:${Math.round(F * 3.4)}px">
+      <col style="width:${Math.round(F * 4.4)}px">
+    </colgroup>
     <thead>
       <tr>
         <th>Description</th>
-        <th class="r" style="width:${Math.round(F * 4.4)}px">Weight</th>
-        <th class="r" style="width:${Math.round(F * 3.4)}px">V.A</th>
-        <th class="r" style="width:${Math.round(F * 4.4)}px">Amount</th>
+        <th class="r">Weight</th>
+        <th class="r">V.A</th>
+        <th class="r">Amount</th>
       </tr>
     </thead>
   </table>
@@ -149,6 +158,12 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
   <hr class="sep">
 
   <table class="items-table">
+    <colgroup>
+      <col style="width:auto">
+      <col style="width:${Math.round(F * 4.4)}px">
+      <col style="width:${Math.round(F * 3.4)}px">
+      <col style="width:${Math.round(F * 4.4)}px">
+    </colgroup>
     <tbody id="items-body"></tbody>
   </table>
 
@@ -162,6 +177,7 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
     <span>Sales&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TOTAL:</span>
     <span id="grand-total-val"></span>
   </div>
+  
 <br/>
   
 
@@ -171,6 +187,7 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
   <div class="blank-row"><b>BAL AMT :</b><span class="blank-line"></span></div>` : ''}
 
   <div class="bracket-line b" id="bracket-line"></div>
+  <br />
 
   <div class="big-estno" id="estno-big"></div>
 
@@ -203,14 +220,17 @@ var rows = '';
   var amount = (item.displayAmount != null ? item.displayAmount : item.amount) || 0;
   var vaDisplay = item.wastper && item.wastper > 0 ? fmtVA(item.wastper) + '%' : '';
 
+  var stoneTotal = (item.stones || []).reduce(function(s, st){ return s + (st.stnamt || 0); }, 0);
+  var displayAmt = ((item.displayAmount != null ? item.displayAmount : item.amount) || 0) - stoneTotal;
+  var itemRate = item.rate || 0;
   rows +=
     '<tr class="item-name-row"><td colspan="4">' + (idx + 1) + ' ' + esc(itemName) +
       ' (' + (item.pcs || 0) + ' Pcs) [' + esc(item.itemid) + '-' + esc(item.tagno) + ']</td></tr>' +
     '<tr>' +
-      '<td></td>' +
+      '<td>' + (itemRate > 0 ? 'Rate: ' + fmt(itemRate) : '') + '</td>' +
       '<td class="r">' + fmtWt(item.grswt) + '</td>' +
       '<td class="r">' + vaDisplay + '</td>' +
-      '<td class="r">' + fmt(amount) + '</td>' +
+      '<td class="r">' + fmt(displayAmt) + '</td>' +
     '</tr>';
 
   if (item.grswt !== item.netwt) {
@@ -231,17 +251,19 @@ document.getElementById('items-body').innerHTML = rows;
 
 var t = P.totals || {};
 var totHtml =
-  '<div class="totals-row"><b>Tot.Pcs : ' + (t.totalpcs || 0) + '</b>' +
-    '<b class="indent">' + fmtWt(t.totalGrossWeight) + '</b>' +
-    '<b>' + fmt(t.grossAmount) + '</b></div>';
+  '<table class="items-table"><colgroup><col style="width:auto"><col style="width:' + ${Math.round(F * 4.4)} + 'px"><col style="width:' + ${Math.round(F * 3.4)} + 'px"><col style="width:' + ${Math.round(F * 4.4)} + 'px"></colgroup><tbody>' +
+  '<tr><td><b>Tot.Pcs : ' + (t.totalpcs || 0) + '</b></td><td class="r"><b>' + fmtWt(t.totalGrossWeight) + '</b></td><td class="r"></td><td class="r"><b>' + fmt(t.grossAmount) + '</b></td></tr>' +
+  '<tr><td colspan="4"><hr style="border:none;border-top:1px dashed #000;margin:3px 0"></td></tr>';
 
 if (t.offerDiscount > 0) {
-  totHtml += '<div class="totals-row"><span>' + esc(t.offerName || 'Offer') + '</span><span>' + fmt(t.offerDiscount) + '</span></div>';
-  totHtml += '<div class="totals-row"><b>TOTAL</b><b>' + fmt(t.baseAmount) + '</b></div>';
+  var offerLabel = esc(t.offerName || 'Offer') + '(' + fmtWt(P.offerNetwt || 0) + '*' + fmt(P.boardRate || 0) + ')';
+  totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(t.offerDiscount) + '</span></td></tr>';
+  totHtml += '<tr><td colspan="3"><b>TOTAL</b></td><td class="r"><b>' + fmt(t.baseAmount) + '</b></td></tr>';
 }
 
-totHtml += '<div class="totals-row"><span class="indent">CGST (1.5%)</span><span>' + fmt(t.cgstAmount) + '</span></div>';
-totHtml += '<div class="totals-row"><span class="indent">SGST (1.5%)</span><span>' + fmt(t.sgstAmount) + '</span></div>';
+totHtml += '<tr><td colspan="3"><span>CGST (1.5%)</span></td><td class="r"><span>' + fmt(t.cgstAmount) + '</span></td></tr>';
+totHtml += '<tr><td colspan="3"><span>SGST (1.5%)</span></td><td class="r"><span>' + fmt(t.sgstAmount) + '</span></td></tr>';
+totHtml += '</tbody></table>';
 
 document.getElementById('totals').innerHTML = totHtml;
 document.getElementById('grand-total-val').textContent = fmt(t.grandTotal);

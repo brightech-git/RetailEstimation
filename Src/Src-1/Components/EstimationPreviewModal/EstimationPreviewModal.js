@@ -20,6 +20,7 @@ import { formatDate, getCurrentTime } from "../../Service/EstimationPrinterServi
 import createApiInstance from "../../../Api/axiosInstance";
 import ENDPOINTS from "../../../Api/endpoints";
 import { useApiBaseUrl } from "../../../Config/Config";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const formatDateSafe = (dateString) => {
   if (!dateString) return "";
@@ -43,6 +44,7 @@ const EstimationPreviewModal = ({
 }) => {
   const { theme } = useTheme();
   const styles = createEstimationPreviewModalStyles(theme);
+  const insets = useSafeAreaInsets();
   const [printCount, setPrintCount] = useState(1);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   const [customPrintCount, setCustomPrintCount] = useState("");
@@ -60,7 +62,7 @@ const EstimationPreviewModal = ({
     const empId = slipData.sample.empid;
     console.log("[EmpDisplay] Fetching for empId:", empId, "costId:", selectedCostId);
     createApiInstance(API_BASE_URL)
-      .get(ENDPOINTS.EMPLOYEES(selectedCostId, empId))
+      .get(ENDPOINTS.EMPLOYEES(empId))
       .then((res) => {
      
         const found = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
@@ -99,8 +101,11 @@ const EstimationPreviewModal = ({
         itemid: item.itemid, tagno: item.tagno, itemname: item.itemname,
         pcs: item.pcs, grswt: item.grswt, netwt: item.netwt,
         wastper: item.wastper, amount: item.amount, displayAmount: item.displayAmount,
+        rate: item.rate,
         stones: (item.stones || []).map((s) => ({ stnwt: s.stnwt, stnamt: s.stnamt, stoneunit: s.stoneunit })),
       })),
+      boardRate: slipData.offer?.board_rate || 0,
+      offerNetwt: slipData.offer?.netwt || 0,
       totals: { totalpcs, totalGrossWeight, grossAmount, baseAmount, offerDiscount, offerName, cgstAmount, sgstAmount, grandTotal },
     };
     return buildHtml(params, previewWidth);
@@ -389,7 +394,7 @@ const EstimationPreviewModal = ({
             </View>
 
             {/* Action Buttons */}
-            <View style={styles.buttonContainer}>
+            <View style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
                 <MaterialIcons
                   name="close"

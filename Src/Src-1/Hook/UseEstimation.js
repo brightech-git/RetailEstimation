@@ -64,7 +64,7 @@ export const useEstimation = (apiBaseUrl) => {
         console.log("[Employees] Request URL:", url);
         console.log("[Employees] selectedCostId:", selectedCostId, "emp:", emp.trim());
         const res = await api.get(url);
-        console.log("[Employees] Response:", res.data);
+        // console.log("[Employees] Response:", res.data);
         const empIdNum = Number(emp.trim());
         const found = Array.isArray(res.data)
           ? res.data.find((e) => Number(e.emp_id) === empIdNum) || null
@@ -342,7 +342,7 @@ export const useEstimation = (apiBaseUrl) => {
               0,
             mcharge: tagDetails?.mccharge || 0,
             amount: parseFloat((calculateGrossAmount(item) - (parseFloat(item.DISCOUNT) || 0)).toFixed(2)) || 0,
-            rate: parseFloat(offerData?.board_rate) || parseFloat(item.BOARD_RATE) || 0,
+            rate: parseFloat(item.RATE) || parseFloat(item.Rate) || 0,
             boardrate: parseFloat(offerData?.board_rate) || parseFloat(item.BOARD_RATE) ||  0,
             costid: item.COSTID || costId,
             companyid: companyCode,
@@ -388,7 +388,7 @@ export const useEstimation = (apiBaseUrl) => {
             orderno: "",
             stoneunit: "",
             protype: "0",
-            metalid: item.METALID ? String(item.METALID) : "G",
+            metalid: item.METALID ? String(item.METALID) : "",
             tax: parseFloat(calculateDiscountedGST(item).toFixed(2)) || 0,
             sc: "0.00",
             adsc: "0.00",
