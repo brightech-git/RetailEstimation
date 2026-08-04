@@ -846,7 +846,7 @@ const buildRasterImageString = ({ data, widthBytes, heightLines }) => {
 // the slipData shape returned by fetchEstimationData(). Exported so the
 // caller can kick off rendering early (e.g. as soon as the preview modal
 // opens) instead of waiting until the Print button is pressed.
-export const buildReceiptImageParams = (slipData, companyInfo = {}) => {
+export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGst = 'N') => {
   const {
     items,
     sample,
@@ -881,6 +881,7 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}) => {
     username: companyInfo.username || "",
     boardRate: offer?.board_rate || 0,
     offerNetwt: offer?.netwt || 0,
+    offerPrintGst,
     goldRate,
     silverRate,
     items: (itemsWithStones || items || []).map((item) => ({
@@ -923,14 +924,15 @@ export const renderReceiptBitmap = async (
   slipData,
   processorRef,
   companyInfo = {},
-  printerWidthPx = 576 // 80mm thermal printer (576 dots at 203dpi)
+  printerWidthPx = 576,
+  offerPrintGst = 'N'
 ) => {
   if (!processorRef || !processorRef.current) {
     throw new Error(
       "Image receipt renderer is not ready. Make sure <ImageBitmapProcessor /> is mounted."
     );
   }
-  const params = buildReceiptImageParams(slipData, companyInfo);
+  const params = buildReceiptImageParams(slipData, companyInfo, offerPrintGst);
   return processorRef.current.process(params, printerWidthPx);
 };
 

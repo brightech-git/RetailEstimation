@@ -257,7 +257,16 @@ var totHtml =
 
 if (t.offerDiscount > 0) {
   var offerLabel = esc(t.offerName || 'Offer') + '(' + fmtWt(P.offerNetwt || 0) + '*' + fmt(P.boardRate || 0) + ')';
-  totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(t.offerDiscount) + '</span></td></tr>';
+  if (P.offerPrintGst === 'Y') {
+    var offerExclGst = Math.round(t.offerDiscount / 103 * 100);
+    var offerGstTot  = t.offerDiscount - offerExclGst;
+    var offerGstEach = offerGstTot / 2;
+    totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(offerExclGst) + '</span></td></tr>';
+    totHtml += '<tr><td colspan="3"><span>CGST (1.5%)</span></td><td class="r"><span>' + offerGstEach.toFixed(2) + '</span></td></tr>';
+    totHtml += '<tr><td colspan="3"><span>SGST (1.5%)</span></td><td class="r"><span>' + offerGstEach.toFixed(2) + '</span></td></tr>';
+  } else {
+    totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(t.offerDiscount) + '</span></td></tr>';
+  }
   totHtml += '<tr><td colspan="3"><b>TOTAL</b></td><td class="r"><b>' + fmt(t.baseAmount) + '</b></td></tr>';
 }
 

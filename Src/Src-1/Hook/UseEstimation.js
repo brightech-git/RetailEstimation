@@ -31,6 +31,9 @@ export const useEstimation = (apiBaseUrl) => {
   const [tranno, setTranno] = useState(null);
   const [estBatchNo, setEstBatchNo] = useState(null);
   const [lastEmpId, setLastEmpId] = useState("");
+  const [lastEmpName, setLastEmpName] = useState("");
+  const [empSuggestions, setEmpSuggestions] = useState([]);
+  const [showEmpList, setShowEmpList] = useState(false);
   const [scanningField, setScanningField] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
 
@@ -51,31 +54,33 @@ export const useEstimation = (apiBaseUrl) => {
     setTableData((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Fetch employee name when emp ID changes
+  // Fetch employee suggestions when emp input changes
   useEffect(() => {
-    if (!emp.trim() || !service || !selectedCostId) {
+    if (!emp.trim() || !service) {
       setEmpName("");
+      setEmpSuggestions([]);
+      setShowEmpList(false);
       return;
     }
     const timeout = setTimeout(async () => {
       try {
         const api = createApiInstance(service.baseUrl || apiBaseUrl);
-        const url = ENDPOINTS.EMPLOYEES(selectedCostId, emp.trim());
-        console.log("[Employees] Request URL:", url);
-        console.log("[Employees] selectedCostId:", selectedCostId, "emp:", emp.trim());
+        const url = ENDPOINTS.EMPLOYEES(emp.trim());
         const res = await api.get(url);
-        // console.log("[Employees] Response:", res.data);
+        const list = Array.isArray(res.data) ? res.data : [];
+        setEmpSuggestions(list);
+        setShowEmpList(list.length > 0);
         const empIdNum = Number(emp.trim());
-        const found = Array.isArray(res.data)
-          ? res.data.find((e) => Number(e.emp_id) === empIdNum) || null
-          : null;
-        setEmpName(found ? found.emp_name : "");
+        const exact = list.find((e) => Number(e.empId) === empIdNum) || null;
+        setEmpName(exact ? exact.empName : "");
       } catch {
         setEmpName("");
+        setEmpSuggestions([]);
+        setShowEmpList(false);
       }
     }, 400);
     return () => clearTimeout(timeout);
-  }, [emp, service, selectedCostId]);
+  }, [emp, service]);
 
   // Expose the logged-in user's currently selected cost ID (from
   // AsyncStorage, kept in sync by LoginContext) so screens can build
@@ -223,10 +228,15 @@ export const useEstimation = (apiBaseUrl) => {
 
       setTableData((prev) => [...prev, ...newData]);
 
+      // Store last used emp before reset
+      setLastEmpId(emp.trim());
+      setLastEmpName(empName);
+
       // Reset form and focus
       setITEMID("");
       setTAGNO("");
       setEmp("");
+      setShowEmpList(false);
       itemIdInputRef.current?.focus();
     } catch (error) {
       Alert.alert("Error", error.message || "Something went wrong.");
@@ -643,7 +653,7 @@ export const useEstimation = (apiBaseUrl) => {
       setTranno(TRANNO);
       setEstBatchNo(batchNo);
       setTableData([]);
-      setLastEmpId(rawItems[0]?.empid ? String(rawItems[0].empid) : "");
+      setLastEmpId(rawItems[0]?.empid ? String(rawItems[0].empid) : lastEmpId);
 
       return batchNo;
     } catch (error) {
@@ -682,6 +692,9 @@ export const useEstimation = (apiBaseUrl) => {
     estBatchNo,
     scanningField,
     scannerVisible,
+    empSuggestions,
+    showEmpList,
+    lastEmpName,
 
     // Refs
     itemIdInputRef,
@@ -701,6 +714,7 @@ export const useEstimation = (apiBaseUrl) => {
     setEstBatchNo,
     setScanningField,
     setScannerVisible,
+    setShowEmpList,
 
     // Functions
     handleScanned,

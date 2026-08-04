@@ -253,8 +253,13 @@ const HomeScreen = () => {
                 placeholder="Emp ID"
                 placeholderTextColor={theme.COLORS.placeholder}
                 value={estimation.emp}
-                onChangeText={estimation.setEmp}
-                onSubmitEditing={estimation.fetchData}
+                onChangeText={(text) => {
+                  estimation.setEmp(text);
+                }}
+                onSubmitEditing={() => {
+                  estimation.setShowEmpList(false);
+                  estimation.fetchData();
+                }}
                 returnKeyType="done"
               />
               {!!estimation.empName && (

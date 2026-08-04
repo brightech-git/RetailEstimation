@@ -17,6 +17,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import createApiInstance from "../../../Api/axiosInstance";
 import ENDPOINTS from "../../../Api/endpoints";
+import { SoftControlService } from "../../Service/SoftControlService";
 
 // Preview management for estimation slips
 let estimationPreviewCallback = null;
@@ -59,6 +60,7 @@ export const useEstimationPreview = (employeeId) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [slipData, setSlipData] = useState(null);
   const [empDisplay, setEmpDisplay] = useState("");
+  const [offerPrintGst, setOfferPrintGst] = useState('N');
   const [currentPrinter, setCurrentPrinter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [printerStatus, setPrinterStatus] = useState({
@@ -310,18 +312,31 @@ const loadActivePrinter = useCallback(async () => {
     setPreviewVisible(false);
   }, []);
 
-  // Resolve empDisplay whenever slipData changes
+  // Fetch OFFERPRINTGST soft control whenever slipData changes
   useEffect(() => {
-    if (!slipData?.sample?.empid || !API_BASE_URL) { setEmpDisplay(""); return; }
-    const empId = slipData.sample.empid;
+    if (!slipData || !API_BASE_URL || !selectedCostId) return;
+    new SoftControlService(API_BASE_URL)
+      .getControlValue(selectedCostId, 'OFFERPRINTGST')
+      .then((val) => setOfferPrintGst(val || 'N'))
+      .catch(() => setOfferPrintGst('N'));
+  }, [slipData, API_BASE_URL, selectedCostId]);
+
+  // Resolve empDisplay — prefer the employeeId passed from the screen (typed input),
+  // fall back to slipData.sample.empid from the API response.
+  useEffect(() => {
+    const empId = employeeId || slipData?.sample?.empid;
+    if (!empId || !API_BASE_URL) { setEmpDisplay(""); return; }
     createApiInstance(API_BASE_URL)
       .get(ENDPOINTS.EMPLOYEES(empId))
       .then((res) => {
-        const found = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
-        setEmpDisplay(found ? `E${found.emp_id}-${found.emp_name}` : `E${empId}`);
+        const empIdNum = Number(empId);
+        const found = Array.isArray(res.data)
+          ? res.data.find((e) => Number(e.empId) === empIdNum) || null
+          : null;
+        setEmpDisplay(found ? `E${found.empId}-${found.empName}` : `E${empId}`);
       })
       .catch(() => setEmpDisplay(`E${empId}`));
-  }, [slipData, API_BASE_URL]);
+  }, [employeeId, slipData, API_BASE_URL]);
 
   // Pre-warm the receipt bitmap render as soon as the preview is shown, so
   // the ~40s html2canvas/CDN/font pipeline runs while the user is reviewing
@@ -346,12 +361,14 @@ const loadActivePrinter = useCallback(async () => {
     bitmapPromiseRef.current = renderReceiptBitmap(
       slipData,
       imageProcessorRef,
-      companyInfo
+      companyInfo,
+      576,
+      offerPrintGst
     ).catch((err) => {
       console.warn("⚠️ Pre-warm bitmap render failed:", err);
       return null;
     });
-  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay]);
+  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst]);
 
 const executePrint = useCallback(async (printCount = 1) => {
   try {
@@ -437,7 +454,7 @@ const executePrint = useCallback(async (printCount = 1) => {
         }
         if (!bitmap) {
           console.log("🖼️ No pre-warmed bitmap available, rendering now...");
-          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo);
+          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, offerPrintGst);
         }
 
         // Send every copy over a single TCP connection instead of
@@ -486,6 +503,7 @@ const executePrint = useCallback(async (printCount = 1) => {
   loggedInUsername,
   selectedCostId,
   empDisplay,
+  offerPrintGst,
 ]);
 
   // Manual connectivity check function

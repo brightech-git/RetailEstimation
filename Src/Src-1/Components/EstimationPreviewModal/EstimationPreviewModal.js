@@ -64,9 +64,11 @@ const EstimationPreviewModal = ({
     createApiInstance(API_BASE_URL)
       .get(ENDPOINTS.EMPLOYEES(empId))
       .then((res) => {
-     
-        const found = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
-        setEmpDisplay(found ? `E${found.emp_id}-${found.emp_name}` : `E${empId}`);
+        const empIdNum = Number(empId);
+        const found = Array.isArray(res.data)
+          ? res.data.find((e) => Number(e.empId) === empIdNum) || null
+          : null;
+        setEmpDisplay(found ? `E${found.empId}-${found.empName}` : `E${empId}`);
       })
       .catch((err) => {
         console.log("[EmpDisplay] Error:", err.message);
