@@ -17,6 +17,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { LoginContext } from "../../../Context/LoginContext";
 import { buildHtml } from "../../../Utills/buildReceiptHtml";
 import { formatDate, getCurrentTime } from "../../Service/EstimationPrinterService";
+import {
+  getOfferBoardRate,
+  calcDisplayTotals,
+  splitInclusiveGst,
+} from "../../../shared/EstimationCalculations";
 import createApiInstance from "../../../Api/axiosInstance";
 import ENDPOINTS from "../../../Api/endpoints";
 import { useApiBaseUrl } from "../../../Config/Config";
@@ -41,6 +46,7 @@ const EstimationPreviewModal = ({
   onCheckConnection,
   onRefreshPrinter,
   navigation,
+  offerPrintGst = "N",
 }) => {
   const { theme } = useTheme();
   const styles = createEstimationPreviewModalStyles(theme);
@@ -87,8 +93,19 @@ const EstimationPreviewModal = ({
   const previewHtml = useMemo(() => {
     if (!slipData) return null;
     const { items, sample, goldRate, silverRate, totalpcs, totalGrossWeight,
-      grossAmount, baseAmount, offerDiscount, cgstAmount, sgstAmount, grandTotal,
-      offerName, itemsWithStones } = slipData;
+      grossAmount, baseAmount, offerDiscount,
+      offerName, itemsWithStones, discountTaxAmount } = slipData;
+
+    // Same rule as the actual printed receipt (buildReceiptImageParams):
+    // offer line + GST-inclusive split only when OFFERPRINTGST is 'Y';
+    // when 'N', GST/grand total are computed on the full pre-discount
+    // amount instead of the discounted one.
+    const offerSplit =
+      offerPrintGst === "Y" && offerDiscount > 0
+        ? splitInclusiveGst(offerDiscount)
+        : null;
+    const displayTotals = calcDisplayTotals({ baseAmount, grossAmount }, offerPrintGst);
+
     const params = {
       companyName,
       costId: selectedCostId || "",
@@ -106,12 +123,26 @@ const EstimationPreviewModal = ({
         rate: item.rate,
         stones: (item.stones || []).map((s) => ({ stnwt: s.stnwt, stnamt: s.stnamt, stoneunit: s.stoneunit })),
       })),
-      boardRate: slipData.offer?.board_rate || 0,
+      boardRate: getOfferBoardRate(slipData.offer),
       offerNetwt: slipData.offer?.netwt || 0,
-      totals: { totalpcs, totalGrossWeight, grossAmount, baseAmount, offerDiscount, offerName, cgstAmount, sgstAmount, grandTotal },
+      offerPrintGst,
+      totals: {
+        totalpcs,
+        totalGrossWeight,
+        grossAmount,
+        baseAmount,
+        offerDiscount,
+        offerName,
+        cgstAmount: displayTotals.cgstAmount,
+        sgstAmount: displayTotals.sgstAmount,
+        grandTotal: displayTotals.grandTotal,
+        offerExclGst: offerSplit?.exclGst ?? null,
+        offerGstEach: offerSplit?.gstEach ?? null,
+        discountTaxAmount,
+      },
     };
     return buildHtml(params, previewWidth);
-  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, userId]);
+  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, userId, offerPrintGst]);
 
   if (!slipData) {
     return (

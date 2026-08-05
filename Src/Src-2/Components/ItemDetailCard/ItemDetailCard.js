@@ -1,12 +1,12 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { createItemDetailsStyles } from "./ItemDetailsStyles";
-import { calcDiscountedGross, calcGST, calcGrandTotal } from "../../../shared/EstimationCalculations";
+import { calcGross, calcDiscountedGross, calcGST, calcGrandTotal } from "../../../shared/EstimationCalculations";
 
 const ItemDetailsCard = ({ item, index, theme }) => {
   const styles = createItemDetailsStyles(theme);
 
-  const grossAmount = parseFloat(item.GrossAmount) || 0;
+  const grossAmount = calcGross(item);
   const discount = parseFloat(item.DISCOUNT) || 0;
   const taxableAmount = parseFloat(calcDiscountedGross(item).toFixed(2));
   const gstAmount = parseFloat(calcGST(item).toFixed(2));

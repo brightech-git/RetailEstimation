@@ -468,7 +468,7 @@ const executePrint = useCallback(async (printCount = 1) => {
           "⚠️ Image receipt print failed, falling back to text receipt:",
           imageError
         );
-        await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, printCount);
+        await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, offerPrintGst);
         console.log(`✅ All ${printCount} copies printed successfully (text fallback)`);
       } finally {
         bitmapPromiseRef.current = null;
@@ -567,6 +567,7 @@ const executePrint = useCallback(async (printCount = 1) => {
           onCheckConnection={manualConnectivityCheck}
           onRefreshPrinter={refreshPrinter}
           navigation={navigation}
+          offerPrintGst={offerPrintGst}
         />
         {/* Hidden WebView that renders the Trajan-Pro receipt HTML and
             captures it to a 1-bit bitmap for printing. */}
@@ -583,6 +584,7 @@ const executePrint = useCallback(async (printCount = 1) => {
       manualConnectivityCheck,
       refreshPrinter,
       navigation,
+      offerPrintGst,
     ]
   );
 

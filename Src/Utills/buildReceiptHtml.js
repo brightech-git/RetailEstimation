@@ -255,15 +255,19 @@ var totHtml =
   '<tr><td><b>Tot.Pcs : ' + (t.totalpcs || 0) + '</b></td><td class="r"><b>' + fmtWt(t.totalGrossWeight) + '</b></td><td class="r"></td><td class="r"><b>' + fmt(t.grossAmount) + '</b></td></tr>' +
   '<tr><td colspan="4"><hr style="border:none;border-top:1px dashed #000;margin:3px 0"></td></tr>';
 
-if (t.offerDiscount > 0) {
+// Offer name/discount line is only shown when the OFFERPRINTGST soft
+// control is 'Y' (STRGSTPRINT in the legacy VB reference). When it's 'N'
+// (or unset), the offer line — including the offer name — is suppressed
+// entirely; the discount is still applied silently to baseAmount/totals.
+if (t.offerDiscount > 0 && P.offerPrintGst === 'Y') {
   var offerLabel = esc(t.offerName || 'Offer') + '(' + fmtWt(P.offerNetwt || 0) + '*' + fmt(P.boardRate || 0) + ')';
-  if (P.offerPrintGst === 'Y') {
-    var offerExclGst = Math.round(t.offerDiscount / 103 * 100);
-    var offerGstTot  = t.offerDiscount - offerExclGst;
-    var offerGstEach = offerGstTot / 2;
-    totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(offerExclGst) + '</span></td></tr>';
-    totHtml += '<tr><td colspan="3"><span>CGST (1.5%)</span></td><td class="r"><span>' + offerGstEach.toFixed(2) + '</span></td></tr>';
-    totHtml += '<tr><td colspan="3"><span>SGST (1.5%)</span></td><td class="r"><span>' + offerGstEach.toFixed(2) + '</span></td></tr>';
+  if (t.offerExclGst != null) {
+    // offerExclGst / offerGstEach are pre-computed in JS-land by the shared
+    // splitInclusiveGst() helper (fixed 1.5%/1.5% GST rate) — not
+    // recalculated here, so the rate rule lives in exactly one place.
+    totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(t.offerExclGst) + '</span></td></tr>';
+    totHtml += '<tr><td colspan="3"><span>CGST (1.5%)</span></td><td class="r"><span>' + Number(t.offerGstEach || 0).toFixed(2) + '</span></td></tr>';
+    totHtml += '<tr><td colspan="3"><span>SGST (1.5%)</span></td><td class="r"><span>' + Number(t.offerGstEach || 0).toFixed(2) + '</span></td></tr>';
   } else {
     totHtml += '<tr><td colspan="3"><span>' + offerLabel + '</span></td><td class="r"><span>' + fmt(t.offerDiscount) + '</span></td></tr>';
   }

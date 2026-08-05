@@ -17,6 +17,9 @@ import {
   calcGST as calculateDiscountedGST,
   calcGrandTotal as calculateDiscountedGrandTotal,
   calcTotals,
+  generateTaxEntries,
+  calcOfferDiscount,
+  getOfferBoardRate,
 } from "../../shared/EstimationCalculations";
 
 export const useEstimation = (apiBaseUrl) => {
@@ -203,7 +206,7 @@ export const useEstimation = (apiBaseUrl) => {
 
       const newData = await Promise.all(data.map(async (d) => {
         const offer = await service.getOffer(TAGNO);
-        const discount = (offer.netwt || 0) * (offer.board_rate || 0);
+        const discount = calcOfferDiscount(offer);
         return {
           ...d,
           ITEMID: itemIdInt,
@@ -222,7 +225,7 @@ export const useEstimation = (apiBaseUrl) => {
           GSTAmount: d.GSTAmount || "0",
           GrandTotal: d.GrandTotal || "0",
           DISCOUNT: discount,
-          BOARD_RATE: offer.board_rate || 0,
+          BOARD_RATE: getOfferBoardRate(offer),
         };
       }));
 
@@ -351,9 +354,9 @@ export const useEstimation = (apiBaseUrl) => {
               parseFloat(tagDetails?.mcgram) ||
               0,
             mcharge: tagDetails?.mccharge || 0,
-            amount: parseFloat((calculateGrossAmount(item) - (parseFloat(item.DISCOUNT) || 0)).toFixed(2)) || 0,
+            amount: parseFloat(calcDiscountedGross(item).toFixed(2)) || 0,
             rate: parseFloat(item.RATE) || parseFloat(item.Rate) || 0,
-            boardrate: parseFloat(offerData?.board_rate) || parseFloat(item.BOARD_RATE) ||  0,
+            boardrate: getOfferBoardRate(offerData) || parseFloat(item.BOARD_RATE) || 0,
             costid: item.COSTID || costId,
             companyid: companyCode,
             empid: Number(item.EMP) || 0,
@@ -567,26 +570,7 @@ export const useEstimation = (apiBaseUrl) => {
           studded: null,
         };
 
-        const generateTaxEntries = (payload, sgst = 1.5, cgst = 1.5) => {
-          const amt = payload.amount;
-          return [
-            {
-              ...payload,
-              taxid: "SG",
-              taxper: sgst,
-              taxamount: parseFloat(((amt * sgst) / 100).toFixed(2)),
-              tsno: 1,
-            },
-            {
-              ...payload,
-              taxid: "CG",
-              taxper: cgst,
-              taxamount: parseFloat(((amt * cgst) / 100).toFixed(2)),
-              tsno: 2,
-            },
-          ];
-        };
-
+        // Fixed 1.5% CGST + 1.5% SGST — single source: shared/EstimationCalculations.
         const taxEntries = generateTaxEntries(basePayload);
 
         try {

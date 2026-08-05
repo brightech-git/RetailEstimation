@@ -5,6 +5,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FONTS, PRINTER_COMMANDS } from "../Utills/Themedata";
 import createApiInstance from "../../Api/axiosInstance";
 import ENDPOINTS from "../../Api/endpoints";
+import {
+  calcSavedTotals,
+  calcDisplayTotals,
+  calcItemDisplayShare,
+  splitInclusiveGst,
+  getOfferBoardRate,
+} from "../../shared/EstimationCalculations";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -242,34 +249,25 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
       silverRate = sample.silverrate || 0;
     }
 
-    // Calculate totals
-    const totalpcs = items.reduce((sum, i) => sum + (i.pcs || 0), 0);
-    const totalGrossWeight = items.reduce((sum, i) => sum + (i.grswt || 0), 0);
-    const baseAmount = items.reduce((sum, i) => sum + (i.amount || 0), 0);
-    const totalWastage = items.reduce((sum, i) => sum + (i.wastage || 0), 0);
-    const totalMcharge = items.reduce((sum, i) => sum + (i.mcharge || 0), 0);
-
-    // const { username, companyName, companyLogo, companyLogoUrl } =
-    //   useContext(LoginContext);
-
-    // Get GST % from items (use first item's tax rates)
-    let cgstPer = 1.5;
-    let sgstPer = 1.5;
-    if (items.length > 0 && items[0].taxes) {
-      items[0].taxes.forEach((tax) => {
-        const taxId = (tax.tax_id || "").toUpperCase();
-        if (taxId === "CG") cgstPer = tax.tax_perc || 1.5;
-        else if (taxId === "SG") sgstPer = tax.tax_perc || 1.5;
-      });
-    }
-
-    const offerDiscount = (offer.netwt || 0) * (offer.board_rate || 0);
-    const grossAmount = baseAmount + offerDiscount;  // original before discount
-    const taxableAmount = baseAmount;                // already discounted
-    const cgstAmount = parseFloat(((taxableAmount * cgstPer) / 100).toFixed(2));
-    const sgstAmount = parseFloat(((taxableAmount * sgstPer) / 100).toFixed(2));
-    const totalTaxAmount = cgstAmount + sgstAmount;
-    const grandTotal = parseFloat((taxableAmount + totalTaxAmount).toFixed(2));
+    // Calculate totals — single source of truth (shared/EstimationCalculations).
+    // GST is always fixed at 1.5% CGST + 1.5% SGST; any per-item tax record
+    // (item.taxes) is not consulted, matching what is actually persisted.
+    const {
+      totalpcs,
+      totalGrossWeight,
+      baseAmount,
+      totalWastage,
+      totalMcharge,
+      offerDiscount,
+      grossAmount,
+      cgstAmount,
+      sgstAmount,
+      totalTaxAmount,
+      grandTotal,
+      discountCgstAmount,
+      discountSgstAmount,
+      discountTaxAmount,
+    } = calcSavedTotals(items, offer);
 
     console.log("💰 Totals:", {
       totalpcs,
@@ -281,6 +279,10 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
       sgstAmount,
       totalTaxAmount,
       grandTotal,
+      offerDiscount,
+      discountCgstAmount,
+      discountSgstAmount,
+      discountTaxAmount,
     });
 
     // Fetch stones for each item
@@ -305,9 +307,9 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
     const itemsWithStones = await Promise.all(
       items.map(async (item) => {
         const stones = await fetchStonesForItem(item.itemid, item.tagno);
-        const itemShare = baseAmount > 0 ? (item.amount / baseAmount) * offerDiscount : offerDiscount / items.length;
+        const displayAmount = calcItemDisplayShare(item, baseAmount, offerDiscount, items.length);
         const itemRate = parseFloat(item.rate) || goldRate;
-        return { ...item, stones, displayAmount: item.amount + itemShare, rate: itemRate };
+        return { ...item, stones, displayAmount, rate: itemRate };
       })
     );
 
@@ -327,6 +329,9 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
       sgstAmount,
       totalTaxAmount,
       grandTotal,
+      discountCgstAmount,
+      discountSgstAmount,
+      discountTaxAmount,
       offer,
       offerName,
       itemsWithStones,
@@ -516,7 +521,8 @@ export const printEstimationToPrinter = async (
   slipData,
   currentPrinter = null,
   employeeId = null,
-  apiBaseUrl = null
+  apiBaseUrl = null,
+  offerPrintGst = 'N'
 ) => {
   try {
     console.log("🖨️ Starting print process...");
@@ -590,13 +596,18 @@ export const printEstimationToPrinter = async (
       grossAmount,
       baseAmount,
       offerDiscount,
-      cgstAmount,
-      sgstAmount,
-      grandTotal,
       offer,
       offerName,
       itemsWithStones,
+      discountTaxAmount,
     } = slipData;
+
+    // When OFFERPRINTGST is 'N', GST + grand total are calculated on the
+    // full pre-discount gross amount instead of the discounted amount.
+    const { cgstAmount, sgstAmount, grandTotal } = calcDisplayTotals(
+      { baseAmount, grossAmount },
+      offerPrintGst
+    );
 
     return new Promise((resolve, reject) => {
       console.log("🔄 Creating TCP connection for printing...");
@@ -605,8 +616,10 @@ export const printEstimationToPrinter = async (
         console.log("✅ Connected to printer:", activePrinter.ip_address);
 
         const offerWeight = offer.netwt || 0;
-        const offerBoardRate = offer.board_rate || 0;
-        const offerDiscount = offerWeight * offerBoardRate;
+        const offerBoardRate = getOfferBoardRate(offer);
+        // offerDiscount is already computed correctly in fetchEstimationData
+        // (via calcSavedTotals) and destructured from slipData above — do
+        // not recompute it here, that previously shadowed the correct value.
         const trandate =
           sample?.trandate && sample.trandate.includes("-")
             ? sample.trandate
@@ -711,9 +724,9 @@ export const printEstimationToPrinter = async (
           FONTS.BOLD_ON
         );
 
-        if (offerDiscount > 0) {
-          const offerWeight = offer.netwt || 0;
-          const offerBoardRate = offer.board_rate || 0;
+        // Offer name/line only shown when OFFERPRINTGST soft control is 'Y' —
+        // same rule as the image receipt path (buildReceiptHtml.js).
+        if (offerDiscount > 0 && offerPrintGst === "Y") {
           printContent += formatStyledLine(
             `${offerName}`,
             `(${offerWeight.toFixed(3)}*${offerBoardRate})  ${offerDiscount.toFixed(0)}`
@@ -733,6 +746,15 @@ export const printEstimationToPrinter = async (
           "SGST (1.5%)",
           `${sgstAmount.toFixed(2)}`
         );
+
+        // Discount GST — only when the offer block above wasn't already
+        // shown (avoids showing the discount's GST twice).
+        if (offerDiscount > 0 && offerPrintGst !== "Y" && discountTaxAmount != null) {
+          printContent += formatStyledLine(
+            "Discount GST",
+            `${discountTaxAmount.toFixed(2)}`
+          );
+        }
 
         printContent += "-----------------------------------------\n";
 
@@ -857,18 +879,33 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
     grossAmount,
     baseAmount,
     offerDiscount,
-    cgstAmount,
-    sgstAmount,
-    grandTotal,
     offerName,
     itemsWithStones,
     offer,
+    discountCgstAmount,
+    discountSgstAmount,
+    discountTaxAmount,
   } = slipData;
 
   const trandate =
     sample?.trandate && sample.trandate.includes("-")
       ? sample.trandate
       : formatDate(sample?.trandate);
+
+  // Pre-compute the GST-inclusive split of the offer discount here (in
+  // JS-land, using the shared fixed-rate helper) rather than inline inside
+  // the WebView HTML/script string — keeps the 1.5%/1.5% GST rule defined
+  // in exactly one place instead of duplicated as a magic-number formula.
+  const offerSplit =
+    offerPrintGst === "Y" && offerDiscount > 0
+      ? splitInclusiveGst(offerDiscount)
+      : null;
+
+  // When OFFERPRINTGST is 'N' (offer line hidden), GST + grand total are
+  // calculated on the full pre-discount gross amount instead of the
+  // discounted amount — the discount isn't applied at all in that case,
+  // not just hidden from the receipt.
+  const displayTotals = calcDisplayTotals({ baseAmount, grossAmount }, offerPrintGst);
 
   return {
     companyName: companyInfo.companyName || "",
@@ -879,7 +916,7 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
     billDate: trandate,
     billTime: getCurrentTime(),
     username: companyInfo.username || "",
-    boardRate: offer?.board_rate || 0,
+    boardRate: getOfferBoardRate(offer),
     offerNetwt: offer?.netwt || 0,
     offerPrintGst,
     goldRate,
@@ -908,9 +945,16 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       baseAmount,
       offerDiscount,
       offerName,
-      cgstAmount,
-      sgstAmount,
-      grandTotal,
+      cgstAmount: displayTotals.cgstAmount,
+      sgstAmount: displayTotals.sgstAmount,
+      grandTotal: displayTotals.grandTotal,
+      offerExclGst: offerSplit?.exclGst ?? null,
+      offerGstEach: offerSplit?.gstEach ?? null,
+      // GST on just the discount amount (fixed 1.5%/1.5%), exposed as its
+      // own data — not rendered as a receipt line by default.
+      discountCgstAmount,
+      discountSgstAmount,
+      discountTaxAmount,
     },
   };
 };

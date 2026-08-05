@@ -217,35 +217,8 @@ export const formatDateToMidnightSql = (dateInput = new Date()) => {
   return `${year}-${month}-${day} 00:00:00`;
 };
 
-export const parseValue = (value) => {
-  if (!value || value === "null" || value === "undefined") return 0;
-  const parsed = parseFloat(String(value).replace(/"/g, "").trim());
-  return isNaN(parsed) ? 0 : parsed;
-};
-
-export const calculateGrossAmount = (row) => {
-  const grossFromApi = parseValue(row.GrossAmount);
-  if (grossFromApi > 0) return grossFromApi;
-  const netWt = parseValue(row.NETWT);
-  const wastage = parseValue(row.Wastage);
-  const rate = parseValue(row.Rate);
-  const mc = parseValue(row.MC);
-  const stoneAmt = parseValue(row.StoneAmount);
-  const miscAmt = parseValue(row.MiscAmount);
-  return (netWt + wastage) * rate + mc + stoneAmt + miscAmt;
-};
-
-export const calculateGST = (row) => {
-  const gstFromApi = parseValue(row.GSTAmount);
-  if (gstFromApi > 0) return gstFromApi;
-  const gross = calculateGrossAmount(row);
-  let gstPer = parseFloat(row.GSTPer);
-  if (isNaN(gstPer)) gstPer = 0;
-  return (gross * gstPer) / 100;
-};
-
-export const calculateGrandTotal = (row) => {
-  const grandTotalFromApi = parseValue(row.GrandTotal);
-  if (grandTotalFromApi > 0) return grandTotalFromApi;
-  return calculateGrossAmount(row) + calculateGST(row);
-};
+// NOTE: gross/GST/grand-total calculations used to be duplicated here with
+// a stale, drifted formula (undiscounted gross as GST taxable base, 0%
+// default GST rate). They were unused anywhere in the app (confirmed) and
+// have been removed — the single source of truth now lives in
+// Src/shared/EstimationCalculations.js (calcGross/calcGST/calcGrandTotal).

@@ -25,6 +25,7 @@ import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard";
 import createApiInstance from "../../../Api/axiosInstance";
 import ENDPOINTS from "../../../Api/endpoints";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { calcOfferDiscount, getOfferBoardRate } from "../../../shared/EstimationCalculations";
 
 const HomeScreen1 = () => {
   const { theme } = useTheme();
@@ -161,8 +162,8 @@ const fetchApiData = async () => {
     try {
       const offerRes = await api.post(ENDPOINTS.OFFER, null, { params: { tagno: tagNo } });
       const offer = offerRes.data || {};
-      boardRate = offer.board_rate || 0;
-      discount = (offer.netwt || 0) * boardRate;
+      boardRate = getOfferBoardRate(offer);
+      discount = calcOfferDiscount(offer);
     } catch (err) {
       console.warn("Offer fetch failed:", err);
     }
