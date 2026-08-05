@@ -54,12 +54,31 @@ export const calcGST = (row) => {
 // Grand total = discounted gross + GST
 export const calcGrandTotal = (row) => calcDiscountedGross(row) + calcGST(row);
 
-// Batch totals from an array of pre-save rows
-export const calcTotals = (rows) => {
+// Batch totals from an array of pre-save rows, gated by the same
+// OFFERPRINTGST soft control the receipt uses (calcDisplayTotals). GST is
+// always computed on the discounted/net amount either way; the only thing
+// that changes is what the tax gets added to for the on-screen "Gross
+// Amount"/"Grand Total" figures:
+//   - 'Y' (default — matches historical behavior): totals use the
+//     discounted (net) amount.
+//   - 'N': totals use the full, pre-discount gross amount instead.
+export const calcTotals = (rows, offerPrintGst = "Y") => {
+  const applyOffer = offerPrintGst === "Y";
   const totalDiscount = rows.reduce((acc, r) => acc + (parseFloat(r.DISCOUNT) || 0), 0);
-  const totalGross = rows.reduce((acc, r) => acc + calcDiscountedGross(r), 0);
+  const totalNetAmount = rows.reduce((acc, r) => acc + calcDiscountedGross(r), 0);
   const totalGST = rows.reduce((acc, r) => acc + calcGST(r), 0);
-  return { totalDiscount, totalGross, totalGST, totalGrand: totalGross + totalGST };
+  const totalRawGross = rows.reduce((acc, r) => acc + calcGross(r), 0);
+  const totalGross = applyOffer ? totalNetAmount : totalRawGross;
+  let totalGrand = totalGross + totalGST;
+
+  // When 'N' (offer hidden), subtract the discount's own GST back out of
+  // the grand total, same rule as calcDisplayTotals for the receipt.
+  if (!applyOffer && totalDiscount > 0) {
+    const discountTaxAmount = calcTaxSplit(totalDiscount).totalTaxAmount;
+    totalGrand = parseFloat((totalGrand - discountTaxAmount).toFixed(2));
+  }
+
+  return { totalDiscount, totalGross, totalGST, totalGrand };
 };
 
 // ─── Offer discount ─────────────────────────────────────────────────────
@@ -122,7 +141,7 @@ export const calcSavedTotals = (items, offer) => {
     sgstAmount: discountSgstAmount,
     totalTaxAmount: discountTaxAmount,
   } = calcTaxSplit(offerDiscount);
-console.log("discountCgstAmount", discountCgstAmount, "discountSgstAmount", discountSgstAmount, "discountTaxAmount", discountTaxAmount);
+
   return {
     totalpcs,
     totalGrossWeight,
@@ -145,31 +164,25 @@ console.log("discountCgstAmount", discountCgstAmount, "discountSgstAmount", disc
 // Display/print-time GST + grand total, gated by the OFFERPRINTGST soft
 // control. When the control is 'Y', GST is charged on the discounted
 // (offer-applied) amount, same as calcSavedTotals. When it's 'N' (or
-// unset) — i.e. the offer line is hidden on the receipt — GST is instead
-// calculated on the FULL, pre-discount gross amount, and the grand total
-// is gross + GST on that gross amount (the discount is not applied at
-// all in that case, not just hidden from view).
+// unset) — i.e. the offer line is hidden on the receipt — CGST/SGST are
+// calculated on the FULL, pre-discount gross amount, but the discount's
+// own GST portion is then subtracted back out of the grand total (the
+// CGST/SGST figures shown are NOT reduced — only the final total is).
 export const calcDisplayTotals = (totals, offerPrintGst) => {
   const applyOffer = offerPrintGst === "Y";
   const taxableAmount = applyOffer ? totals.baseAmount : totals.grossAmount;
   const { cgstAmount, sgstAmount, totalTaxAmount } = calcTaxSplit(taxableAmount);
   let grandTotal = parseFloat((taxableAmount + totalTaxAmount).toFixed(2));
 
-  // When the offer line is hidden (OFFERPRINTGST='N'), the discount's own
-  // GST portion is subtracted back out of the final grand total on request
-  // (shown separately as the "Discount GST" line on the receipt).
-  let discountTaxAmount = null;
   if (!applyOffer) {
     const offerDiscount = (totals.grossAmount || 0) - (totals.baseAmount || 0);
     if (offerDiscount > 0) {
-      discountTaxAmount = calcTaxSplit(offerDiscount).totalTaxAmount;
+      const discountTaxAmount = calcTaxSplit(offerDiscount).totalTaxAmount;
       grandTotal = parseFloat((grandTotal - discountTaxAmount).toFixed(2));
     }
   }
 
-  console.log("calcDisplayTotals", { taxableAmount, cgstAmount, sgstAmount, totalTaxAmount, grandTotal, discountTaxAmount });
-
-  return { taxableAmount, cgstAmount, sgstAmount, totalTaxAmount, grandTotal, discountTaxAmount };
+  return { taxableAmount, cgstAmount, sgstAmount, totalTaxAmount, grandTotal };
 };
 
 // Per-item pro-rated share of the offer discount, for display purposes only

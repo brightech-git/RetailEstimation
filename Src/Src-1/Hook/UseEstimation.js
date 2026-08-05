@@ -8,6 +8,7 @@ import {
   formatDateToSqlDateTime,
   formatDateToMidnightSql,
 } from "../Service/EstimationService";
+import { SoftControlService } from "../Service/SoftControlService";
 import createApiInstance from "../../Api/axiosInstance";
 import ENDPOINTS from "../../Api/endpoints";
 import {
@@ -39,6 +40,7 @@ export const useEstimation = (apiBaseUrl) => {
   const [showEmpList, setShowEmpList] = useState(false);
   const [scanningField, setScanningField] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [offerPrintGst, setOfferPrintGst] = useState("N");
 
   const {
     username,
@@ -113,6 +115,18 @@ export const useEstimation = (apiBaseUrl) => {
       setService(new EstimationService(apiBaseUrl));
     }
   }, [apiBaseUrl]);
+
+  // Fetch the OFFERPRINTGST soft control so the on-screen running totals
+  // (Gross Amount / Grand Total) follow the same rule as the printed
+  // receipt — same control, same source of truth (calcTotals/calcDisplayTotals
+  // in shared/EstimationCalculations.js).
+  useEffect(() => {
+    if (!apiBaseUrl || !selectedCostId) return;
+    new SoftControlService(apiBaseUrl)
+      .getControlValue(selectedCostId, "OFFERPRINTGST")
+      .then((val) => setOfferPrintGst(val || "N"))
+      .catch(() => setOfferPrintGst("N"));
+  }, [apiBaseUrl, selectedCostId]);
 
   const handleScanned = (field, data) => {
     if (data.includes("-")) {
@@ -660,7 +674,7 @@ export const useEstimation = (apiBaseUrl) => {
     }
   };
 
-  const { totalDiscount, totalGross, totalGST, totalGrand } = calcTotals(tableData);
+  const { totalDiscount, totalGross, totalGST, totalGrand } = calcTotals(tableData, offerPrintGst);
 
   return {
     // State
@@ -679,6 +693,7 @@ export const useEstimation = (apiBaseUrl) => {
     empSuggestions,
     showEmpList,
     lastEmpName,
+    offerPrintGst,
 
     // Refs
     itemIdInputRef,

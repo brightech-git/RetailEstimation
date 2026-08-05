@@ -747,15 +747,6 @@ export const printEstimationToPrinter = async (
           `${sgstAmount.toFixed(2)}`
         );
 
-        // Discount GST — only when the offer block above wasn't already
-        // shown (avoids showing the discount's GST twice).
-        if (offerDiscount > 0 && offerPrintGst !== "Y" && discountTaxAmount != null) {
-          printContent += formatStyledLine(
-            "Discount GST",
-            `${discountTaxAmount.toFixed(2)}`
-          );
-        }
-
         printContent += "-----------------------------------------\n";
 
         // Grand Total
