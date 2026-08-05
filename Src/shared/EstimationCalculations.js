@@ -122,7 +122,7 @@ export const calcSavedTotals = (items, offer) => {
     sgstAmount: discountSgstAmount,
     totalTaxAmount: discountTaxAmount,
   } = calcTaxSplit(offerDiscount);
-
+console.log("discountCgstAmount", discountCgstAmount, "discountSgstAmount", discountSgstAmount, "discountTaxAmount", discountTaxAmount);
   return {
     totalpcs,
     totalGrossWeight,
@@ -153,8 +153,23 @@ export const calcDisplayTotals = (totals, offerPrintGst) => {
   const applyOffer = offerPrintGst === "Y";
   const taxableAmount = applyOffer ? totals.baseAmount : totals.grossAmount;
   const { cgstAmount, sgstAmount, totalTaxAmount } = calcTaxSplit(taxableAmount);
-  const grandTotal = parseFloat((taxableAmount + totalTaxAmount).toFixed(2));
-  return { taxableAmount, cgstAmount, sgstAmount, totalTaxAmount, grandTotal };
+  let grandTotal = parseFloat((taxableAmount + totalTaxAmount).toFixed(2));
+
+  // When the offer line is hidden (OFFERPRINTGST='N'), the discount's own
+  // GST portion is subtracted back out of the final grand total on request
+  // (shown separately as the "Discount GST" line on the receipt).
+  let discountTaxAmount = null;
+  if (!applyOffer) {
+    const offerDiscount = (totals.grossAmount || 0) - (totals.baseAmount || 0);
+    if (offerDiscount > 0) {
+      discountTaxAmount = calcTaxSplit(offerDiscount).totalTaxAmount;
+      grandTotal = parseFloat((grandTotal - discountTaxAmount).toFixed(2));
+    }
+  }
+
+  console.log("calcDisplayTotals", { taxableAmount, cgstAmount, sgstAmount, totalTaxAmount, grandTotal, discountTaxAmount });
+
+  return { taxableAmount, cgstAmount, sgstAmount, totalTaxAmount, grandTotal, discountTaxAmount };
 };
 
 // Per-item pro-rated share of the offer discount, for display purposes only
