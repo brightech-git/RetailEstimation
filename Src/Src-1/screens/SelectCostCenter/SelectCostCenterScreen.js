@@ -20,9 +20,15 @@ import { StyleSheet } from "react-native";
 
 const { width } = Dimensions.get("window");
 
+// Companies with this COMPANYID share one login but operate as several
+// separate companies underneath - instead of picking a cost centre, the
+// user picks which company (COMPANYID) to work as.
+const MULTI_COMPANY_ID = "15";
+
 const SelectCostCenterScreen = ({ navigation }) => {
   const {
     companyName,
+    companyId,
     companyUrl,
     costOptions,
     selectedCostId,
@@ -30,12 +36,19 @@ const SelectCostCenterScreen = ({ navigation }) => {
     costLoading,
     fetchCostOptions,
     hasCostCentres,
+    companyIdOptions,
+    companyIdLoading,
+    fetchCompanyIdOptions,
+    selectCompanyId,
     logout,
   } = useContext(LoginContext);
   const { theme, isDarkMode } = useTheme();
   const styles = getStyles(theme);
 
+  const isCompanySelectMode = String(companyId) === MULTI_COMPANY_ID;
+
   const [pickedCostId, setPickedCostId] = useState(selectedCostId || "");
+  const [pickedCompanyId, setPickedCompanyId] = useState("");
   const [continuing, setContinuing] = useState(false);
   // Tracks whether we've completed at least one fetch, so the "no cost
   // centres" empty state (with its Continue-without-one option) only
@@ -43,24 +56,45 @@ const SelectCostCenterScreen = ({ navigation }) => {
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    if (companyUrl) {
+    if (!companyUrl) return;
+
+    if (isCompanySelectMode) {
+      fetchCompanyIdOptions(companyUrl).then(() => {
+        setHasFetched(true);
+      });
+    } else {
       fetchCostOptions(companyUrl).then(() => {
         setHasFetched(true);
       });
     }
-  }, [companyUrl]);
+  }, [companyUrl, isCompanySelectMode]);
 
   // Auto-navigate when hasCostCentres becomes false (no cost centres configured)
   useEffect(() => {
-    if (hasCostCentres === false) {
+    if (!isCompanySelectMode && hasCostCentres === false) {
       navigation.navigate("Home");
     }
-  }, [hasCostCentres]);
+  }, [hasCostCentres, isCompanySelectMode]);
 
   // Just highlight the tapped item - selection is only committed when
   // the user presses Continue.
   const handlePick = (item) => {
     setPickedCostId(item.COSTID);
+  };
+
+  const handlePickCompanyId = (id) => {
+    setPickedCompanyId(id);
+  };
+
+  const proceedWithCompanyId = async (companyIdToUse) => {
+    if (continuing || !companyIdToUse) return;
+    setContinuing(true);
+    try {
+      await selectCompanyId(companyIdToUse);
+      navigation.navigate("Home");
+    } finally {
+      setContinuing(false);
+    }
   };
 
   const proceedToHome = async (costIdToUse) => {
@@ -105,13 +139,63 @@ const SelectCostCenterScreen = ({ navigation }) => {
         style={styles.gradient}
       >
         <View style={styles.container}>
-          <Text style={styles.title}>Select Cost Centre</Text>
+          <Text style={styles.title}>
+            {isCompanySelectMode ? "Select Company Id" : "Select Cost Centre"}
+          </Text>
           {companyName ? (
             <Text style={styles.subtitle}>{companyName}</Text>
           ) : null}
 
           <View style={styles.card}>
-            {costLoading || !hasFetched ? (
+            {isCompanySelectMode ? (
+              companyIdLoading || !hasFetched ? (
+                <ActivityIndicator
+                  size="large"
+                  color={theme.COLORS.primary}
+                  style={{ margin: moderateScale(24) }}
+                />
+              ) : companyIdOptions.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    No company IDs were found for this account.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={() => {
+                      setHasFetched(false);
+                      fetchCompanyIdOptions(companyUrl).finally(() =>
+                        setHasFetched(true)
+                      );
+                    }}
+                  >
+                    <Text style={styles.retryText}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <FlatList
+                  data={companyIdOptions}
+                  keyExtractor={(item) => item}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.item,
+                        pickedCompanyId === item && styles.itemSelected,
+                      ]}
+                      onPress={() => handlePickCompanyId(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.itemText,
+                          pickedCompanyId === item && styles.itemTextSelected,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              )
+            ) : costLoading || !hasFetched ? (
               <ActivityIndicator
                 size="large"
                 color={theme.COLORS.primary}
@@ -178,26 +262,47 @@ const SelectCostCenterScreen = ({ navigation }) => {
             )}
           </View>
 
-          {costOptions.length > 0 && (
-            <TouchableOpacity
-              style={[
-                styles.continueButton,
-                (!pickedCostId || continuing) &&
-                  styles.continueButtonDisabled,
-              ]}
-              onPress={handleContinue}
-              disabled={!pickedCostId || continuing}
-            >
-              {continuing ? (
-                <ActivityIndicator
-                  color={theme.COLORS.buttonText}
-                  size="small"
-                />
-              ) : (
-                <Text style={styles.continueButtonText}>Continue</Text>
+          {isCompanySelectMode
+            ? companyIdOptions.length > 0 && (
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    (!pickedCompanyId || continuing) &&
+                      styles.continueButtonDisabled,
+                  ]}
+                  onPress={() => proceedWithCompanyId(pickedCompanyId)}
+                  disabled={!pickedCompanyId || continuing}
+                >
+                  {continuing ? (
+                    <ActivityIndicator
+                      color={theme.COLORS.buttonText}
+                      size="small"
+                    />
+                  ) : (
+                    <Text style={styles.continueButtonText}>Continue</Text>
+                  )}
+                </TouchableOpacity>
+              )
+            : costOptions.length > 0 && (
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    (!pickedCostId || continuing) &&
+                      styles.continueButtonDisabled,
+                  ]}
+                  onPress={handleContinue}
+                  disabled={!pickedCostId || continuing}
+                >
+                  {continuing ? (
+                    <ActivityIndicator
+                      color={theme.COLORS.buttonText}
+                      size="small"
+                    />
+                  ) : (
+                    <Text style={styles.continueButtonText}>Continue</Text>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          )}
 
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
             <Text style={styles.logoutText}>Log out</Text>

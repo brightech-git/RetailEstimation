@@ -1,5 +1,5 @@
 // AppContainer.js
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import { StyleSheet, ActivityIndicator, View } from "react-native";
 import {
   NavigationContainer,
@@ -8,9 +8,9 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dimensions } from "react-native";
+import AsynchStorage from "@react-native-async-storage/async-storage";
 
 // Screens
 import LoginScreen from "../Src-1/screens/Login/LoginScreen";
@@ -34,15 +34,13 @@ import { useTheme } from "../Context/ThemeContext";
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 const InnerStack = createNativeStackNavigator();
-// Bumped to v2: the navigator tree changed from a plain stack to a
-// stack-wrapping-a-drawer, so any state persisted under the old key would
-// have an incompatible shape and could fail to restore.
-const PERSISTENCE_KEY = "NAVIGATION_STATE_V3";
 const { width } = Dimensions.get("window");
 const isTablet = width >= 768;
 
 // Inner stack handles proper back navigation between screens
 function AppScreensStack() {
+
+  // AsynchStorage.clear(); // Clear AsyncStorage on app start for testing purposes (remove in production)
   const { hasCostCentres } = useContext(LoginContext);
   const initialRoute = hasCostCentres === false ? "Home" : "SelectCostCenter";
   return (
@@ -103,37 +101,7 @@ function AppStack() {
     },
   };
 
-  const [isReady, setIsReady] = useState(false);
-  const [initialState, setInitialState] = useState();
-
-  // 🔥 Restore navigation state
-  useEffect(() => {
-    const restoreState = async () => {
-      try {
-        const savedState = await AsyncStorage.getItem(PERSISTENCE_KEY);
-        const state = savedState ? JSON.parse(savedState) : undefined;
-
-        if (state !== undefined && username) {
-          setInitialState(state);
-        }
-      } catch (e) {
-        console.log("Failed to restore navigation state", e);
-      } finally {
-        setIsReady(true);
-      }
-    };
-
-    restoreState();
-  }, [username]);
-
-  // 🔥 Clear navigation state when user logs out
-  useEffect(() => {
-    if (!username) {
-      AsyncStorage.removeItem(PERSISTENCE_KEY);
-    }
-  }, [username]);
-
-  if (loading || !isReady) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6a1b9a" />
@@ -142,13 +110,7 @@ function AppStack() {
   }
 
   return (
-    <NavigationContainer
-      initialState={initialState}
-      onStateChange={(state) =>
-        AsyncStorage.setItem(PERSISTENCE_KEY, JSON.stringify(state))
-      }
-      theme={navTheme}
-    >
+    <NavigationContainer theme={navTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!username ? (
           // 🔐 If not logged in
@@ -165,11 +127,11 @@ function AppStack() {
 export default function AppContainer() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <LoginProvider>
-        <ToastProvider>
+      <ToastProvider>
+        <LoginProvider>
           <AppStack />
-        </ToastProvider>
-      </LoginProvider>
+        </LoginProvider>
+      </ToastProvider>
     </SafeAreaView>
   );
 }

@@ -3,10 +3,46 @@ import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { initCostCache, setCostCache } from "../Api/axiosInstance";
+import { useToast } from "../Src-1/Context/ToastContext";
 
 export const LoginContext = createContext();
 
-export const LoginProvider = ({ children, showToast }) => {
+// Classifies an axios error so callers can tell a connectivity problem
+// (no response reached the device) apart from the backend actually
+// responding with a failure (4xx/5xx).
+const getErrorInfo = (error) => {
+  if (!error.response) {
+    // Request never got a response: no internet, DNS failure, timeout,
+    // or the server is unreachable.
+    return {
+      type: "network",
+      message: "Network error. Please check your internet connection.",
+    };
+  }
+
+  const status = error.response.status;
+
+  if (status >= 500) {
+    return {
+      type: "server",
+      message: "Server error. Please try again later.",
+    };
+  }
+
+  return {
+    type: "client",
+    message:
+      error.response?.data?.message ||
+      "Request failed. Please try again.",
+  };
+};
+
+export const LoginProvider = ({ children, showToast: showToastProp }) => {
+  // Prefer the ToastContext hook so this works regardless of provider
+  // nesting order; fall back to an explicitly passed prop if given.
+  const { showToast: showToastFromContext } = useToast();
+  const showToast = showToastProp || showToastFromContext;
+
   // --- existing states ---
   const [username, setUsername] = useState("");
   const [userId, setUserId] = useState(null);
@@ -27,6 +63,10 @@ export const LoginProvider = ({ children, showToast }) => {
   const [selectedCompanyId, setSelectedCompanyId] = useState(""); // COMPANYID from selected cost centre
   const [hasCostCentres, setHasCostCentres] = useState(null); // null=unknown, true/false after fetch
   const [costLoading, setCostLoading] = useState(false);   // loading indicator for fetching options
+
+  // --- new states for multi-company selection (companies with COMPANYID 18) ---
+  const [companyIdOptions, setCompanyIdOptions] = useState([]); // list of company_id strings
+  const [companyIdLoading, setCompanyIdLoading] = useState(false);
 
   // --- login function (unchanged, cost ID is NOT sent here) ---
   const login = async (username, password) => {
@@ -68,8 +108,13 @@ export const LoginProvider = ({ children, showToast }) => {
         return false;
       }
     } catch (error) {
-      console.error("Login error:", error);
-      showToast?.("Login failed. Please try again.", "error", 3000);
+      const { type, message } = getErrorInfo(error);
+      console.error(`❌ Login error [${type}]:`, {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      showToast?.(message, "error", 3000);
       return false;
     } finally {
       setLoading(false);
@@ -134,18 +179,114 @@ export const LoginProvider = ({ children, showToast }) => {
         return false;
       }
     } catch (error) {
-      console.error("❌ Fetch cost options error:", {
+      const { type, message } = getErrorInfo(error);
+      console.error(`❌ Fetch cost options error [${type}]:`, {
         url,
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
       });
-      showToast?.("Could not fetch cost options", "error", 3000);
+      showToast?.(message, "error", 3000);
       return false;
     } finally {
       setCostLoading(false);
     }
   };
+
+  // --- fetch the list of company IDs for companies that operate under a
+  // shared parent (COMPANYID "18"), instead of the usual cost-centre list ---
+  const fetchCompanyIdOptions = async (baseUrlOverride) => {
+    const baseUrl = baseUrlOverride || companyUrl;
+
+    if (!baseUrl) {
+      console.warn("fetchCompanyIdOptions: no company base URL available yet");
+      showToast?.("Please login again to load company options", "error", 3000);
+      return false;
+    }
+
+    const url = `${baseUrl}/company/companyIds`;
+
+    try {
+      setCompanyIdLoading(true);
+      console.log("📡 [GET] Company IDs request:", url);
+
+      const response = await axios.get(url, { timeout: 10000 });
+
+      console.log("✅ Company IDs response status:", response.status);
+      console.log("📦 Company IDs response data:", response.data);
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+  const ids = [
+    ...new Set(
+      response.data
+        .map((o) => o.company_id?.trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  setCompanyIdOptions(ids);
+
+  console.log("📋 Unique Company IDs:", ids);
+
+  return true;
+}
+       else {
+        console.warn(
+          "⚠️ Company IDs response was not a 200 + array:",
+          response.status,
+          response.data
+        );
+        showToast?.("Failed to load company options", "error", 3000);
+        return false;
+      }
+    } catch (error) {
+      const { type, message } = getErrorInfo(error);
+      console.error(`❌ Fetch company id options error [${type}]:`, {
+        url,
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      showToast?.(message, "error", 3000);
+      return false;
+    } finally {
+      setCompanyIdLoading(false);
+    }
+  };
+
+  // --- select one of the fetched company IDs and persist it (used in place
+  // of a cost centre for companies with COMPANYID "18") ---
+const selectCompanyId = async (companyIdValue) => {
+  setSelectedCompanyId(companyIdValue);
+
+  if (companyIdValue) {
+    // Store selected Company ID
+    await AsyncStorage.setItem(
+      "SELECTED_COMPANY_ID",
+      companyIdValue
+    );
+
+    // Company ID flow does not use Cost Centre
+    await AsyncStorage.removeItem("SELECTED_COST_ID");
+    setSelectedCostId("");
+
+    // Update cache
+    setCostCache(null, companyIdValue);
+
+    console.log("✅ Selected Company ID:", companyIdValue);
+
+    // If selected company is DJG
+    if (companyIdValue === "DJG") {
+      console.log("✅ DJG selected - compId header should be DJG");
+    }
+  } else {
+    await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
+    await AsyncStorage.removeItem("SELECTED_COST_ID");
+
+    setSelectedCostId("");
+    setCostCache(null, null);
+  }
+};
 
   // --- update selected cost ID + company ID and persist both ---
   const updateSelectedCostId = async (costId) => {
@@ -195,6 +336,8 @@ export const LoginProvider = ({ children, showToast }) => {
       setSelectedCompanyId("");
       setHasCostCentres(null);
       setCostLoading(false);
+      setCompanyIdOptions([]);
+      setCompanyIdLoading(false);
 
       showToast?.("Logged out successfully", "info", 2000);
     } catch (error) {
@@ -293,6 +436,12 @@ export const LoginProvider = ({ children, showToast }) => {
         setSelectedCostId: updateSelectedCostId,
         costLoading,
         fetchCostOptions,
+
+        // multi-company (COMPANYID "18") related
+        companyIdOptions,
+        companyIdLoading,
+        fetchCompanyIdOptions,
+        selectCompanyId,
       }}
     >
       {children}

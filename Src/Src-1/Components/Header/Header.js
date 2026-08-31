@@ -127,14 +127,21 @@ const MainHeader = () => {
                 <Text style={styles.label}>📅 Date :</Text>
                 <Text style={styles.value}>{date}</Text>
               </View>
-              <View style={styles.infoRow}>
+              <View
+                style={[
+                  styles.infoRow,
+                  !selectedCostId && { borderBottomWidth: 0 },
+                ]}
+              >
                 <Text style={styles.label}>👤 User :</Text>
                 <Text style={styles.value} numberOfLines={1}>{username || "N/A"}</Text>
               </View>
-              <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
-                <Text style={styles.label}>💰 Cost ID :</Text>
-                <Text style={styles.value}>{selectedCostId || "N/A"}</Text>
-              </View>
+              {selectedCostId ? (
+                <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.label}>💰 Cost ID :</Text>
+                  <Text style={styles.value}>{selectedCostId}</Text>
+                </View>
+              ) : null}
             </View>
 
             {/* Divider */}
