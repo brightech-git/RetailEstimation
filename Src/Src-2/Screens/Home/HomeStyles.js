@@ -153,7 +153,7 @@ export const createHomeStyles = (theme) => {
 
     // ===== NEW CARD STYLES (MATCHING THE IMAGE) =====
     itemsContainer: {
-      marginTop: moderateScale(20),
+      marginTop: moderateScale(0),
       marginBottom: moderateScale(20),
     },
 

@@ -72,7 +72,7 @@ export const createItemDetailsStyles = (theme) =>
       color: theme.COLORS.h2,
       fontWeight: "600",
       flex: 1,
-      textAlign: "left",
+      textAlign: "right",
     },
     cardGrandTotalRow: {
       marginTop: moderateScale(8),
