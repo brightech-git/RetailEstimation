@@ -178,7 +178,7 @@ export const createPrinterService = (baseUrl) => {
   };
 };
 
-export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
+export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId, purchaseEstBatchNo) => {
   console.log("🔍 fetchEstimationData called with:", { estBatchNo, apiBaseUrl });
 
   if (!estBatchNo) {
@@ -335,7 +335,18 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId) => {
       offer,
       offerName,
       itemsWithStones,
+      purchaseItems: [],
     };
+
+    // Try to fetch purchase items for this batch — if present, include them
+    try {
+      const purchBatchNo = purchaseEstBatchNo || estBatchNo;
+      const purchaseRes = await api.get(ENDPOINTS.RECEIPT_PRINT_DETAILS(purchBatchNo));
+      result.purchaseItems = Array.isArray(purchaseRes.data) ? purchaseRes.data : [];
+      console.log("✅ Purchase items for receipt:", result.purchaseItems.length);
+    } catch (err) {
+      console.warn("No purchase data for this batch:", err.message);
+    }
 
     console.log("✅ Successfully built slip data with first item GST");
     return result;
@@ -876,6 +887,7 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
     discountCgstAmount,
     discountSgstAmount,
     discountTaxAmount,
+    purchaseItems,
   } = slipData;
 
   const trandate =
@@ -947,6 +959,20 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       discountSgstAmount,
       discountTaxAmount,
     },
+    purchaseItems: (purchaseItems || []).map((p) => ({
+      itemname:  p.itemname  || "",
+      pcs:       p.pcs       || 0,
+      grswt:     p.grswt     || 0,
+      netwt:     p.netwt     || 0,
+      dustwt:    p.dustwt    || 0,
+      wastper:   p.wastper   || 0,
+      wastage:   p.wastage   || 0,
+      rate:      p.rate      || 0,
+      amount:    p.amount    || 0,
+      flag:      p.flag      || "",
+      purexch:   p.purexch   || "",
+      purity:    p.purity    || 0,
+    })),
   };
 };
 

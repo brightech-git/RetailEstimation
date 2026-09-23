@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -28,15 +28,29 @@ import { calcWastage, calcNetWt, calcAmount } from "../../Hook/UsePurchase";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { theme, isDarkMode } = useTheme();
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
   const { username, selectedCompanyId, selectedCostId } = useContext(LoginContext);
-  const { savedRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno } = usePurchaseContext();
+  const { savedRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo } = usePurchaseContext();
 
   React.useEffect(() => {
     if (API_BASE_URL) setApiBaseUrl(API_BASE_URL);
   }, [API_BASE_URL]);
+
+  // Clear all data only when coming from SelectCostCenter
+  useFocusEffect(
+    React.useCallback(() => {
+      if (route.params?.fromCostCenter) {
+        estimation.clearAll();
+        clearPurchaseAll();
+        navigation.setParams({ fromCostCenter: false });
+      }
+    }, [route.params?.fromCostCenter])
+  );
+
+
 
   // Check if EstimationPreviewComponent is a valid React element
   const estimationPreview = useEstimationPreview();
@@ -110,7 +124,7 @@ const HomeScreen = () => {
 
     try {
       console.log("📞 Calling printEstimationSlip...");
-      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL, estimation.lastEmpId);
+      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL, estimation.lastEmpId, purchaseEstBatchNo);
     } catch (err) {
       console.error("❌ Print error:", err);
       Alert.alert("Print Failed", err.message || "Unable to generate slip");
@@ -174,12 +188,12 @@ const HomeScreen = () => {
           >
             <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.purchaseNavButton}
             onPress={() => navigation.navigate("Purchase")}
           >
             <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           </View>
          
           {/* Totals Display */}

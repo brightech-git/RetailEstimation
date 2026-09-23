@@ -181,6 +181,10 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
 <br/>
   
 
+  <div id="purchase-section"></div>
+
+  <div id="combined-totals"></div>
+
   ${params.userId == 1 ? `
   <div class="blank-row"><b>NEW AMT :</b><span class="blank-line"></span></div>
   <div class="blank-row"><b>OLD AMT :</b><span class="blank-line"></span></div>
@@ -280,6 +284,65 @@ totHtml += '</tbody></table>';
 
 document.getElementById('totals').innerHTML = totHtml;
 document.getElementById('grand-total-val').textContent = fmt(t.grandTotal);
+
+// ── Purchase Estimate Section ──────────────────────────────────────────
+var purchItems = P.purchaseItems || [];
+if (purchItems.length > 0) {
+  var flagMap = { W: 'OWN MAKE', O: 'OTHERS' };
+  var exchMap = { E: 'EXCHANGE', P: 'CASH PURCH' };
+
+  var pHtml =
+    '<hr style="border:none;border-top:1px dashed #000;margin:4px 0">' +
+    '<div style="text-align:center;font-weight:700;padding:4px 0">PURCHASE ESTIMATE</div>' +
+   
+    '<table class="items-table"><colgroup>' +
+    '<col style="width:' + ${Math.round(F * 3.2)} + 'px"><col style="width:' + ${Math.round(F * 4.5)} + 'px">' +
+    '<col style="width:' + ${Math.round(F * 3.8)} + 'px"><col style="width:' + ${Math.round(F * 3.2)} + 'px">' +
+    '<col style="width:' + ${Math.round(F * 4.0)} + 'px">' +
+    '</colgroup>' +
+    '<thead>' +
+    '<tr><td colspan="5"><hr style="border:none;border-top:1px dashed #000;margin:2px 0"></td></tr>' +
+    '<tr><th>Descrip</th><th class="r">Pur/Wast</th><th class="r">Net.wt</th><th class="r">Rate</th><th class="r">Amount</th></tr>' +
+    '<tr><td colspan="5"><hr style="border:none;border-top:1px dashed #000;margin:2px 0"></td></tr>' +
+    '</thead><tbody>';
+
+  var totalPurchGrswt = 0, totalPurchNetwt = 0, totalPurchAmt = 0;
+  purchItems.forEach(function(p, idx) {
+    var ownership = flagMap[p.flag] || '';
+    var itemLabel = (p.itemname || '').toUpperCase() + (ownership ? ' - ' + ownership : '');
+    var wastStr = (p.wastper > 0 ? p.wastper + '%' : '') + (p.wastage > 0 ? ' ' + fmtWt(p.wastage) : '');
+    totalPurchGrswt += (p.grswt || 0);
+    totalPurchNetwt += (p.netwt || 0);
+    totalPurchAmt   += (p.amount || 0);
+    pHtml +=
+      '<tr class="item-name-row"><td colspan="5">' + (idx + 1) + ' ' + esc(itemLabel) + '</td></tr>' +
+      '<tr>' +
+        '<td>' + fmtWt(p.grswt) + '</td>' +
+        '<td class="r">' + esc(Number(p.purity || 0).toFixed(0)) + (p.wastper > 0 ? '-' + p.wastper + '%' : '') + '</td>' +
+        '<td class="r">' + fmtWt(p.netwt) + '</td>' +
+        '<td class="r">' + fmt(p.rate) + '</td>' +
+        '<td class="r">' + fmt(p.amount) + '</td>' +
+      '</tr>';
+  });
+  pHtml += '</tbody></table>';
+  document.getElementById('purchase-section').innerHTML = pHtml;
+
+  // Combined totals
+  var salesTotal = t.grandTotal || 0;
+  var purchTotal = totalPurchAmt;
+  var grandNet   = salesTotal - purchTotal;
+  var cHtml =
+    '<hr style="border:none;border-top:1px dashed #000;margin:4px 0">' +
+    '<table class="items-table"><tbody>' +
+    '<tr><td><b>' + fmtWt(totalPurchGrswt) + '</b></td><td class="r"></td><td class="r"><b>' + fmtWt(totalPurchNetwt) + '</b></td><td class="r"></td><td class="r"><b>' + fmt(totalPurchAmt) + '</b></td></tr>' +
+    '<tr><td>Sales</td><td class="r" colspan="4" style="text-align:right">' + fmt(salesTotal) + '</td></tr>' +
+    '<tr><td>Purchase</td><td class="r" colspan="4" style="text-align:right">' + fmt(purchTotal) + '</td></tr>' +
+    '</tbody></table>' +
+    '<hr style="border:none;border-top:1px dashed #000;margin:4px 0">' +
+    '<div class="grand-total-row"><span>Grand Total :' + fmtWt(totalPurchGrswt) + '</span><span>' + fmt(grandNet) + '</span></div>' +
+    '<div class="grand-total-row"><span>Purchase </span><span>TOTAL Rs. &nbsp;&nbsp;' + fmt(grandNet) + '</span></div>';
+  document.getElementById('combined-totals').innerHTML = cHtml;
+}
 
 var bracket = P.empDisplay || [P.costId, P.companyName].filter(Boolean).join('-');
 document.getElementById('bracket-line').textContent = bracket ? '[' + bracket + ']' : '';

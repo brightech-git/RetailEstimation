@@ -72,7 +72,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
   // Auto-navigate when hasCostCentres becomes false (no cost centres configured)
   useEffect(() => {
     if (!isCompanySelectMode && hasCostCentres === false) {
-      navigation.navigate("Home");
+      navigation.navigate("Home", { fromCostCenter: true });
     }
   }, [hasCostCentres, isCompanySelectMode]);
 
@@ -91,7 +91,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
     setContinuing(true);
     try {
       await selectCompanyId(companyIdToUse);
-      navigation.navigate("Home");
+      navigation.navigate("Home", { fromCostCenter: true });
     } finally {
       setContinuing(false);
     }
@@ -108,7 +108,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
       // Drawer navigator doesn't support `replace` (that's a stack-only
       // action) — `navigate` is equivalent here since there's nothing to
       // go "back" to from the drawer's home screen anyway.
-      navigation.navigate("Home");
+      navigation.navigate("Home", { fromCostCenter: true });
     } finally {
       setContinuing(false);
     }

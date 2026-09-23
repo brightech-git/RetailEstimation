@@ -17,6 +17,7 @@ const ENDPOINTS = {
   TODAY_RATE:               "/todayrate",
   IP_ADDRESS:               "/ipaddress",
   PRINT_DETAILS:            (estBatchNo) => `/printDetails/${estBatchNo}`,
+  RECEIPT_PRINT_DETAILS:    (estBatchNo) => `/receiptPrintDetails/${estBatchNo}`,
 
   // Category / item lookup for Purchase entry (costId is auto-injected by
   // the axios interceptor — see Api/axiosInstance.js). With no catCode,

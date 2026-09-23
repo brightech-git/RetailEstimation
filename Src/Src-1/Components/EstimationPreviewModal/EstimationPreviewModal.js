@@ -94,7 +94,7 @@ const EstimationPreviewModal = ({
     if (!slipData) return null;
     const { items, sample, goldRate, silverRate, totalpcs, totalGrossWeight,
       grossAmount, baseAmount, offerDiscount,
-      offerName, itemsWithStones, discountTaxAmount } = slipData;
+      offerName, itemsWithStones, discountTaxAmount, purchaseItems } = slipData;
 
     // Same rule as the actual printed receipt (buildReceiptImageParams):
     // offer line + GST-inclusive split only when OFFERPRINTGST is 'Y';
@@ -140,6 +140,20 @@ const EstimationPreviewModal = ({
         offerGstEach: offerSplit?.gstEach ?? null,
         discountTaxAmount,
       },
+      purchaseItems: (purchaseItems || []).map((p) => ({
+        itemname: p.itemname || "",
+        pcs:      p.pcs      || 0,
+        grswt:    p.grswt    || 0,
+        netwt:    p.netwt    || 0,
+        dustwt:   p.dustwt   || 0,
+        wastper:  p.wastper  || 0,
+        wastage:  p.wastage  || 0,
+        rate:     p.rate     || 0,
+        amount:   p.amount   || 0,
+        flag:     p.flag     || "",
+        purexch:  p.purexch  || "",
+        purity:   p.purity   || 0,
+      })),
     };
     return buildHtml(params, previewWidth);
   }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, userId, offerPrintGst]);

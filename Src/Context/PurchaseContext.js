@@ -61,6 +61,7 @@ export const PurchaseProvider = ({ children }) => {
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [purchaseTranno, setPurchaseTranno] = useState(null);
+  const [purchaseEstBatchNo, setPurchaseEstBatchNo] = useState(null);
 
   const savePurchaseRows = (rows) => setSavedRows(rows);
   const clearPurchaseRows = () => {
@@ -69,6 +70,7 @@ export const PurchaseProvider = ({ children }) => {
   const clearPurchaseAll = () => {
     setSavedRows([]);
     setPurchaseTranno(null);
+    setPurchaseEstBatchNo(null);
   };
 
   const submitPurchase = async () => {
@@ -86,7 +88,9 @@ export const PurchaseProvider = ({ children }) => {
       console.log("✅ Purchase response:", JSON.stringify(response?.data, null, 2));
       const first = Array.isArray(response?.data) ? response.data[0] : response?.data;
       const tranno = first?.tranno || null;
+      const estbatchno = first?.estbatchno || null;
       if (tranno) setPurchaseTranno(tranno);
+      if (estbatchno) setPurchaseEstBatchNo(estbatchno);
       clearPurchaseRows();
       return tranno;
     } catch (e) {
@@ -102,7 +106,7 @@ export const PurchaseProvider = ({ children }) => {
 
   return (
     <PurchaseContext.Provider
-      value={{ savedRows, savePurchaseRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno }}
+      value={{ savedRows, savePurchaseRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo }}
     >
       {children}
     </PurchaseContext.Provider>

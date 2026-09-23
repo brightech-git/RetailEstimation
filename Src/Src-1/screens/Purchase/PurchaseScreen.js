@@ -5,6 +5,7 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Footer from "../../Components/Footer/Footer";
@@ -21,7 +22,7 @@ const COLUMN_LABELS = [
   "Pcs",
   "Grswt",
   "DustWt",
-  "W%",
+  "Wast %",
   "Wastage",
   "Stn wt",
   "Net WT",
@@ -39,7 +40,7 @@ const FOCUS_FIELDS = [
   "grswt",
   "dustwt",
   "wPercent",
-  "stnwt",
+ 
   "rate",
   "emp",
 ];
@@ -75,11 +76,28 @@ export default function PurchaseScreen() {
     ref?.focus?.();
   };
 
+  const validateRow = (row) => {
+    const missing = [];
+    if (!row?.purity) missing.push('Purity');
+    if (!row?.grswt) missing.push('Grswt');
+    if (!row?.rate) missing.push('Rate');
+    if (!row?.emp) missing.push('Emp');
+    return missing;
+  };
+
   const handleSubmitEditing = (rowId, field) => {
     const idx = FOCUS_FIELDS.indexOf(field);
     const nextField = FOCUS_FIELDS[idx + 1];
     if (nextField) {
       focusField(rowId, nextField);
+    } else {
+      const row = purchase.rows.find((r) => r.id === rowId);
+      const missing = validateRow(row);
+      if (missing.length > 0) {
+        Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
+        return;
+      }
+      purchase.openNewRowModal();
     }
   };
 
@@ -437,6 +455,12 @@ export default function PurchaseScreen() {
             <TouchableOpacity
               style={[styles.submitButton, styles.saveButton, purchase.rows.length === 0 && styles.disabledButton]}
               onPress={() => {
+                const invalid = purchase.rows.find((r) => validateRow(r).length > 0);
+                if (invalid) {
+                  const missing = validateRow(invalid);
+                  Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
+                  return;
+                }
                 savePurchaseRows(purchase.rows);
                 navigation.goBack();
               }}

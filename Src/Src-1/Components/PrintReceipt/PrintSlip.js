@@ -32,7 +32,7 @@ export const showEstimationPreview = (slipData) => {
 };
 
 // Main function to print estimation slip with preview
-export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empId) => {
+export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empId, purchaseEstBatchNo) => {
   try {
     console.log("🖨️ Starting print process for batch:", estBatchNo);
 
@@ -41,7 +41,7 @@ export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empI
       return;
     }
 
-    const slipData = await fetchEstimationData(estBatchNo, apiBaseUrl, empId);
+    const slipData = await fetchEstimationData(estBatchNo, apiBaseUrl, empId, purchaseEstBatchNo);
 
     if (slipData) {
       console.log("✅ Slip data fetched successfully, showing preview");
