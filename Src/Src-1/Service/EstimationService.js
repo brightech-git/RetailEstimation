@@ -208,6 +208,14 @@ export const formatDateToSqlDateTime = (dateInput) => {
   return dt.toISOString().replace("T", " ").split(".")[0];
 };
 
+export const formatDateTimeSql = (date) => {
+  const pad = (n) => String(n).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+         `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
+formatDateTimeSql(new Date());
 export const formatDateToMidnightSql = (dateInput = new Date()) => {
   const date = new Date(dateInput);
   if (isNaN(date.getTime())) return null;

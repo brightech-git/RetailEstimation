@@ -7,6 +7,7 @@ import {
   EstimationService,
   formatDateToSqlDateTime,
   formatDateToMidnightSql,
+  formatDateTimeSql,
 } from "../Service/EstimationService";
 import { SoftControlService } from "../Service/SoftControlService";
 import createApiInstance from "../../Api/axiosInstance";
@@ -42,13 +43,8 @@ export const useEstimation = (apiBaseUrl) => {
   const [scannerVisible, setScannerVisible] = useState(false);
   const [offerPrintGst, setOfferPrintGst] = useState("N");
 
-  const {
-    username,
-    userId,
-    costOptions,
-    selectedCostId,
-    selectedCompanyId,
-  } = useContext(LoginContext);
+  const { username, userId, costOptions, selectedCostId, selectedCompanyId } =
+    useContext(LoginContext);
   const [service, setService] = useState(null);
 
   const itemIdInputRef = useRef(null);
@@ -163,7 +159,7 @@ export const useEstimation = (apiBaseUrl) => {
     if (!ITEMID.trim() || !TAGNO.trim() || !emp.trim()) {
       Alert.alert(
         "Missing Input",
-        "Please enter valid Item ID, Tag No, and Employee."
+        "Please enter valid Item ID, Tag No, and Employee.",
       );
       return;
     }
@@ -179,11 +175,20 @@ export const useEstimation = (apiBaseUrl) => {
     try {
       // Check if tag already exists
       const tagDetails = await service.checkTagExists(ITEMID, TAGNO);
-      if (tagDetails && tagDetails.status !== "not issued" && tagDetails.trandate) {
-        console.log("Tag already issued on:", tagDetails, "Trn No:", tagDetails.tranno);
+      if (
+        tagDetails &&
+        tagDetails.status !== "not issued" &&
+        tagDetails.trandate
+      ) {
+        console.log(
+          "Tag already issued on:",
+          tagDetails,
+          "Trn No:",
+          tagDetails.tranno,
+        );
         Alert.alert(
           "Tag Already Issued",
-          `Issued on ${tagDetails.trandate}, Trn No: ${tagDetails.tranno}`
+          `Issued on ${tagDetails.trandate}, Trn No: ${tagDetails.tranno}`,
         );
         return;
       }
@@ -192,13 +197,13 @@ export const useEstimation = (apiBaseUrl) => {
       // Check for duplicates in current table
       const alreadyExists = tableData.some(
         (row) =>
-          row.ITEMID === itemIdInt && row.TAGNO === TAGNO && row.EMPID === emp
+          row.ITEMID === itemIdInt && row.TAGNO === TAGNO && row.EMPID === emp,
       );
 
       if (alreadyExists) {
         Alert.alert(
           "Duplicate Entry",
-          "This Tag is already loaded in the Sales Grid."
+          "This Tag is already loaded in the Sales Grid.",
         );
         return;
       }
@@ -218,30 +223,32 @@ export const useEstimation = (apiBaseUrl) => {
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
       const companyId = firstItem.COMPANYID || selectedCompanyId || "";
 
-      const newData = await Promise.all(data.map(async (d) => {
-        const offer = await service.getOffer(TAGNO);
-        const discount = calcOfferDiscount(offer);
-        return {
-          ...d,
-          ITEMID: itemIdInt,
-          TAGNO,
-          EMPID: emp,
-          EMP: emp,
-          EMP_NAME: empName,
-          METALID: d.METALID || 0,
-          COSTID: costId,
-          COMPANYID: companyId,
-          MAXMCGRM: d.MAXMCGRM || 0,
-          MC_FROM_API: d.MC || 0,
-          Rate: d.RATE || d.Rate || 0,
-          Wastage: d.WASTAGE || d.Wastage || 0,
-          GrossAmount: d.GrossAmount || "0",
-          GSTAmount: d.GSTAmount || "0",
-          GrandTotal: d.GrandTotal || "0",
-          DISCOUNT: discount,
-          BOARD_RATE: getOfferBoardRate(offer),
-        };
-      }));
+      const newData = await Promise.all(
+        data.map(async (d) => {
+          const offer = await service.getOffer(TAGNO);
+          const discount = calcOfferDiscount(offer);
+          return {
+            ...d,
+            ITEMID: itemIdInt,
+            TAGNO,
+            EMPID: emp,
+            EMP: emp,
+            EMP_NAME: empName,
+            METALID: d.METALID ?? 0,
+            COSTID: costId,
+            COMPANYID: companyId,
+            MAXMCGRM: d.MAXMCGRM || 0,
+            MC_FROM_API: d.MC || 0,
+            Rate: d.RATE || d.Rate || 0,
+            Wastage: d.WASTAGE || d.Wastage || 0,
+            GrossAmount: d.GrossAmount || "0",
+            GSTAmount: d.GSTAmount || "0",
+            GrandTotal: d.GrandTotal || "0",
+            DISCOUNT: discount,
+            BOARD_RATE: getOfferBoardRate(offer),
+          };
+        }),
+      );
 
       setTableData((prev) => [...prev, ...newData]);
 
@@ -311,22 +318,35 @@ export const useEstimation = (apiBaseUrl) => {
       const enrichedData = await Promise.all(
         data.map(async (item) => {
           console.log(
-            `Fetching stone inputs for ITEMID=${item.ITEMID} TAGNO=${item.TAGNO}`
+            `Fetching stone inputs for ITEMID=${item.ITEMID} TAGNO=${item.TAGNO}`,
           );
 
           // Fetch stone inputs
-          console.log("[StoneInputs] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO, costId: item.COSTID || costId });
-          let stoneInputs = await service.getStoneInputs(item.ITEMID, item.TAGNO);
+          console.log("[StoneInputs] Payload:", {
+            ITEMID: item.ITEMID,
+            TAGNO: item.TAGNO,
+            costId: item.COSTID || costId,
+          });
+          let stoneInputs = await service.getStoneInputs(
+            item.ITEMID,
+            item.TAGNO,
+          );
           console.log("[StoneInputs] Response:", stoneInputs);
 
           // Fetch stone category codes
           for (const stn of stoneInputs) {
             if (!stn?.stnitemid) continue;
-            stn.catcode = await service.getStoneCategoryCode(item.ITEMID, stn.stnitemid);
+            stn.catcode = await service.getStoneCategoryCode(
+              item.ITEMID,
+              stn.stnitemid,
+            );
           }
 
           // Fetch tag details
-          console.log("[TagDetails] Payload:", { TAGNO: item.TAGNO, costId: item.COSTID || costId });
+          console.log("[TagDetails] Payload:", {
+            TAGNO: item.TAGNO,
+            costId: item.COSTID || costId,
+          });
           const tagDetails = await service.getTagDetails(item.TAGNO);
           console.log("[TagDetails] Response:", tagDetails);
 
@@ -341,10 +361,13 @@ export const useEstimation = (apiBaseUrl) => {
 
           // Get transaction date
           let trandateString = formatDateToSqlDateTime();
-          console.log("[TranDate] Payload:", { ITEMID: item.ITEMID, TAGNO: item.TAGNO });
+          console.log("[TranDate] Payload:", {
+            ITEMID: item.ITEMID,
+            TAGNO: item.TAGNO,
+          });
           const dateFromApi = await service.getTransactionDate(
             item.ITEMID,
-            item.TAGNO
+            item.TAGNO,
           );
           console.log("[TranDate] Response:", dateFromApi);
           if (dateFromApi) {
@@ -364,13 +387,15 @@ export const useEstimation = (apiBaseUrl) => {
             itemid: item.ITEMID || 0,
             wastper: tagDetails?.wastper,
             wastage: tagDetails?.wastage || 0,
-            mcgrm:
-              parseFloat(tagDetails?.mcgram) ||
-              0,
+            mcgrm: parseFloat(tagDetails?.mcgram) || 0,
             mcharge: tagDetails?.mccharge || 0,
             amount: parseFloat(calcDiscountedGross(item).toFixed(2)) || 0,
             rate: parseFloat(item.RATE) || parseFloat(item.Rate) || 0,
-            boardrate: getOfferBoardRate(offerData) || parseFloat(item.BOARD_RATE) || 0,
+            boardrate:
+              getOfferBoardRate(offerData) ||
+              parseFloat(item.RATE) ||
+              parseFloat(item.Rate) ||
+              0,
             costid: item.COSTID || costId,
             companyid: companyCode,
             empid: Number(item.EMP) || 0,
@@ -385,66 +410,41 @@ export const useEstimation = (apiBaseUrl) => {
             itemctrid: tagDetails?.itemctrid,
             purity: tagDetails?.purity,
             tagsvalue: tagDetails?.salvalue,
-            transtatus: "",
-            refno: "",
-            refdate: "1900-01-01 00:00:00",
-            flag: "",
+
             taggrswt: parseFloat(item.GRSWT) || 0,
             tagnetwt: parseFloat(item.NETWT) || 0,
-            tagrateid: 0,
-            tablecode: "",
-            incentive: "",
-            weightunit: "",
-            catcode: itemTaxDetails?.CATCODE ? String(itemTaxDetails.CATCODE) : (item.CATCODE ? String(item.CATCODE) : ""),
-            ocatcode: "",
-            accode: "",
-            alloy: "0.000",
-            batchno: "",
-            remark1: "",
-            remark2: "",
-            userid: String(userId || "1"),
+
+            catcode: itemTaxDetails?.CATCODE
+              ? String(itemTaxDetails.CATCODE)
+              : item.CATCODE
+                ? String(item.CATCODE)
+                : "",
+
+            userid: 999,
             updated: formatDateToMidnightSql(new Date()),
-            uptime: "",
-            systemid: "",
+            uptime: formatDateTimeSql(new Date()),
+            systemid: 8,
             discount: parseFloat((parseFloat(item.DISCOUNT) || 0).toFixed(2)),
-            runno: "",
-            cancel: "",
-            cashid: "",
-            vatexm: "",
-            orsno: "",
-            orderno: "",
-            stoneunit: "",
-            protype: "0",
-            metalid: item.METALID ? String(item.METALID) : "",
+
+            metalid: item.METALID != null ? String(item.METALID) : "",
             tax: parseFloat(calculateDiscountedGST(item).toFixed(2)) || 0,
-            sc: "0.00",
-            adsc: "0.00",
-            appver: "",
-            psno: "",
-            discempid: "",
-            marginid: "0",
-            otheramt: "",
-            rateid: "0.00",
+
+            appver: "APP",
+
             estbatchno: batchNo,
-            oestbatchno: null,
-            setgrpid: "",
-            status: "",
+
             duedate: formatDateToMidnightSql(item.duedate),
-            touch: "0.00",
-            stktype: "",
-            barprefix: "",
-            hsn: null,
           };
 
           return [rawItem, stoneInputs];
-        })
+        }),
       );
 
       const rawItems = enrichedData.map(([item]) => item);
 
       console.log(
         "📤 Payload to /estissue:",
-        JSON.stringify(rawItems, null, 2)
+        JSON.stringify(rawItems, null, 2),
       );
 
       // Submit main estimation data
@@ -454,7 +454,7 @@ export const useEstimation = (apiBaseUrl) => {
       if (!Array.isArray(savedIssues)) {
         throw new Error(
           "❌ Invalid EstIssue response: expected an array but got " +
-            JSON.stringify(savedIssues)
+            JSON.stringify(savedIssues),
         );
       }
 
@@ -481,12 +481,15 @@ export const useEstimation = (apiBaseUrl) => {
         const estSNO = snoMap[tagno];
         const generatedSNO = await service.generateEstissStoneSno(
           item.costid || costId,
-          item.companyid || companyCode
+          item.companyid || companyCode,
         );
 
         if (!Array.isArray(stoneInputs) || stoneInputs.length === 0) continue;
 
-        console.log("[EstIssStoneSno] Payload:", { costId: item.costid || costId, companyId: item.companyid || companyCode });
+        console.log("[EstIssStoneSno] Payload:", {
+          costId: item.costid || costId,
+          companyId: item.companyid || companyCode,
+        });
         console.log("[EstIssStoneSno] Response:", generatedSNO);
 
         const stonePayloads = stoneInputs.map((stone) => ({
@@ -554,15 +557,18 @@ export const useEstimation = (apiBaseUrl) => {
         const amount = parseFloat(rawItem.amount) || 0;
         if (amount <= 0) {
           console.warn(
-            `⛔ Skipping tax entry for tagno=${tagno} because amount is 0`
+            `⛔ Skipping tax entry for tagno=${tagno} because amount is 0`,
           );
           continue;
         }
 
-        console.log("[EstTaxTranSno] Payload:", { costId: rawItem.costid || costId, companyId: rawItem.companyid || companyCode });
+        console.log("[EstTaxTranSno] Payload:", {
+          costId: rawItem.costid || costId,
+          companyId: rawItem.companyid || companyCode,
+        });
         const estTaxTranSno = await service.generateEstTaxTranSno(
           rawItem.costid || costId,
-          rawItem.companyid || companyCode
+          rawItem.companyid || companyCode,
         );
         console.log("[EstTaxTranSno] Response:", estTaxTranSno);
 
@@ -596,11 +602,11 @@ export const useEstimation = (apiBaseUrl) => {
         } catch (err) {
           console.warn(
             "❌ Failed to insert SGST/CGST tax entries:",
-            err.response?.data || err.message
+            err.response?.data || err.message,
           );
           Alert.alert(
             "Warning",
-            `Tax insert failed for tagno: ${rawItem.tagno}`
+            `Tax insert failed for tagno: ${rawItem.tagno}`,
           );
         }
       }
@@ -612,7 +618,7 @@ export const useEstimation = (apiBaseUrl) => {
       } catch (err) {
         Alert.alert(
           "Partial Success",
-          "Data submitted, but TRANNO update failed."
+          "Data submitted, but TRANNO update failed.",
         );
       }
 
@@ -667,14 +673,20 @@ export const useEstimation = (apiBaseUrl) => {
         requestData: error.config?.data,
         responseData: error.response?.data,
       });
-      Alert.alert("Error", typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg));
+      Alert.alert(
+        "Error",
+        typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg),
+      );
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const { totalDiscount, totalGross, totalGST, totalGrand } = calcTotals(tableData, offerPrintGst);
+  const { totalDiscount, totalGross, totalGST, totalGrand } = calcTotals(
+    tableData,
+    offerPrintGst,
+  );
 
   return {
     // State
