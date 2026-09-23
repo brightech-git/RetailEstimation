@@ -11,7 +11,7 @@ import { ThemeProvider, useTheme } from './Src/Context/ThemeContext';
 // Wrapper component for theme-aware styling
 const AppWrapper = () => {
   const { theme, isDarkMode } = useTheme();
-  
+
   return (
     <View style={[styles.container, { backgroundColor: theme.COLORS.background }]}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
@@ -21,14 +21,15 @@ const AppWrapper = () => {
 };
 
 export default function App() {
-  // Load custom fonts
+  // Load custom fonts — the app UI now uses only Poppins, in three
+  // weights: Regular for body text, Medium for subheadings/labels,
+  // and Bold for headings/emphasis.
   const [fontsLoaded] = useFonts({
-    TrajanPro: require('./Src/Src-1/Assets/Fonts/TrajanPro-Regular.ttf'),
-    TrajanProBold: require('./Src/Src-1/Assets/Fonts/TrajanPro-Bold.otf'),
-    DancingScript: require('./Src/Src-1/Assets/Fonts/DancingScript.ttf'),
-    DMSerif: require('./Src/Src-1/Assets/Fonts/DMSerif.ttf'),
-    Fancy: require('./Src/Src-1/Assets/Fonts/Fancy.ttf'),
-    Domine: require('./Src/Src-1/Assets/Fonts/Domine-Bold.ttf'),
+    'Poppins-Regular': require('./Src/Src-1/Assets/Fonts/Poppins/Poppins-Regular.ttf'),
+    'Poppins-Medium': require('./Src/Src-1/Assets/Fonts/Poppins/Poppins-Medium.ttf'),
+    'Poppins-Bold': require('./Src/Src-1/Assets/Fonts/Poppins/Poppins-Bold.ttf'),
+    'Poppins-SemiBold': require('./Src/Src-1/Assets/Fonts/Poppins/Poppins-SemiBold.ttf'),
+    'Poppins-Black': require('./Src/Src-1/Assets/Fonts/Poppins/Poppins-Black.ttf'),
   });
 
   // Show loader while fonts are loading

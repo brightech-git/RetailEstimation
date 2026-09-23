@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -22,12 +23,16 @@ import { useTheme } from "../../../Context/ThemeContext";
 import { createHomeStyles } from "./HomeStyles";
 import { useEstimation } from "../../Hook/UseEstimation";
 import { LoginContext } from "../../../Context/LoginContext";
+import { usePurchaseContext } from "../../../Context/PurchaseContext";
+import { calcWastage, calcNetWt, calcAmount } from "../../Hook/UsePurchase";
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
   const { theme, isDarkMode } = useTheme();
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
   const { username, selectedCompanyId, selectedCostId } = useContext(LoginContext);
+  const { savedRows, clearPurchaseRows } = usePurchaseContext();
 
   // Check if EstimationPreviewComponent is a valid React element
   const estimationPreview = useEstimationPreview();
@@ -109,42 +114,42 @@ const HomeScreen = () => {
   };
 
   // Helper function to render individual table cells
-  const renderTableData = () => {
-    return estimation.tableData.map((item, rowIdx) => (
-      <View key={`row-${rowIdx}`} style={styles.dataRow}>
-        {/* 🗑️ DELETE BUTTON (Before ItemID) */}
-        <TouchableOpacity
-          onPress={() => estimation.removeRow(rowIdx)}
-          style={styles.deleteButton}
-        >
-          <Text style={styles.deleteButtonText}>🗑️</Text>
-        </TouchableOpacity>
+  // const renderTableData = () => {
+  //   return estimation.tableData.map((item, rowIdx) => (
+  //     <View key={`row-${rowIdx}`} style={styles.dataRow}>
+  //       {/* 🗑️ DELETE BUTTON (Before ItemID) */}
+  //       <TouchableOpacity
+  //         onPress={() => estimation.removeRow(rowIdx)}
+  //         style={styles.deleteButton}
+  //       >
+  //         <Text style={styles.deleteButtonText}>🗑️</Text>
+  //       </TouchableOpacity>
 
-        <Text style={styles.cell}>{item.ITEMID ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.TAGNO ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.PCS ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.GRSWT ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.NETWT ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.Rate ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.Wastage ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.MC ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.StoneAmount ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.MiscAmount ?? "N/A"}</Text>
-        <Text style={styles.cell}>
-          {estimation.calculateGrossAmount(item).toFixed(2)}
-        </Text>
-        <Text style={styles.cell}>
-          {estimation.calculateGST(item).toFixed(2)}
-        </Text>
-        <Text style={styles.cell}>
-          {estimation.calculateGrandTotal(item).toFixed(2)}
-        </Text>
-        <Text style={styles.cell}>{item.EMP ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.COSTID ?? "N/A"}</Text>
-        <Text style={styles.cell}>{item.COMPANYID ?? "N/A"}</Text>
-      </View>
-    ));
-  };
+  //       <Text style={styles.cell}>{item.ITEMID ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.TAGNO ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.PCS ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.GRSWT ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.NETWT ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.Rate ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.Wastage ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.MC ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.StoneAmount ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.MiscAmount ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>
+  //         {estimation.calculateGrossAmount(item).toFixed(2)}
+  //       </Text>
+  //       <Text style={styles.cell}>
+  //         {estimation.calculateGST(item).toFixed(2)}
+  //       </Text>
+  //       <Text style={styles.cell}>
+  //         {estimation.calculateGrandTotal(item).toFixed(2)}
+  //       </Text>
+  //       <Text style={styles.cell}>{item.EMP ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.COSTID ?? "N/A"}</Text>
+  //       <Text style={styles.cell}>{item.COMPANYID ?? "N/A"}</Text>
+  //     </View>
+  //   ));
+  // };
 
   return (
     <>
@@ -157,6 +162,22 @@ const HomeScreen = () => {
       >
         <MainHeader />
         <View style={styles.container}>
+          <View style={styles.header}>
+             {/* Purchase Navigation Button */}
+          <TouchableOpacity
+            style={styles.purchaseNavButton}
+            onPress={() => navigation.navigate("Purchase")}
+          >
+            <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.purchaseNavButton}
+            onPress={() => navigation.navigate("Purchase")}
+          >
+            <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
+          </TouchableOpacity>
+          </View>
+         
           {/* Totals Display */}
           {estimation.tableData.length > 0 && (
             <View style={styles.totalsContainer}>
@@ -467,6 +488,69 @@ const HomeScreen = () => {
               <Text style={styles.submitButtonText}>Clear All</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Purchase Table from PurchaseScreen */}
+          {savedRows.length > 0 && (
+            <>
+              <View style={styles.purchaseSectionHeader}>
+                <Text style={styles.purchaseSectionTitle}>Purchase Details</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator
+                style={styles.tableContainer}
+              >
+                <View>
+                  <View style={styles.headerRow}>
+                    {["Category","Purity","Pcs","Grswt","DustWt","W%","Wastage","Stn Wt","Net Wt","Rate","GST","Amount","Emp"].map((label, idx) => (
+                      <View key={`ph-${idx}`} style={styles.column}>
+                        <Text style={styles.headerCell}>{label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {savedRows.map((row, idx) => (
+                    <View key={`pr-${idx}`} style={styles.dataRow}>
+                      <View style={styles.column}><Text style={styles.cell}>{row.category || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.purity || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.pcs || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.grswt || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.dustwt || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.wPercent || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{calcWastage(row).toFixed(3)}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.stnwt || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{calcNetWt(row).toFixed(3)}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.rate || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.gst || "-"}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{calcAmount(row).toFixed(2)}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{row.emp || "-"}</Text></View>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+
+              {/* Purchase action buttons */}
+              <View style={styles.actionButtonsContainer}>
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={() => { /* wire to purchase save API */ }}
+                >
+                  <Text style={styles.submitButtonText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.submitButton, styles.printButton]}
+                  onPress={() => { /* wire to purchase print */ }}
+                >
+                  <Text style={styles.submitButtonText}>Print</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.submitButton, styles.clearButton]}
+                  onPress={clearPurchaseRows}
+                >
+                  <Text style={styles.submitButtonText}>Clear All</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
           {/* Scanner Modal */}
           <BarcodeScannerModal

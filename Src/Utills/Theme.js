@@ -63,7 +63,7 @@ export const LIGHT_COLORS = {
   /* -------------------------------------------------------------------------- */
   iconPrimary: "#1C467C",
   iconSecondary: "#6C757D",
-  
+
   gradientPrimary: ["#1C467C", "#3A6EA5"],
   gradientSecondary: ["#ffffffff", "#ffffffff"],
   gradientText: ["#ffffffff", "#3A6EA5"],
@@ -136,6 +136,20 @@ export const SIZES = {
 };
 
 /* -------------------------------------------------------------------------- */
+/* 🔤 APP-WIDE FONT FAMILIES                                                  */
+/* Only Poppins is used across the entire app UI, in three weights:          */
+/*   - Poppins-Regular : body / label / regular text                        */
+/*   - Poppins-Medium  : subheadings                                        */
+/*   - Poppins-Bold    : headings / emphasis / buttons                      */
+/* -------------------------------------------------------------------------- */
+export const FONT_FAMILIES = {
+  heading: "Poppins-Black",
+  subheading: "Poppins-SemiBold",
+  body: "Poppins-Bold",
+  bold: "Poppins-Bold",
+};
+
+/* -------------------------------------------------------------------------- */
 /* 🧾 FUNCTION TO BUILD FONTS BASED ON COLOR PALETTE                          */
 /* -------------------------------------------------------------------------- */
 export const createFonts = (COLORS) => ({
@@ -143,68 +157,68 @@ export const createFonts = (COLORS) => ({
     fontSize: moderateScale(SIZES.fontLg),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 28 : 24,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   font: {
     fontSize: moderateScale(SIZES.font),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 24 : 20,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   fontSm: {
     fontSize: moderateScale(SIZES.fontSm),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 22 : 18,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   fontXs: {
     fontSize: moderateScale(SIZES.fontXs),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 20 : 16,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   h1: {
     fontSize: moderateScale(SIZES.h1),
     color: COLORS.title,
-    fontFamily: "TrajanProBold",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 48 : 40,
   },
   h2: {
     fontSize: moderateScale(SIZES.h2),
     color: COLORS.title,
-    fontFamily: "TrajanProBold",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 44 : 36,
   },
   h3: {
     fontSize: moderateScale(SIZES.h3),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 38 : 32,
   },
   h4: {
     fontSize: moderateScale(SIZES.h4),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 34 : 28,
   },
   h5: {
     fontSize: moderateScale(SIZES.h5),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 30 : 26,
   },
   h6: {
     fontSize: moderateScale(SIZES.h6),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 28 : 24,
   },
-  heading: { fontFamily: "TrajanProBold", lineHeight: DEVICE.isTablet ? 40 : 35 },
-  subheading: { fontFamily: "DMSerif" },
-  body: { fontFamily: "DancingScript" },
-  text: { fontFamily: "Domine" },
-  text1: { fontFamily: "TrajanProBold" },
-  text2: { fontFamily: "TrajanPro" },
+  heading: { fontFamily: FONT_FAMILIES.heading, lineHeight: DEVICE.isTablet ? 40 : 35 },
+  subheading: { fontFamily: FONT_FAMILIES.subheading },
+  body: { fontFamily: FONT_FAMILIES.body },
+  text: { fontFamily: FONT_FAMILIES.body },
+  text1: { fontFamily: FONT_FAMILIES.bold },
+  text2: { fontFamily: FONT_FAMILIES.body },
 });
 
 /* -------------------------------------------------------------------------- */
@@ -213,17 +227,17 @@ export const createFonts = (COLORS) => ({
 export const PRINTER_COMMANDS = {
   // Initialization
   INIT: "\x1B\x40",
-  
+
   // Paper cut
   CUT: "\x1D\x56\x41\x00", // Full cut
-  
+
   // Line spacing
   LINE_SPACING_24: "\x1B\x33\x18", // 24/180 inch
   LINE_SPACING_30: "\x1B\x33\x1E", // 30/180 inch
-  
+
   // Paper feed
   FEED_LINES: (lines) => `\x1B\x64${String.fromCharCode(lines)}`,
-  
+
   // Barcode
   BARCODE_HEIGHT: (height) => `\x1D\x68${String.fromCharCode(height)}`,
   BARCODE_WIDTH: (width) => `\x1D\x77${String.fromCharCode(width)}`,
@@ -239,7 +253,7 @@ export const FONTS = {
   ALIGN_LEFT: "\x1B\x61\x00",
   ALIGN_CENTER: "\x1B\x61\x01",
   ALIGN_RIGHT: "\x1B\x61\x02",
-  
+
   // Font Sizes
   NORMAL: "\x1B\x21\x00",
   DOUBLE_HEIGHT: "\x1B\x21\x10",
@@ -248,7 +262,7 @@ export const FONTS = {
   SMALL: "\x1D\x21\x00",
   MEDIUM: "\x1D\x21\x01",
   LARGE: "\x1D\x21\x11",
-  
+
   // Font Styles
   BOLD_ON: "\x1B\x45\x01",
   BOLD_OFF: "\x1B\x45\x00",
@@ -256,10 +270,10 @@ export const FONTS = {
   UNDERLINE_OFF: "\x1B\x2D\x00",
   INVERSE_ON: "\x1D\x42\x01",
   INVERSE_OFF: "\x1D\x42\x00",
-  
+
   // Character spacing
   SET_SPACING: (n) => `\x1B\x20${String.fromCharCode(n)}`,
-  
+
   // Printer modes
   DRAFT_MODE: "\x1B\x78\x00",
   NLQ_MODE: "\x1B\x78\x01",

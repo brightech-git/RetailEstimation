@@ -18,6 +18,13 @@ const ENDPOINTS = {
   IP_ADDRESS:               "/ipaddress",
   PRINT_DETAILS:            (estBatchNo) => `/printDetails/${estBatchNo}`,
 
+  // Category / item lookup for Purchase entry (costId is auto-injected by
+  // the axios interceptor — see Api/axiosInstance.js). With no catCode,
+  // returns the category list ({CATCODE, CATNAME}[]); with a catCode,
+  // returns that category's items ({ITEMID, ITEMNAME}[]).
+  CATEGORY_SEARCH:          "/category-search",
+  ITEMS_BY_CATEGORY:        (catCode) => `/category-search?catCode=${catCode}`,
+
   // POST
   EST_ISSUE:                "/estissue",
   EST_STN_ISSUE:            "/eststnissue",

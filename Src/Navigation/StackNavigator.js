@@ -22,12 +22,14 @@ import Homescreen1 from "../Src-2/Screens/Home/Home";
 import BMGJewellersScreen from "../Src-3/Screens/Home/Home";
 import ResultsScreen from "../Src-3/Screens/Result/ResultScreen";
 import ChangeStockPassword from "../Src-1/screens/StockPassword/ChangeStockPassword";
+import PurchaseScreen from "../Src-1/screens/Purchase/PurchaseScreen";
 
 // Sidebar (drawer content)
 import Sidebar from "../Components/Sidebar/Sidebar";
 
 // Context
 import { LoginProvider, LoginContext } from "../Context/LoginContext";
+import { PurchaseProvider } from "../Context/PurchaseContext";
 import { ToastProvider } from "../Src-1/Context/ToastContext";
 import { useTheme } from "../Context/ThemeContext";
 
@@ -53,6 +55,7 @@ function AppScreensStack() {
       <InnerStack.Screen name="BMGJewellers" component={BMGJewellersScreen} />
       <InnerStack.Screen name="Results" component={ResultsScreen} />
       <InnerStack.Screen name="ChangeStockPassword" component={ChangeStockPassword} />
+      <InnerStack.Screen name="Purchase" component={PurchaseScreen} />
     </InnerStack.Navigator>
   );
 }
@@ -129,7 +132,9 @@ export default function AppContainer() {
     <SafeAreaView style={{ flex: 1 }}>
       <ToastProvider>
         <LoginProvider>
-          <AppStack />
+          <PurchaseProvider>
+            <AppStack />
+          </PurchaseProvider>
         </LoginProvider>
       </ToastProvider>
     </SafeAreaView>

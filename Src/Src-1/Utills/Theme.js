@@ -62,75 +62,86 @@ export const SIZES = {
   height,
 };
 
+// 🔤 App-wide font families — only Poppins is used across the app UI:
+//   - Poppins-Regular : body / label / regular text
+//   - Poppins-Medium  : subheadings
+//   - Poppins-Bold    : headings / emphasis / buttons
+export const FONT_FAMILIES = {
+  heading: "Poppins-Bold",
+  subheading: "Poppins-Medium",
+  body: "Poppins-Regular",
+  bold: "Poppins-Bold",
+};
+
 // 🧾 Fonts
 export const FONTS = {
   fontLg: {
     fontSize: moderateScale(SIZES.fontLg),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 28 : 24,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   font: {
     fontSize: moderateScale(SIZES.font),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 24 : 20,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   fontSm: {
     fontSize: moderateScale(SIZES.fontSm),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 22 : 18,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
   fontXs: {
     fontSize: moderateScale(SIZES.fontXs),
     color: COLORS.text,
     lineHeight: DEVICE.isTablet ? 20 : 16,
-    fontFamily: "TimesNewRoman",
+    fontFamily: FONT_FAMILIES.body,
   },
 
   // Headings
   h1: {
     fontSize: moderateScale(SIZES.h1),
     color: COLORS.title,
-    fontFamily: "TrajanProBold",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 48 : 40,
   },
   h2: {
     fontSize: moderateScale(SIZES.h2),
     color: COLORS.title,
-    fontFamily: "TrajanProBold",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 44 : 36,
   },
   h3: {
     fontSize: moderateScale(SIZES.h3),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 38 : 32,
   },
   h4: {
     fontSize: moderateScale(SIZES.h4),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 34 : 28,
   },
   h5: {
     fontSize: moderateScale(SIZES.h5),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 30 : 26,
   },
   h6: {
     fontSize: moderateScale(SIZES.h6),
     color: COLORS.title,
-    fontFamily: "DMSerif",
+    fontFamily: FONT_FAMILIES.heading,
     lineHeight: DEVICE.isTablet ? 28 : 24,
   },
 
-  heading: { fontFamily: "TrajanProBold", lineHeight: DEVICE.isTablet ? 40 : 35 },
-  subheading: { fontFamily: "DMSerif", fontWeight: "500" },
-  body: { fontFamily: "DancingScript", fontWeight: "600" },
-  text: { fontFamily: "Domine", fontWeight: "400" },
+  heading: { fontFamily: FONT_FAMILIES.heading, lineHeight: DEVICE.isTablet ? 40 : 35 },
+  subheading: { fontFamily: FONT_FAMILIES.subheading },
+  body: { fontFamily: FONT_FAMILIES.body },
+  text: { fontFamily: FONT_FAMILIES.body },
 };
 
 // 🚀 Export the combined theme

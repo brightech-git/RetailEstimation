@@ -15,6 +15,11 @@ export const createHomeStyles = (theme) => {
       paddingBottom: moderateScale(80),
       backgroundColor: COLORS.background,
     },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      },
     inputRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -254,6 +259,37 @@ export const createHomeStyles = (theme) => {
       paddingVertical: moderateScale(8),
       borderRightWidth: 1,
       borderColor: COLORS.borderColor,
+    },
+    purchaseNavButton: {
+      backgroundColor: COLORS.secondary,
+      borderRadius: SIZES.radius,
+      padding: moderateScale(12),
+      alignItems: 'center',
+      marginBottom: moderateScale(14),
+      elevation: 3,
+      shadowColor: COLORS.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 1,
+      shadowRadius: 4,
+    },
+    purchaseNavButtonText: {
+      color: COLORS.buttonText,
+      fontSize: moderateScale(SIZES.font),
+      fontWeight: 'bold',
+      ...FONTS.text,
+    },
+    purchaseSectionHeader: {
+      marginTop: moderateScale(16),
+      marginBottom: moderateScale(6),
+      borderLeftWidth: moderateScale(4),
+      borderLeftColor: COLORS.secondary,
+      paddingLeft: moderateScale(8),
+    },
+    purchaseSectionTitle: {
+      fontSize: moderateScale(SIZES.font),
+      fontWeight: '700',
+      color: COLORS.secondary,
+      ...FONTS.text,
     },
 
   });
