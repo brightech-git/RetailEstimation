@@ -105,6 +105,23 @@ export const createHomeStyles = (theme) => {
       flexDirection: 'row',
       justifyContent: 'space-around',
     },
+    finalAmountDivider: {
+      borderTopWidth: 1,
+      borderColor: COLORS.borderColor,
+      marginVertical: moderateScale(8),
+    },
+    finalAmount: {
+      fontWeight: 'bold',
+      fontSize: moderateScale(SIZES.fontLg || SIZES.font + 2),
+      color: COLORS.primary,
+    },
+    totalsSectionLabel: {
+      fontSize: moderateScale(SIZES.fontSm),
+      fontWeight: '700',
+      color: COLORS.primary,
+      marginBottom: moderateScale(4),
+      ...FONTS.subheading,
+    },
     totalItem: {
       alignItems: 'center',
     },

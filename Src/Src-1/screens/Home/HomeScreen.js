@@ -32,7 +32,11 @@ const HomeScreen = () => {
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
   const { username, selectedCompanyId, selectedCostId } = useContext(LoginContext);
-  const { savedRows, clearPurchaseRows } = usePurchaseContext();
+  const { savedRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno } = usePurchaseContext();
+
+  React.useEffect(() => {
+    if (API_BASE_URL) setApiBaseUrl(API_BASE_URL);
+  }, [API_BASE_URL]);
 
   // Check if EstimationPreviewComponent is a valid React element
   const estimationPreview = useEstimationPreview();
@@ -179,39 +183,100 @@ const HomeScreen = () => {
           </View>
          
           {/* Totals Display */}
-          {estimation.tableData.length > 0 && (
-            <View style={styles.totalsContainer}>
-              <View style={styles.totalsRow}>
-                <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel}>Gross Amount</Text>
-                  <Text style={styles.totalValue}>
-                    ₹{estimation.totalGross.toFixed(2)}
-                  </Text>
-                </View>
-
-                <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel}>Discount</Text>
-                  <Text style={styles.totalValue}>
-                    ₹{estimation.totalDiscount.toFixed(2)}
-                  </Text>
-                </View>
-
-                <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel}>GST Amount</Text>
-                  <Text style={styles.totalValue}>
-                    ₹{estimation.totalGST.toFixed(2)}
-                  </Text>
-                </View>
-
-                <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel}>Grand Total</Text>
-                  <Text style={[styles.totalValue, styles.grandTotal]}>
-                    ₹{estimation.totalGrand.toFixed(2)}
-                  </Text>
-                </View>
+          {(estimation.tableData.length > 0 || savedRows.length > 0) && (() => {
+            const purchaseTotals = savedRows.reduce(
+              (acc, row) => {
+                acc.grswt  += parseFloat(row.grswt)  || 0;
+                acc.netwt  += calcNetWt(row);
+                acc.amount += calcAmount(row);
+                return acc;
+              },
+              { grswt: 0, netwt: 0, amount: 0 }
+            );
+            return (
+              <View style={styles.totalsContainer}>
+                {estimation.tableData.length > 0 && (
+                  <>
+                    <Text style={styles.totalsSectionLabel}>Sales</Text>
+                    <View style={styles.totalsRow}>
+                      {estimation.totalGross > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>Gross Amt</Text>
+                          <Text style={styles.totalValue}>₹{estimation.totalGross.toFixed(2)}</Text>
+                        </View>
+                      )}
+                      {estimation.totalDiscount > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>Discount</Text>
+                          <Text style={styles.totalValue}>₹{estimation.totalDiscount.toFixed(2)}</Text>
+                        </View>
+                      )}
+                      {estimation.totalGST > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>GST Amt</Text>
+                          <Text style={styles.totalValue}>₹{estimation.totalGST.toFixed(2)}</Text>
+                        </View>
+                      )}
+                      {estimation.totalGrand > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>Grand Total</Text>
+                          <Text style={[styles.totalValue, styles.grandTotal]}>₹{estimation.totalGrand.toFixed(2)}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </>
+                )}
+                {savedRows.length > 0 && (
+                  <>
+                    <Text style={[styles.totalsSectionLabel, { marginTop: estimation.tableData.length > 0 ? 10 : 0 }]}>Purchase</Text>
+                    <View style={styles.totalsRow}>
+                      {purchaseTotals.grswt > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>Gross Wt</Text>
+                          <Text style={styles.totalValue}>{purchaseTotals.grswt.toFixed(3)}</Text>
+                        </View>
+                      )}
+                      {purchaseTotals.netwt > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>Net Wt</Text>
+                          <Text style={styles.totalValue}>{purchaseTotals.netwt.toFixed(3)}</Text>
+                        </View>
+                      )}
+                      {purchaseTotals.amount > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel}>Amount</Text>
+                          <Text style={[styles.totalValue, styles.grandTotal]}>₹{purchaseTotals.amount.toFixed(2)}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </>
+                )}
+                {estimation.tableData.length > 0 && savedRows.length > 0 && (
+                  <>
+                    <View style={styles.finalAmountDivider} />
+                    <View style={styles.totalsRow}>
+                      {(() => {
+                        const finalBase = estimation.totalGross - purchaseTotals.amount;
+                        const finalTotal = finalBase + estimation.totalGST;
+                        return (
+                          <View style={styles.totalItem}>
+                            <Text style={styles.totalsSectionLabel}>Final Amount</Text>
+                            <Text style={styles.totalLabel}>
+                              ₹{estimation.totalGross.toFixed(2)} - ₹{purchaseTotals.amount.toFixed(2)} = ₹{finalBase.toFixed(2)}
+                            </Text>
+                            {estimation.totalGST > 0 && (
+                              <Text style={styles.totalLabel}>+ GST ₹{estimation.totalGST.toFixed(2)}</Text>
+                            )}
+                            <Text style={[styles.totalValue, styles.finalAmount]}>₹{finalTotal.toFixed(2)}</Text>
+                          </View>
+                        );
+                      })()}
+                    </View>
+                  </>
+                )}
               </View>
-            </View>
-          )}
+            );
+          })()}
 
           {/* Input Fields */}
           {/* Input Fields */}
@@ -448,46 +513,13 @@ const HomeScreen = () => {
             </View>
           )}
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                estimation.loading && styles.disabledButton,
-              ]}
-              onPress={async () => {
-                const batchNo = await estimation.submitData();
-                if (batchNo) {
-                  estimation.setEstBatchNo(batchNo);
-                  console.log("ESTBATCHNO:", batchNo);
-                }
-              }}
-              disabled={estimation.loading}
-            >
-              <Text style={styles.submitButtonText}>
-                {estimation.loading ? "Submitting..." : "Submit"}
+          {purchaseTranno && (
+            <View style={styles.trannoContainer}>
+              <Text style={styles.trannoText}>
+                Purchase TRANNO: {purchaseTranno}
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                styles.printButton,
-                !estimation.estBatchNo && styles.disabledButton,
-              ]}
-              onPress={handlePrint}
-              disabled={!estimation.estBatchNo}
-            >
-              <Text style={styles.submitButtonText}>Print Slip</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.submitButton, styles.clearButton]}
-              onPress={estimation.clearAll}
-            >
-              <Text style={styles.submitButtonText}>Clear All</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          )}
 
           {/* Purchase Table from PurchaseScreen */}
           {savedRows.length > 0 && (
@@ -527,29 +559,67 @@ const HomeScreen = () => {
                   ))}
                 </View>
               </ScrollView>
-
-              {/* Purchase action buttons */}
-              <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={() => { /* wire to purchase save API */ }}
-                >
-                  <Text style={styles.submitButtonText}>Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.submitButton, styles.printButton]}
-                  onPress={() => { /* wire to purchase print */ }}
-                >
-                  <Text style={styles.submitButtonText}>Print</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.submitButton, styles.clearButton]}
-                  onPress={clearPurchaseRows}
-                >
-                  <Text style={styles.submitButtonText}>Clear All</Text>
-                </TouchableOpacity>
-              </View>
             </>
+          )}
+
+          {/* Shared Action Buttons — triggers whichever table(s) have data */}
+          {(estimation.tableData.length > 0 || savedRows.length > 0 || estimation.estBatchNo || purchaseTranno) && (
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  (estimation.loading || submitting) && styles.disabledButton,
+                ]}
+                disabled={estimation.loading || submitting}
+                onPress={async () => {
+                  let salesTranno = null;
+                  let purchTranno = null;
+                  if (estimation.tableData.length > 0) {
+                    const result = await estimation.submitData();
+                    if (result) {
+                      salesTranno = result.tranno;
+                      estimation.setEstBatchNo(result.batchNo);
+                    }
+                  }
+                  if (savedRows.length > 0) {
+                    purchTranno = await submitPurchase();
+                  }
+                  if (salesTranno || purchTranno) {
+                    const lines = [];
+                    if (salesTranno) lines.push(`Sales Estimation No :  ${salesTranno}`);
+                    if (purchTranno) lines.push(`Purchase Estimation No :  ${purchTranno}`);
+                    lines.push("Generated..");
+                    Alert.alert("Success", lines.join("\n"));
+                  }
+                }}
+              >
+                <Text style={styles.submitButtonText}>
+                  {estimation.loading || submitting ? "Saving..." : "Submit"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  styles.printButton,
+                  !estimation.estBatchNo && styles.disabledButton,
+                ]}
+                onPress={handlePrint}
+                disabled={!estimation.estBatchNo}
+              >
+                <Text style={styles.submitButtonText}>Print Slip</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.submitButton, styles.clearButton]}
+                onPress={() => {
+                  estimation.clearAll();
+                  clearPurchaseAll();
+                }}
+              >
+                <Text style={styles.submitButtonText}>Clear All</Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Scanner Modal */}

@@ -24,6 +24,7 @@ const ENDPOINTS = {
   // returns that category's items ({ITEMID, ITEMNAME}[]).
   CATEGORY_SEARCH:          "/category-search",
   ITEMS_BY_CATEGORY:        (catCode) => `/category-search?catCode=${catCode}`,
+  EST_RECEIPT:              "/estreceipt",
 
   // POST
   EST_ISSUE:                "/estissue",

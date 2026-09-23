@@ -49,7 +49,13 @@ export default function PurchaseScreen() {
   const styles = createPurchaseStyles(theme);
   const purchase = usePurchase();
   const navigation = useNavigation();
-  const { savePurchaseRows } = usePurchaseContext();
+  const { savePurchaseRows, clearPurchaseRows } = usePurchaseContext();
+
+  // Clear any previously saved rows when entering this screen,
+  // so Home only shows rows after an explicit Save — same as sales.
+  useEffect(() => {
+    clearPurchaseRows();
+  }, []);
 
   // Map of "<rowId>-<field>" -> TextInput ref, so "next" on the keyboard
   // can jump straight to the next field in FOCUS_FIELDS order.

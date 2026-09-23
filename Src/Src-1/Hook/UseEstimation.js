@@ -653,7 +653,7 @@ export const useEstimation = (apiBaseUrl) => {
       setTableData([]);
       setLastEmpId(rawItems[0]?.empid ? String(rawItems[0].empid) : lastEmpId);
 
-      return batchNo;
+      return { batchNo, tranno: TRANNO };
     } catch (error) {
       const errMsg =
         error.response?.data?.message ||
