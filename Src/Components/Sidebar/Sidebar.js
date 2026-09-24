@@ -235,6 +235,17 @@ const Sidebar = (props) => {
         />
 
         <NavItem
+          icon="return-up-back"
+          iconSet={Ionicons}
+          label="Sales Return"
+          routeName="SalesReturn"
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate("AppScreens", { screen: "SalesReturn" });
+          }}
+        />
+
+        <NavItem
           icon="print"
           label="Print"
           routeName="Print"

@@ -193,12 +193,12 @@ const HomeScreen = () => {
           >
             <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity
+          <TouchableOpacity
             style={styles.purchaseNavButton}
-            onPress={() => navigation.navigate("Purchase")}
+            onPress={() => navigation.navigate("SalesReturn")}
           >
-            <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
-          </TouchableOpacity> */}
+            <Text style={styles.purchaseNavButtonText}>🛒  Go to SalesReturn</Text>
+          </TouchableOpacity>
           </View>
          
           {/* Totals Display */}
@@ -638,9 +638,7 @@ const HomeScreen = () => {
                 style={[
                   styles.submitButton,
                   styles.clearButton,
-                  !isSubmitted && styles.disabledButton,
                 ]}
-                disabled={!isSubmitted}
                 onPress={() => {
                   estimation.clearAll();
                   clearPurchaseAll();

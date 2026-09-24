@@ -84,7 +84,7 @@ export const PurchaseProvider = ({ children }) => {
       const api = createApiInstance(apiBaseUrl);
       const payload = savedRows.map(buildPayload);
       console.log("📦 Purchase payload:", JSON.stringify(payload, null, 2));
-      const response = await api.post(ENDPOINTS.EST_RECEIPT, payload);
+      const response = await api.post(`${ENDPOINTS.EST_RECEIPT}?costId=`, payload);
       console.log("✅ Purchase response:", JSON.stringify(response?.data, null, 2));
       const first = Array.isArray(response?.data) ? response.data[0] : response?.data;
       const tranno = first?.tranno || null;
