@@ -653,7 +653,7 @@ export const useEstimation = (apiBaseUrl) => {
       const printResponse = await service.submitPrintData(estPrintPayload);
       console.log("[PrintData] Response:", printResponse);
 
-      Alert.alert("Success", `Sales Estimation No: ${TRANNO} Generated`);
+      // Alert.alert("Success", `Salescc Estimation No: ${TRANNO} Generated`);
       setTranno(TRANNO);
       setEstBatchNo(batchNo);
       setTableData([]);

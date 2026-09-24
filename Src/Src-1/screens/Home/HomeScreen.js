@@ -59,6 +59,10 @@ const HomeScreen = () => {
 
   const estimation = useEstimation(API_BASE_URL);
 
+  // Once either sale or purchase has been submitted, lock further entry
+  // (nav to Purchase + sale inputs) and unlock Print Slip / Clear All.
+  const isSubmitted = !!(estimation.estBatchNo || purchaseTranno);
+
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = async () => {
@@ -183,8 +187,9 @@ const HomeScreen = () => {
           <View style={styles.header}>
              {/* Purchase Navigation Button */}
           <TouchableOpacity
-            style={styles.purchaseNavButton}
+            style={[styles.purchaseNavButton, isSubmitted && styles.disabledButton]}
             onPress={() => navigation.navigate("Purchase")}
+            disabled={isSubmitted}
           >
             <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
           </TouchableOpacity>
@@ -302,6 +307,7 @@ const HomeScreen = () => {
                 placeholder="Item ID"
                 placeholderTextColor={theme.COLORS.placeholder}
                 value={estimation.ITEMID}
+                editable={!isSubmitted}
                 onChangeText={(text) => {
                   estimation.setITEMID(text);
                   estimation.setShowList(false);
@@ -319,6 +325,7 @@ const HomeScreen = () => {
                   estimation.setScannerVisible(true);
                 }}
                 style={styles.scanButton}
+                disabled={isSubmitted}
               >
                 <Text style={styles.scanIcon}>📷</Text>
               </TouchableOpacity>
@@ -331,6 +338,7 @@ const HomeScreen = () => {
                 placeholder="Tag No"
                 placeholderTextColor={theme.COLORS.placeholder}
                 value={estimation.TAGNO}
+                editable={!isSubmitted}
                 onChangeText={estimation.setTAGNO}
                 onSubmitEditing={() => estimation.empInputRef.current?.focus()}
                 returnKeyType="next"
@@ -341,6 +349,7 @@ const HomeScreen = () => {
                   estimation.setScannerVisible(true);
                 }}
                 style={styles.scanButton}
+                disabled={isSubmitted}
               >
                 <Text style={styles.scanIcon}>📷</Text>
               </TouchableOpacity>
@@ -353,6 +362,7 @@ const HomeScreen = () => {
                 placeholder="Emp ID"
                 placeholderTextColor={theme.COLORS.placeholder}
                 value={estimation.emp}
+                editable={!isSubmitted}
                 onChangeText={(text) => {
                   estimation.setEmp(text);
                 }}
@@ -582,9 +592,9 @@ const HomeScreen = () => {
               <TouchableOpacity
                 style={[
                   styles.submitButton,
-                  (estimation.loading || submitting) && styles.disabledButton,
+                  (estimation.loading || submitting || isSubmitted) && styles.disabledButton,
                 ]}
-                disabled={estimation.loading || submitting}
+                disabled={estimation.loading || submitting || isSubmitted}
                 onPress={async () => {
                   let salesTranno = null;
                   let purchTranno = null;
@@ -625,7 +635,12 @@ const HomeScreen = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.submitButton, styles.clearButton]}
+                style={[
+                  styles.submitButton,
+                  styles.clearButton,
+                  !isSubmitted && styles.disabledButton,
+                ]}
+                disabled={!isSubmitted}
                 onPress={() => {
                   estimation.clearAll();
                   clearPurchaseAll();
