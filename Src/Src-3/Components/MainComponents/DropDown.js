@@ -14,7 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../Context/ThemeContext";
 import { fontFor, SIZES } from "../../../Utills/Theme";
 
-const { width, height } = Dimensions.get("window");
 
 const DropdownInput = ({
   label,
@@ -240,9 +239,9 @@ const getStyles = (theme) =>
     modalContent: {
       backgroundColor: theme.COLORS.cardBackground,
       borderRadius: 16,
-      width: width * 0.9,
+      width: "100%",
       maxWidth: 520,
-      maxHeight: height * 0.7,
+      maxHeight: "80%",
       shadowColor: theme.COLORS.shadowDark,
       shadowOffset: {
         width: 0,

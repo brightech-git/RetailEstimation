@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { createItemDetailsStyles } from "./ItemDetailsStyles";
+import { useLayout } from "../../../Utills/Theme";
 import {
   calcGross,
   calcDiscountedGross,
@@ -9,7 +10,8 @@ import {
 } from "../../../shared/EstimationCalculations";
 
 const ItemDetailsCard = ({ item, index, theme }) => {
-  const styles = createItemDetailsStyles(theme);
+  const { cardColumns } = useLayout();
+  const styles = createItemDetailsStyles(theme, cardColumns);
 
   const grossAmount = calcGross(item);
   const discount = parseFloat(item.DISCOUNT) || 0;

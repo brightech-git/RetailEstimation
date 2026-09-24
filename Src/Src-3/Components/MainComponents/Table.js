@@ -11,7 +11,6 @@ import {
 import getStyles from "./TableStyles";
 import { useTheme } from "../../../Context/ThemeContext";
 
-const { width } = Dimensions.get('window');
 
 const TableComponent = ({
   itemTags,

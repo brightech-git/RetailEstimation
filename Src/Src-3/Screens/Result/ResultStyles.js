@@ -1,7 +1,6 @@
 import { StyleSheet, Dimensions } from "react-native";
 import { fontFor, SIZES } from "../../../Utills/Theme";
 
-const { width } = Dimensions.get("window");
 
 const getStyles = (theme) =>
   StyleSheet.create({

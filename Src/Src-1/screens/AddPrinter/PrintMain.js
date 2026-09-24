@@ -17,6 +17,7 @@ import { useTheme } from "../../../Context/ThemeContext";
 import { usePrinterService } from "../../Service/IpServices";
 import { useToast } from "../../Context/ToastContext";
 import { createPrinterSettingsStyles } from "./PrinterStyles";
+import { useLayout } from "../../../Utills/Theme";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -49,7 +50,8 @@ const isValidPort = (port) => {
 
 const PrinterSettings = () => {
   const { theme } = useTheme();
-  const styles = createPrinterSettingsStyles(theme);
+  const layout = useLayout();
+  const styles = createPrinterSettingsStyles(theme, layout);
   const { showToast } = useToast();
   const printerService = usePrinterService();
   const navigation = useNavigation();

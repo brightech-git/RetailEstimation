@@ -14,7 +14,6 @@ import { useApiBaseUrl } from "../../../Config/Config";
 import { useTheme } from "../../../Context/ThemeContext";
 import getStyles from "./HeaderStyles";
 
-const { width } = Dimensions.get("window");
 
 // MainHeader renders the top bar (theme toggle, company name, sidebar
 // launcher) and the gold/silver rate info card. The sidebar itself (menu

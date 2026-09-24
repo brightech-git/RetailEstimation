@@ -4,7 +4,10 @@ import { fontFor } from "../../../Utills/Theme";
 
 
 
-export const createItemDetailsStyles = (theme) =>
+// Card width per number of cards in a row (parent grid wraps, space-between)
+const CARD_WIDTH = { 1: "95%", 2: "48.5%", 3: "32%" };
+
+export const createItemDetailsStyles = (theme, columns = 1) =>
   StyleSheet.create({
     itemCard: {
       backgroundColor: theme.COLORS.white,
@@ -18,9 +21,8 @@ export const createItemDetailsStyles = (theme) =>
       elevation: 3,
       borderWidth: 1,
       borderColor: theme.COLORS.border,
-      // two cards per row on tablets (the parent grid wraps), one on phones
-      alignSelf: theme.LAYOUT.isTablet ? "flex-start" : "center",
-      width: theme.LAYOUT.isTablet ? "48.5%" : "95%",
+      alignSelf: columns > 1 ? "flex-start" : "center",
+      width: CARD_WIDTH[columns] || CARD_WIDTH[1],
     },
     cardImageContainer: {
       alignItems: "center",

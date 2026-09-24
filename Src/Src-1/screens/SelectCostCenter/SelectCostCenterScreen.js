@@ -19,7 +19,6 @@ import { moderateScale } from "../../../Utills/Scalling";
 import { StyleSheet } from "react-native";
 import { fontFor } from "../../../Utills/Theme";
 
-const { width } = Dimensions.get("window");
 
 // Companies with this COMPANYID share one login but operate as several
 // separate companies underneath - instead of picking a cost centre, the

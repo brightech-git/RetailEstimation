@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "rea
 import DropdownInput from "./DropDown";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../Context/ThemeContext";
-import { fontFor, SIZES } from "../../../Utills/Theme";
+import { fontFor, SIZES, useLayout } from "../../../Utills/Theme";
 
 const FiltersComponent = ({
   filters,
@@ -14,7 +14,8 @@ const FiltersComponent = ({
   loadingStates = { items: false, subItems: false }
 }) => {
   const { theme } = useTheme();
-  const styles = getStyles(theme);
+  const layout = useLayout();
+  const styles = getStyles(theme, layout);
 
   const clearFilter = () => {
     setFilters({
@@ -152,7 +153,7 @@ const FiltersComponent = ({
   );
 };
 
-const getStyles = (theme) =>
+const getStyles = (theme, layout) =>
   StyleSheet.create({
     container: {
       marginTop: 10,
@@ -190,11 +191,11 @@ const getStyles = (theme) =>
       color: theme.COLORS.danger,
       marginLeft: 4,
     },
-    // Phone: two rows of two dropdowns. Tablet: both rows side by side, so
-    // all four filters sit on one line.
-    filterContainer: theme.LAYOUT.isTablet ? { flexDirection: "row", gap: 12 } : {},
+    // Phone portrait: two rows of two dropdowns. Tablet or landscape: both
+    // rows side by side, so all four filters sit on one line.
+    filterContainer: layout.wide ? { flexDirection: "row", gap: 12 } : {},
     rowContainer: {
-      ...(theme.LAYOUT.isTablet && { flex: 1 }),
+      ...(layout.wide && { flex: 1 }),
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: 16,

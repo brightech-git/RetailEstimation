@@ -3,7 +3,6 @@ import { StyleSheet, Dimensions } from "react-native";
 import { moderateScale } from "../../../Utills/Scalling";
 import { fontFor } from "../../../Utills/Theme";
 
-const { width } = Dimensions.get("window");
 
 export const getStyles = (theme) => {
   const { COLORS, FONTS, SIZES } = theme;
@@ -123,7 +122,7 @@ export const getStyles = (theme) => {
       alignItems: "center",
     },
     modalContent: {
-      width: width * 0.85,
+      width: "85%",
       maxWidth: 480,
       maxHeight: "70%",
       backgroundColor: COLORS.card,

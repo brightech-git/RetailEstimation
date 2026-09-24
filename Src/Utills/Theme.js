@@ -1,7 +1,5 @@
-import { Dimensions } from "react-native";
+import { useWindowDimensions } from "react-native";
 import { DEVICE, moderateScale } from "./Scalling";
-
-const { width, height } = Dimensions.get("screen");
 
 /* -------------------------------------------------------------------------- */
 /* 🎨 PURE WHITE & TRUE BLACK COLOR SCHEMES                                   */
@@ -149,8 +147,6 @@ export const SIZES = {
   h4: baseHeading + 4,
   h5: baseHeading + 2,
   h6: baseHeading,
-  width,
-  height,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -158,11 +154,27 @@ export const SIZES = {
 /* -------------------------------------------------------------------------- */
 export const LAYOUT = {
   isTablet: DEVICE.isTablet,
-  // item cards / form sections placed side by side on tablets
-  columns: DEVICE.isTablet ? 2 : 1,
   // forms and dialogs stop growing past this width and centre themselves
   formMaxWidth: 640,
   toastMaxWidth: 560,
+};
+
+// Live layout info — re-renders the calling component when the device
+// rotates. Use it for decisions that depend on the current orientation.
+//   wide        → room for two sections side by side (tablet, or phone in landscape)
+//   cardColumns → item cards per row: phone 1 / 2, tablet 2 / 3 (portrait / landscape)
+export const useLayout = () => {
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+  const { isTablet } = DEVICE;
+  return {
+    width,
+    height,
+    isLandscape,
+    isTablet,
+    wide: isTablet || isLandscape,
+    cardColumns: isTablet ? (isLandscape ? 3 : 2) : isLandscape ? 2 : 1,
+  };
 };
 
 /* -------------------------------------------------------------------------- */

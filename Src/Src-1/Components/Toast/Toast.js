@@ -11,7 +11,6 @@ import {
 import { useTheme } from '../../../Context/ThemeContext';
 import { fontFor, SIZES, LAYOUT } from "../../../Utills/Theme";
 
-const { width } = Dimensions.get('window');
 
 const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => {
   const { theme } = useTheme();
@@ -145,7 +144,7 @@ const getStyles = (COLORS) =>
       alignItems: 'center',
     },
     toast: {
-      width: width - 40,
+      width: "100%",
       maxWidth: LAYOUT.toastMaxWidth,
       minHeight: 60,
       borderRadius: SIZES.radius,

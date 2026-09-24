@@ -1,7 +1,6 @@
 import { StyleSheet, Dimensions } from "react-native";
 import { fontFor, SIZES } from "../../../Utills/Theme";
 
-const { width } = Dimensions.get('window');
 
 const getStyles = (theme) =>
   StyleSheet.create({
@@ -117,7 +116,7 @@ const getStyles = (theme) =>
     dropdownContainer: {
       backgroundColor: theme.COLORS.cardBackground,
       borderRadius: 8,
-      width: width * 0.7,
+      width: "70%",
       maxWidth: 300,
       shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },

@@ -20,7 +20,6 @@ import { useTheme } from "../../../Context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getStyles } from "./LoginStyles";
 
-const { width } = Dimensions.get("window");
 
 const LoginScreen = ({ navigation }) => {
   const { login, loading } = useContext(LoginContext);
