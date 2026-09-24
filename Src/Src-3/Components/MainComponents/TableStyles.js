@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions } from "react-native";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const { width } = Dimensions.get('window');
 
@@ -18,8 +19,8 @@ const getStyles = (theme) =>
       paddingHorizontal: 4,
     },
     formTitle: {
-      fontSize: 18,
-      fontWeight: "600",
+      fontSize: SIZES.h5,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.title,
     },
     filterButton: {
@@ -33,22 +34,25 @@ const getStyles = (theme) =>
       borderColor: theme.COLORS.border,
     },
     filterButtonText: {
-      fontSize: 14,
+      fontSize: SIZES.font,
       color: theme.COLORS.text,
       marginRight: 8,
+      fontFamily: fontFor(),
     },
     filterArrow: {
       fontSize: 10,
       color: theme.COLORS.textLight,
+      fontFamily: fontFor(),
     },
     filterInfoContainer: {
       marginBottom: 12,
       paddingHorizontal: 4,
     },
     filterInfoText: {
-      fontSize: 12,
+      fontSize: SIZES.fontXs,
       color: theme.COLORS.textLight,
       fontStyle: "italic",
+      fontFamily: fontFor(),
     },
     tableHeader: {
       flexDirection: "row",
@@ -60,8 +64,8 @@ const getStyles = (theme) =>
     },
     headerCell: {
       color: theme.COLORS.buttonText,
-      fontWeight: "bold",
-      fontSize: 13,
+      fontFamily: fontFor("bold"),
+      fontSize: SIZES.fontSm,
       textAlign: "center",
       paddingHorizontal: 4,
     },
@@ -82,14 +86,15 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.primaryLight,
     },
     rowCell: {
-      fontSize: 14,
+      fontSize: SIZES.font,
       textAlign: "center",
       paddingHorizontal: 4,
       color: theme.COLORS.text,
+      fontFamily: fontFor(),
     },
     checkedText: {
       color: theme.COLORS.info,
-      fontWeight: "500",
+      fontFamily: fontFor("500"),
     },
     emptyContainer: {
       padding: 40,
@@ -100,11 +105,12 @@ const getStyles = (theme) =>
     },
     emptyText: {
       color: theme.COLORS.textLight,
-      fontSize: 14,
+      fontSize: SIZES.font,
+      fontFamily: fontFor(),
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.3)",
+      backgroundColor: theme.COLORS.backdrop,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -113,7 +119,7 @@ const getStyles = (theme) =>
       borderRadius: 8,
       width: width * 0.7,
       maxWidth: 300,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
@@ -135,15 +141,16 @@ const getStyles = (theme) =>
     dropdownItemText: {
       fontSize: 15,
       color: theme.COLORS.text,
+      fontFamily: fontFor(),
     },
     dropdownItemTextSelected: {
       color: theme.COLORS.primary,
-      fontWeight: "600",
+      fontFamily: fontFor("600"),
     },
     checkmark: {
       color: theme.COLORS.primary,
-      fontSize: 16,
-      fontWeight: "bold",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("bold"),
     },
     loadMoreButton: {
       backgroundColor: theme.COLORS.primary,
@@ -166,8 +173,8 @@ const getStyles = (theme) =>
     loadMoreText: {
       textAlign: "center",
       color: theme.COLORS.buttonText,
-      fontWeight: "600",
-      fontSize: 14,
+      fontFamily: fontFor("600"),
+      fontSize: SIZES.font,
     },
     allLoadedContainer: {
       backgroundColor: theme.COLORS.success,
@@ -180,8 +187,8 @@ const getStyles = (theme) =>
     allLoadedText: {
       textAlign: "center",
       color: theme.COLORS.white,
-      fontWeight: "600",
-      fontSize: 14,
+      fontFamily: fontFor("600"),
+      fontSize: SIZES.font,
     },
     printButton: {
       backgroundColor: theme.COLORS.info,
@@ -193,8 +200,8 @@ const getStyles = (theme) =>
     },
     printText: {
       color: theme.COLORS.white,
-      fontSize: 16,
-      fontWeight: "bold",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("bold"),
     },
   });
 

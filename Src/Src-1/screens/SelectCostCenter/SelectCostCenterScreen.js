@@ -15,8 +15,9 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { LoginContext } from "../../../Context/LoginContext";
 import { useTheme } from "../../../Context/ThemeContext";
-import { moderateScale } from "../../Utills/Scalling";
+import { moderateScale } from "../../../Utills/Scalling";
 import { StyleSheet } from "react-native";
+import { fontFor } from "../../../Utills/Theme";
 
 const { width } = Dimensions.get("window");
 
@@ -365,7 +366,7 @@ const getStyles = (theme) => {
     },
     itemTextSelected: {
       color: COLORS.primary,
-      fontWeight: "600",
+      fontFamily: fontFor("600"),
     },
     emptyContainer: {
       alignItems: "center",

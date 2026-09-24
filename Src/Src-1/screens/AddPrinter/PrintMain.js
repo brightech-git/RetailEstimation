@@ -481,7 +481,7 @@ const PrinterSettings = () => {
             {status && (
               <Text style={[
                 styles.connStatusText,
-                status === 'connected' && { color: '#1B9721' },
+                status === 'connected' && { color: theme.COLORS.success },
                 status === 'offline' && { color: theme.COLORS.danger },
                 status === 'checking' && { color: theme.COLORS.textLight },
               ]}>
@@ -495,34 +495,34 @@ const PrinterSettings = () => {
                 style={[styles.actionButton, styles.selectButton]}
                 onPress={() => handleSetCurrentPrinter(item)}
               >
-                <MaterialIcons name="check-circle" size={16} color="#fff" />
+                <MaterialIcons name="check-circle" size={16} color={theme.COLORS.buttonText} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
               style={[styles.actionButton, styles.editButton]}
               onPress={() => handleEditPrinter(item)}
             >
-              <MaterialIcons name="edit" size={16} color="#fff" />
+              <MaterialIcons name="edit" size={16} color={theme.COLORS.buttonText} />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.connButton]}
               onPress={() => handleCheckConnection(item)}
             >
               {status === 'checking' ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.COLORS.buttonText} />
               ) : status === 'connected' ? (
-                <MaterialIcons name="wifi" size={16} color="#fff" />
+                <MaterialIcons name="wifi" size={16} color={theme.COLORS.buttonText} />
               ) : status === 'offline' ? (
-                <MaterialIcons name="wifi-off" size={16} color="#fff" />
+                <MaterialIcons name="wifi-off" size={16} color={theme.COLORS.buttonText} />
               ) : (
-                <MaterialIcons name="wifi" size={16} color="#fff" />
+                <MaterialIcons name="wifi" size={16} color={theme.COLORS.buttonText} />
               )}
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
               onPress={() => handleDeletePrinter(item)}
             >
-              <MaterialIcons name="delete" size={16} color="#fff" />
+              <MaterialIcons name="delete" size={16} color={theme.COLORS.buttonText} />
             </TouchableOpacity>
           </View>
         </View>

@@ -1,5 +1,6 @@
 import { StyleSheet, Platform } from "react-native";
 import { moderateScale } from "../../../Utills/Scalling";
+import { fontFor } from "../../../Utills/Theme";
 
 export const createPrinterSettingsStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -62,12 +63,12 @@ export const createPrinterSettingsStyles = (theme) => {
     
     mainTitle: {
       fontSize: moderateScale(SIZES.h4),
-      fontWeight: "700",
       color: COLORS.title,
       flex: 1,
       textAlign: "center",
       marginHorizontal: moderateScale(12),
       ...FONTS.h4,
+      fontFamily: fontFor("700"),
     },
     
     refreshButton: {
@@ -150,9 +151,9 @@ export const createPrinterSettingsStyles = (theme) => {
 
     compactPrinterName: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       color: COLORS.text,
       ...FONTS.font,
+      fontFamily: fontFor("700"),
     },
 
     compactActiveBadge: {
@@ -174,10 +175,10 @@ export const createPrinterSettingsStyles = (theme) => {
 
     compactActiveBadgeText: {
       fontSize: moderateScale(SIZES.fontXs),
-      fontWeight: "700",
       color: COLORS.buttonText,
       letterSpacing: moderateScale(0.5),
       ...FONTS.fontXs,
+      fontFamily: fontFor("700"),
     },
 
     compactPrinterAddress: {
@@ -240,9 +241,9 @@ export const createPrinterSettingsStyles = (theme) => {
     
     sectionTitle: {
       fontSize: moderateScale(SIZES.h6),
-      fontWeight: "700",
       color: COLORS.title,
       ...FONTS.h6,
+      fontFamily: fontFor("700"),
     },
 
     cancelEditButton: {
@@ -258,8 +259,8 @@ export const createPrinterSettingsStyles = (theme) => {
     cancelEditText: {
       color: COLORS.danger,
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: "700",
       ...FONTS.fontSm,
+      fontFamily: fontFor("700"),
     },
 
     inputGroup: {
@@ -270,20 +271,20 @@ export const createPrinterSettingsStyles = (theme) => {
       fontSize: moderateScale(SIZES.fontSm),
       color: COLORS.text,
       marginBottom: moderateScale(6),
-      fontWeight: "600",
       ...FONTS.fontSm,
+      fontFamily: fontFor("600"),
     },
 
     optionalText: {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.textLight,
-      fontWeight: "400",
       ...FONTS.fontXs,
+      fontFamily: fontFor("400"),
     },
 
     requiredText: {
       color: COLORS.danger,
-      fontWeight: "700",
+      fontFamily: fontFor("700"),
     },
 
     inputWrapper: {
@@ -348,10 +349,10 @@ export const createPrinterSettingsStyles = (theme) => {
     buttonText: {
       
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       letterSpacing: moderateScale(0.5),
       ...FONTS.font,
-      color: "#fff",
+      color: COLORS.buttonText,
+      fontFamily: fontFor("700"),
     },
 
     // ===========================================
@@ -403,9 +404,9 @@ export const createPrinterSettingsStyles = (theme) => {
 
     printerCountText: {
       fontSize: moderateScale(SIZES.fontXs),
-      fontWeight: "700",
       color: COLORS.buttonText,
       ...FONTS.fontXs,
+      fontFamily: fontFor("700"),
     },
     
     sectionActions: {
@@ -428,8 +429,8 @@ export const createPrinterSettingsStyles = (theme) => {
     viewAllButtonText: {
       color: COLORS.primary,
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: "700",
       ...FONTS.fontSm,
+      fontFamily: fontFor("700"),
     },
     
     clearAllButton: {
@@ -456,8 +457,8 @@ export const createPrinterSettingsStyles = (theme) => {
     clearAllButtonText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: "700",
       ...FONTS.fontSm,
+      fontFamily: fontFor("700"),
     },
 
     // ===========================================
@@ -527,8 +528,8 @@ export const createPrinterSettingsStyles = (theme) => {
       flexShrink: 1,
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
-      fontWeight: "700",
       ...FONTS.font,
+      fontFamily: fontFor("700"),
     },
     
     printerAddress: {
@@ -558,9 +559,9 @@ export const createPrinterSettingsStyles = (theme) => {
     currentBadgeText: {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.buttonText,
-      fontWeight: "800",
       letterSpacing: moderateScale(0.5),
       ...FONTS.fontXs,
+      fontFamily: fontFor("800"),
     },
     
     printerActions: {
@@ -577,7 +578,7 @@ export const createPrinterSettingsStyles = (theme) => {
       alignItems: "center",
       ...Platform.select({
         ios: {
-          shadowColor: "#000",
+          shadowColor: COLORS.shadowDark,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.15,
           shadowRadius: 2,
@@ -589,22 +590,22 @@ export const createPrinterSettingsStyles = (theme) => {
     },
     
     selectButton: {
-      backgroundColor: COLORS.success || "#4CAF50",
+      backgroundColor: COLORS.success,
     },
     
     editButton: {
-      backgroundColor: COLORS.info || "#2196F3",
+      backgroundColor: COLORS.info,
     },
 
     connButton: {
-      backgroundColor: COLORS.success || "#4CAF50",
+      backgroundColor: COLORS.success,
     },
 
     connStatusText: {
       fontSize: moderateScale(SIZES.fontXs),
       marginTop: moderateScale(2),
-      fontWeight: '600',
       ...FONTS.fontXs,
+      fontFamily: fontFor('600'),
     },
     
     deleteButton: {
@@ -632,9 +633,9 @@ export const createPrinterSettingsStyles = (theme) => {
       fontSize: moderateScale(SIZES.font),
       color: COLORS.textLight,
       textAlign: "center",
-      fontWeight: "600",
       marginBottom: moderateScale(4),
       ...FONTS.font,
+      fontFamily: fontFor("600"),
     },
     
     emptySubtext: {
@@ -651,7 +652,7 @@ export const createPrinterSettingsStyles = (theme) => {
     // ===========================================
     modalOverlay: {
       flex: 1,
-      backgroundColor: COLORS.overlay || "rgba(0, 0, 0, 0.6)",
+      backgroundColor: COLORS.backdrop,
       justifyContent: "center",
       alignItems: "center",
       padding: moderateScale(SIZES.padding),
@@ -667,7 +668,7 @@ export const createPrinterSettingsStyles = (theme) => {
       borderColor: COLORS.borderColor,
       ...Platform.select({
         ios: {
-          shadowColor: "#000",
+          shadowColor: COLORS.shadowDark,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.3,
           shadowRadius: 12,
@@ -690,8 +691,8 @@ export const createPrinterSettingsStyles = (theme) => {
       marginRight: moderateScale(8),
       fontSize: moderateScale(SIZES.h5),
       color: COLORS.title,
-      fontWeight: "800",
       ...FONTS.h5,
+      fontFamily: fontFor("800"),
     },
 
     modalCloseButton: {
@@ -745,7 +746,7 @@ export const createPrinterSettingsStyles = (theme) => {
       borderColor: COLORS.borderColor,
       ...Platform.select({
         ios: {
-          shadowColor: "#000",
+          shadowColor: COLORS.shadowDark,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.3,
           shadowRadius: 12,
@@ -771,8 +772,8 @@ export const createPrinterSettingsStyles = (theme) => {
       color: COLORS.title,
       marginBottom: moderateScale(12),
       textAlign: "center",
-      fontWeight: "800",
       ...FONTS.h5,
+      fontFamily: fontFor("800"),
     },
     
     confirmMessage: {
@@ -799,7 +800,7 @@ export const createPrinterSettingsStyles = (theme) => {
       justifyContent: "center",
       ...Platform.select({
         ios: {
-          shadowColor: "#000",
+          shadowColor: COLORS.shadowDark,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.15,
           shadowRadius: 4,
@@ -817,9 +818,9 @@ export const createPrinterSettingsStyles = (theme) => {
     cancelConfirmButtonText: {
       color: COLORS.text,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       letterSpacing: moderateScale(0.5),
       ...FONTS.font,
+      fontFamily: fontFor("700"),
     },
     
     deleteConfirmButton: {
@@ -829,9 +830,9 @@ export const createPrinterSettingsStyles = (theme) => {
     confirmButtonText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       letterSpacing: moderateScale(0.5),
       ...FONTS.font,
+      fontFamily: fontFor("700"),
     },
   });
 };

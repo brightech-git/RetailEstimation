@@ -59,6 +59,17 @@ export const LIGHT_COLORS = {
   buttonText: "#FFFFFF",
 
   /* -------------------------------------------------------------------------- */
+  /* 🧱 SURFACES & OVERLAYS (used instead of hard-coded values in screens)     */
+  /* -------------------------------------------------------------------------- */
+  shadowDark: "#000000",               // shadowColor for cards / modals
+  backdrop: "rgba(0,0,0,0.5)",         // dimmed background behind modals
+  neutralButton: "#444444",            // "Clear All" style buttons
+  onPrimaryMuted: "rgba(255,255,255,0.2)", // translucent chip on a primary bar
+  headerCard: "rgba(255,255,255,0.95)",    // info card on the gradient header
+  warningSurface: "#FFF3CD",           // warning banner background
+  scannerFrame: "#00FF9A",             // barcode scanner target frame
+
+  /* -------------------------------------------------------------------------- */
   /* 🔵 ICONS & GRADIENTS                                                      */
   /* -------------------------------------------------------------------------- */
   iconPrimary: "#1C467C",
@@ -102,6 +113,13 @@ export const DARK_COLORS = {
   input: "#1C1C1C",
   darkInput: "#2A2A2A",
   buttonText: "#FFFFFF",
+  shadowDark: "#000000",
+  backdrop: "rgba(0,0,0,0.7)",
+  neutralButton: "#3A3A3A",
+  onPrimaryMuted: "rgba(255,255,255,0.2)",
+  headerCard: "#1A1A1A",
+  warningSurface: "rgba(255,193,7,0.15)",
+  scannerFrame: "#00FF9A",
   iconPrimary: "#C5A572",
   iconSecondary: "#AAAAAA",
   gradientPrimary: ["#000000", "#1A1A1A"],
@@ -149,6 +167,17 @@ export const FONT_FAMILIES = {
   subheading: "Poppins-SemiBold",
   body: "Poppins-Medium",
   bold: "Poppins-Bold",
+};
+
+// Font family for a CSS-style weight ("400", "600", "bold", …). Custom fonts
+// ignore fontWeight on Android, so screens pick the matching Poppins file
+// through this instead — change FONT_FAMILIES above and every screen follows.
+export const fontFor = (weight = "400") => {
+  const w =
+    weight === "bold" ? 700 : weight === "normal" ? 400 : parseInt(weight, 10) || 400;
+  if (w >= 700) return FONT_FAMILIES.bold;
+  if (w >= 600) return FONT_FAMILIES.subheading;
+  return FONT_FAMILIES.body;
 };
 
 // Line height proportional to the font size. Fixed line heights clip or

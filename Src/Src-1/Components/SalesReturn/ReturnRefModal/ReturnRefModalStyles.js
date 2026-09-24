@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { moderateScale } from "../../../../Utills/Scalling";
+import { fontFor } from "../../../../Utills/Theme";
 
 export const createReturnRefModalStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -28,9 +29,9 @@ export const createReturnRefModalStyles = (theme) => {
     },
     modalHeaderText: {
       color: COLORS.text,
-      fontWeight: "700",
       fontSize: moderateScale(SIZES.font),
       ...FONTS.text,
+      fontFamily: fontFor("700"),
     },
     modalBody: {
       paddingHorizontal: moderateScale(18),
@@ -39,12 +40,12 @@ export const createReturnRefModalStyles = (theme) => {
     },
     titleText: {
       textAlign: "center",
-      fontWeight: "800",
       fontSize: moderateScale(SIZES.fontLg || SIZES.font + 4),
       color: COLORS.primary,
       letterSpacing: 1,
       marginBottom: moderateScale(18),
       ...FONTS.subheading,
+      fontFamily: fontFor("800"),
     },
     checkboxRow: {
       flexDirection: "row",
@@ -69,13 +70,13 @@ export const createReturnRefModalStyles = (theme) => {
     checkboxTick: {
       color: COLORS.buttonText,
       fontSize: moderateScale(12),
-      fontWeight: "900",
+      fontFamily: fontFor("900"),
     },
     fieldLabel: {
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: "700",
       color: COLORS.label,
       ...FONTS.subheading,
+      fontFamily: fontFor("700"),
     },
     fieldInput: {
       borderWidth: 1,
@@ -109,10 +110,10 @@ export const createReturnRefModalStyles = (theme) => {
     },
     secondFieldLabel: {
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: "700",
       color: COLORS.label,
       marginBottom: moderateScale(6),
       ...FONTS.subheading,
+      fontFamily: fontFor("700"),
     },
     modalFooter: {
       flexDirection: "row",
@@ -133,8 +134,8 @@ export const createReturnRefModalStyles = (theme) => {
     cancelBtnText: {
       color: COLORS.text,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "600",
       ...FONTS.text,
+      fontFamily: fontFor("600"),
     },
     okBtn: {
       paddingVertical: moderateScale(10),
@@ -145,8 +146,8 @@ export const createReturnRefModalStyles = (theme) => {
     okBtnText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       ...FONTS.text,
+      fontFamily: fontFor("700"),
     },
   });
 };

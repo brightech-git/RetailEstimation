@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
-import { moderateScale } from '../../../Utills/Scalling'; // Adjust path as needed
+import { moderateScale } from '../../../Utills/Scalling';
+import { fontFor } from "../../../Utills/Theme"; // Adjust path as needed
 
 export const createBarcodeScannerModalStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -28,8 +29,8 @@ export const createBarcodeScannerModalStyles = (theme) => {
     closeText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: '600',
       ...FONTS.font,
+      fontFamily: fontFor('600'),
     },
     centered: {
       flex: 1,
@@ -52,9 +53,9 @@ export const createBarcodeScannerModalStyles = (theme) => {
     },
     permissionText: {
       color: COLORS.buttonText,
-      fontWeight: 'bold',
       fontSize: moderateScale(SIZES.font),
       ...FONTS.font,
+      fontFamily: fontFor('bold'),
     },
     permissionMessage: {
       fontSize: moderateScale(SIZES.font),

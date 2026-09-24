@@ -1,12 +1,16 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useTheme } from '../../../Context/ThemeContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const WebViewPrintScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const webViewRef = useRef(null);
+  const { theme } = useTheme();
+  const styles = getStyles(theme.COLORS);
   
   const { htmlContent, slipData } = route.params;
 
@@ -78,10 +82,10 @@ const WebViewPrintScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -90,49 +94,50 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 10,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: COLORS.surfaceVariant,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: COLORS.outline,
   },
   backButton: {
     padding: 8,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
+    fontSize: SIZES.fontLg,
+    color: COLORS.primary,
+    fontFamily: fontFor(),
   },
   title: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: SIZES.h5,
+    fontFamily: fontFor('bold'),
+    color: COLORS.title,
   },
   buttonContainer: {
     flexDirection: 'row',
     gap: 6,
   },
   printButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
   },
   printButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: COLORS.buttonText,
+    fontSize: SIZES.font,
+    fontFamily: fontFor('bold'),
   },
   shareButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: COLORS.success,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
   },
   shareButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: COLORS.buttonText,
+    fontSize: SIZES.font,
+    fontFamily: fontFor('bold'),
   },
   webview: {
     flex: 1,

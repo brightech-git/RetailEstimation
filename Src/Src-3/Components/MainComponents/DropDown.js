@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../Context/ThemeContext";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const { width, height } = Dimensions.get("window");
 
@@ -196,8 +197,8 @@ const getStyles = (theme) =>
       marginBottom: 16,
     },
     label: {
-      fontSize: 13,
-      fontWeight: "500",
+      fontSize: SIZES.fontSm,
+      fontFamily: fontFor("500"),
       color: theme.COLORS.title,
       marginBottom: 6,
     },
@@ -218,9 +219,10 @@ const getStyles = (theme) =>
     },
     dropdownText: {
       flex: 1,
-      fontSize: 14,
+      fontSize: SIZES.font,
       color: theme.COLORS.text,
       marginRight: 8,
+      fontFamily: fontFor(),
     },
     disabledText: {
       color: theme.COLORS.textLight,
@@ -230,7 +232,7 @@ const getStyles = (theme) =>
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      backgroundColor: theme.COLORS.backdrop,
       justifyContent: "center",
       alignItems: "center",
       padding: 20,
@@ -241,7 +243,7 @@ const getStyles = (theme) =>
       width: width * 0.9,
       maxWidth: 520,
       maxHeight: height * 0.7,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: {
         width: 0,
         height: 2,
@@ -261,8 +263,8 @@ const getStyles = (theme) =>
     modalTitle: {
       flex: 1,
       marginRight: 8,
-      fontSize: 18,
-      fontWeight: "600",
+      fontSize: SIZES.h5,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.title,
     },
     closeButton: {
@@ -284,8 +286,9 @@ const getStyles = (theme) =>
     searchInput: {
       flex: 1,
       paddingVertical: 10,
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: theme.COLORS.text,
+      fontFamily: fontFor(),
     },
     optionsList: {
       maxHeight: 300,
@@ -303,13 +306,14 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.primaryLight,
     },
     optionText: {
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: theme.COLORS.text,
       flex: 1,
+      fontFamily: fontFor(),
     },
     selectedOptionText: {
       color: theme.COLORS.primary,
-      fontWeight: "500",
+      fontFamily: fontFor("500"),
     },
     noResults: {
       alignItems: "center",
@@ -318,7 +322,8 @@ const getStyles = (theme) =>
     noResultsText: {
       marginTop: 12,
       color: theme.COLORS.textLight,
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor(),
     },
     clearSearchButton: {
       marginTop: 12,
@@ -329,7 +334,8 @@ const getStyles = (theme) =>
     },
     clearSearchText: {
       color: theme.COLORS.textLight,
-      fontSize: 14,
+      fontSize: SIZES.font,
+      fontFamily: fontFor(),
     },
     modalFooter: {
       padding: 16,
@@ -344,8 +350,8 @@ const getStyles = (theme) =>
     },
     cancelButtonText: {
       color: theme.COLORS.textLight,
-      fontSize: 16,
-      fontWeight: "500",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("500"),
     },
   });
 

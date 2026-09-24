@@ -1,6 +1,7 @@
 // 📁 Src/Components/Header/CommonHeaderStyles.js
 import { StyleSheet, Platform, StatusBar } from "react-native";
 import { moderateScale } from "../../Utills/Scalling";
+import { fontFor } from "../../Utills/Theme";
 
 export const createCommonHeaderStyles = (theme) => {
   const { COLORS, FONTS } = theme;
@@ -12,7 +13,7 @@ export const createCommonHeaderStyles = (theme) => {
       borderBottomLeftRadius: moderateScale(12),
       borderBottomRightRadius: moderateScale(12),
       elevation: 6,
-      shadowColor: "#000",
+      shadowColor: COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
       shadowRadius: 4,
@@ -48,10 +49,10 @@ export const createCommonHeaderStyles = (theme) => {
     },
     title: {
       fontSize: moderateScale(18),
-      fontWeight: "700",
       color: COLORS.buttonText,
       textAlign: "center",
       ...FONTS.heading,
+      fontFamily: fontFor("700"),
     },
     subtitle: {
       fontSize: moderateScale(12),

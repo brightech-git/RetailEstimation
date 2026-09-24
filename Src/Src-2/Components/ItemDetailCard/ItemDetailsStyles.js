@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
-import { moderateScale } from "../../Utills/Scalling";
+import { moderateScale } from "../../../Utills/Scalling";
+import { fontFor } from "../../../Utills/Theme";
 
 
 
@@ -36,6 +37,7 @@ export const createItemDetailsStyles = (theme) =>
     },
     imagePlaceholderIcon: {
       fontSize: moderateScale(36),
+      fontFamily: fontFor(),
     },
     cardTagSection: {
       alignItems: "center",
@@ -44,7 +46,7 @@ export const createItemDetailsStyles = (theme) =>
     cardTagNumber: {
       maxWidth: "100%",
       fontSize: moderateScale(20),
-      fontWeight: "bold",
+      fontFamily: fontFor("bold"),
       color: theme.COLORS.primary,
       backgroundColor: theme.COLORS.primaryLight + "20",
       paddingHorizontal: moderateScale(12),

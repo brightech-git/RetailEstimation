@@ -192,7 +192,7 @@ const EstimationPreviewModal = ({
     if (printerStatus.checking) {
       return {
         text: "Checking printer connection...",
-        color: theme.COLORS.warning || "#FFA000",
+        color: theme.COLORS.warning,
         icon: "🔄",
         status: "checking",
       };
@@ -201,7 +201,7 @@ const EstimationPreviewModal = ({
     if (printerStatus.connected && currentPrinter) {
       return {
         text: `Connected to ${currentPrinter.name}`,
-        color: theme.COLORS.success || "#1B9721",
+        color: theme.COLORS.success,
         icon: "✅",
         status: "connected",
       };
@@ -210,7 +210,7 @@ const EstimationPreviewModal = ({
     if (currentPrinter) {
       return {
         text: `Offline - ${currentPrinter.name}`,
-        color: theme.COLORS.danger || "#C62828",
+        color: theme.COLORS.danger,
         icon: "❌",
         status: "offline",
       };
@@ -218,7 +218,7 @@ const EstimationPreviewModal = ({
 
     return {
       text: "No printer configured",
-      color: theme.COLORS.textLight || "#4A4A4A",
+      color: theme.COLORS.textLight,
       icon: "⚙️",
       status: "not_configured",
     };
@@ -462,7 +462,7 @@ const EstimationPreviewModal = ({
                 onPress={handlePrintPress}
               >
                 {printerStatus.checking ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={theme.COLORS.buttonText} />
                 ) : (
                   <>
                     <MaterialIcons

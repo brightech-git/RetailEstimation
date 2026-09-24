@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "rea
 import DropdownInput from "./DropDown";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../Context/ThemeContext";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const FiltersComponent = ({
   filters,
@@ -169,8 +170,8 @@ const getStyles = (theme) =>
     formTitle: {
       flexShrink: 1,
       marginRight: 8,
-      fontSize: 18,
-      fontWeight: "600",
+      fontSize: SIZES.h5,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.title,
     },
     clearButton: {
@@ -184,8 +185,8 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.surfaceVariant,
     },
     clearText: {
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.danger,
       marginLeft: 4,
     },
@@ -218,7 +219,8 @@ const getStyles = (theme) =>
       flexShrink: 1,
       marginLeft: 8,
       color: theme.COLORS.textLight,
-      fontSize: 12,
+      fontSize: SIZES.fontXs,
+      fontFamily: fontFor(),
     },
     filterButtons: {
       flexDirection: "row",
@@ -237,8 +239,8 @@ const getStyles = (theme) =>
     },
     applyButtonText: {
       color: theme.COLORS.white,
-      fontWeight: "600",
-      fontSize: 14,
+      fontFamily: fontFor("600"),
+      fontSize: SIZES.font,
     },
     allButton: {
       flex: 1,
@@ -252,8 +254,8 @@ const getStyles = (theme) =>
     },
     allButtonText: {
       color: theme.COLORS.warning,
-      fontWeight: "600",
-      fontSize: 14,
+      fontFamily: fontFor("600"),
+      fontSize: SIZES.font,
     },
   });
 

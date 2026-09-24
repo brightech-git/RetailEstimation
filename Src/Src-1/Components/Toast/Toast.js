@@ -9,13 +9,14 @@ import {
   Platform,
 } from 'react-native';
 import { useTheme } from '../../../Context/ThemeContext';
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const { width } = Dimensions.get('window');
 
 const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => {
   const { theme } = useTheme();
   const { COLORS, FONTS, SIZES } = theme;
-  const styles = getStyles(SIZES);
+  const styles = getStyles(COLORS);
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -68,17 +69,17 @@ const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => 
       case 'success':
         return {
           backgroundColor: COLORS.success,
-          borderColor: '#2ecc71',
+          borderColor: COLORS.success,
         };
       case 'error':
         return {
           backgroundColor: COLORS.danger,
-          borderColor: '#e74c3c',
+          borderColor: COLORS.danger,
         };
       case 'warning':
         return {
           backgroundColor: COLORS.warning,
-          borderColor: '#f39c12',
+          borderColor: COLORS.warning,
           
         };
       case 'info':
@@ -133,7 +134,7 @@ const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => 
   );
 };
 
-const getStyles = (SIZES) =>
+const getStyles = (COLORS) =>
   StyleSheet.create({
     container: {
       position: 'absolute',
@@ -151,7 +152,7 @@ const getStyles = (SIZES) =>
       paddingVertical: 12,
       flexDirection: 'row',
       alignItems: 'center',
-      shadowColor: '#000',
+      shadowColor: COLORS.shadowDark,
       shadowOffset: {
         width: 0,
         height: 4,
@@ -165,21 +166,22 @@ const getStyles = (SIZES) =>
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      backgroundColor: COLORS.onPrimaryMuted,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
     },
     icon: {
-      fontSize: 18,
-      color: '#FFFFFF',
-      fontWeight: 'bold',
+      fontSize: SIZES.h5,
+      color: COLORS.buttonText,
+      fontFamily: fontFor('bold'),
     },
     message: {
       flex: 1,
-      color: '#FFFFFF',
-      fontSize: 14,
+      color: COLORS.buttonText,
+      fontSize: SIZES.font,
       lineHeight: 20,
+      fontFamily: fontFor(),
     },
   });
 

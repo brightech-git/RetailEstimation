@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { moderateScale } from "../../../../Utills/Scalling";
+import { fontFor } from "../../../../Utills/Theme";
 
 export const createCategorySelectModalStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -34,9 +35,9 @@ export const createCategorySelectModalStyles = (theme) => {
       flex: 1,
       marginRight: moderateScale(8),
       color: COLORS.buttonText,
-      fontWeight: "700",
       fontSize: moderateScale(SIZES.font),
       ...FONTS.text,
+      fontFamily: fontFor("700"),
     },
     closeIconBtn: {
       padding: moderateScale(4),
@@ -44,7 +45,7 @@ export const createCategorySelectModalStyles = (theme) => {
     closeIconText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
+      fontFamily: fontFor("700"),
     },
     modalBody: {
       paddingHorizontal: moderateScale(16),
@@ -84,6 +85,7 @@ export const createCategorySelectModalStyles = (theme) => {
     dropdownCaret: {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.iconPrimary,
+      fontFamily: fontFor(),
     },
     dropdownList: {
       borderWidth: 1,
@@ -109,6 +111,7 @@ export const createCategorySelectModalStyles = (theme) => {
     searchIcon: {
       fontSize: moderateScale(SIZES.fontSm),
       marginRight: moderateScale(6),
+      fontFamily: fontFor(),
     },
     searchInput: {
       flex: 1,
@@ -122,6 +125,7 @@ export const createCategorySelectModalStyles = (theme) => {
       fontSize: moderateScale(SIZES.fontSm),
       color: COLORS.label,
       paddingHorizontal: moderateScale(6),
+      fontFamily: fontFor(),
     },
     dropdownScroll: {
       maxHeight: moderateScale(140),
@@ -211,8 +215,8 @@ export const createCategorySelectModalStyles = (theme) => {
     cancelBtnText: {
       color: COLORS.text,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "600",
       ...FONTS.text,
+      fontFamily: fontFor("600"),
     },
     doneBtn: {
       paddingVertical: moderateScale(10),
@@ -223,8 +227,8 @@ export const createCategorySelectModalStyles = (theme) => {
     doneBtnText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       ...FONTS.text,
+      fontFamily: fontFor("700"),
     },
   });
 };

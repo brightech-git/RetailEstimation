@@ -15,7 +15,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { LoginContext } from "../../../Context/LoginContext";
 import { useToast } from "../../Context/ToastContext";
-import Footer from "../../Components/Footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
 import { useTheme } from "../../../Context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getStyles } from "./LoginStyles";

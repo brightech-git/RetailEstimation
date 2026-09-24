@@ -1,5 +1,6 @@
 // 📁 Src/Components/Sidebar/SidebarStyles.js
 import { StyleSheet, Dimensions, Platform } from "react-native";
+import { fontFor, SIZES } from "../../Utills/Theme";
 
 const { width } = Dimensions.get("window");
 const isTablet = width >= 768;
@@ -105,13 +106,13 @@ export default function getStyles(theme) {
     badgeText: {
       color: COLORS.white,
       fontSize: 10,
-      fontWeight: "bold",
+      fontFamily: fontFor("bold"),
     },
 
     /* Modals (admin auth / change password auth) */
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.55)",
+      backgroundColor: COLORS.backdrop,
       justifyContent: "center",
       alignItems: "center",
       padding: 20,
@@ -122,7 +123,7 @@ export default function getStyles(theme) {
       backgroundColor: COLORS.card,
       borderRadius: 16,
       padding: 22,
-      shadowColor: "#000",
+      shadowColor: COLORS.shadowDark,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 10,
@@ -133,23 +134,24 @@ export default function getStyles(theme) {
       marginBottom: 20,
     },
     modalTitle: {
-      fontSize: 20,
-      fontWeight: "bold",
+      fontSize: SIZES.h4,
+      fontFamily: fontFor("bold"),
       color: COLORS.title,
       marginBottom: 6,
       textAlign: "center",
     },
     modalSubtitle: {
-      fontSize: 14,
+      fontSize: SIZES.font,
       color: COLORS.textLight,
       textAlign: "center",
+      fontFamily: fontFor(),
     },
     inputContainer: {
       marginBottom: 16,
     },
     inputLabel: {
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("600"),
       color: COLORS.text,
       marginBottom: 8,
     },
@@ -158,10 +160,11 @@ export default function getStyles(theme) {
       borderRadius: 10,
       paddingHorizontal: 14,
       paddingVertical: 12,
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: COLORS.text,
       borderWidth: 1,
       borderColor: COLORS.border,
+      fontFamily: fontFor(),
     },
     inputError: {
       borderColor: COLORS.danger,
@@ -169,8 +172,8 @@ export default function getStyles(theme) {
     },
     errorText: {
       color: COLORS.danger,
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("600"),
       textAlign: "center",
       marginBottom: 12,
     },
@@ -194,16 +197,16 @@ export default function getStyles(theme) {
     },
     cancelButtonText: {
       color: COLORS.text,
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("600"),
     },
     submitButton: {
       backgroundColor: COLORS.primary,
     },
     submitButtonText: {
       color: COLORS.white,
-      fontSize: 16,
-      fontWeight: "bold",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("bold"),
     },
   });
 }

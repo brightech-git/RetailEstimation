@@ -12,7 +12,7 @@ import {
   RefreshControl,
 } from "react-native";
 import MainHeader from "../../Components/Header/Header";
-import Footer from "../../Components/Footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
 import BarcodeScannerModal from "../../Components/BarCodeScanner/BarcodeScannerModal";
 import {
   printEstimationSlip,

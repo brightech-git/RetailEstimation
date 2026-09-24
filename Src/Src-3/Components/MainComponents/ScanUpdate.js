@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../Context/ThemeContext";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const ScanUpdateComponent = ({
   mode,
@@ -99,7 +100,7 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.primary,
       borderRadius: 50,
       elevation: 3,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.2,
       shadowRadius: 3,
@@ -107,22 +108,23 @@ const getStyles = (theme) =>
     scanText: {
       marginTop: 12,
       color: theme.COLORS.primary,
-      fontWeight: "600",
-      fontSize: 16,
+      fontFamily: fontFor("600"),
+      fontSize: SIZES.fontLg,
     },
     scanDescription: {
       marginTop: 6,
       color: theme.COLORS.textLight,
-      fontSize: 13,
+      fontSize: SIZES.fontSm,
       textAlign: "center",
       paddingHorizontal: 20,
+      fontFamily: fontFor(),
     },
     manualContainer: {
       paddingVertical: 8,
     },
     sectionTitle: {
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.title,
       marginBottom: 16,
     },
@@ -137,20 +139,21 @@ const getStyles = (theme) =>
       minWidth: 0,
     },
     label: {
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.title,
       marginBottom: 6,
     },
     textInput: {
       paddingHorizontal: 14,
       paddingVertical: 10,
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: theme.COLORS.text,
       borderWidth: 1,
       borderColor: theme.COLORS.border,
       borderRadius: 8,
       backgroundColor: theme.COLORS.input,
+      fontFamily: fontFor(),
     },
     submitButton: {
       backgroundColor: theme.COLORS.primary,
@@ -165,8 +168,8 @@ const getStyles = (theme) =>
     },
     submitButtonText: {
       color: theme.COLORS.buttonText,
-      fontWeight: "600",
-      fontSize: 16,
+      fontFamily: fontFor("600"),
+      fontSize: SIZES.fontLg,
     },
     scanAlternativeButton: {
       flexDirection: "row",
@@ -180,8 +183,8 @@ const getStyles = (theme) =>
     },
     scanAlternativeText: {
       color: theme.COLORS.primary,
-      fontSize: 14,
-      fontWeight: "500",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("500"),
     },
   });
 

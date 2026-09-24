@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { moderateScale } from "../../../Utills/Scalling";
+import { fontFor } from "../../../Utills/Theme";
 
 export const createHomeStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -44,6 +45,7 @@ export const createHomeStyles = (theme) => {
     scanIcon: {
       fontSize: moderateScale(15),
       color: COLORS.iconPrimary,
+      fontFamily: fontFor(),
     },
     dropdown: {
       backgroundColor: COLORS.surface,
@@ -97,12 +99,12 @@ export const createHomeStyles = (theme) => {
     },
     totalValue: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "600",
       color: COLORS.text,
       ...FONTS.text,
+      fontFamily: fontFor("600"),
     },
     grandTotal: {
-      fontWeight: "bold",
+      fontFamily: fontFor("bold"),
       color: COLORS.primary,
     },
     loader: {
@@ -166,11 +168,11 @@ export const createHomeStyles = (theme) => {
 
     itemsTitle: {
       fontSize: moderateScale(18),
-      fontWeight: "bold",
       color: COLORS.text,
       marginBottom: moderateScale(15),
       textAlign: "center",
       ...FONTS.heading,
+      fontFamily: fontFor("bold"),
     },
 
     cardsGrid: {
@@ -189,7 +191,7 @@ export const createHomeStyles = (theme) => {
       marginBottom: moderateScale(15),
       overflow: "hidden",
       elevation: 3,
-      shadowColor: "#000",
+      shadowColor: COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -218,6 +220,7 @@ export const createHomeStyles = (theme) => {
 
     imagePlaceholderIcon: {
       fontSize: moderateScale(40),
+      fontFamily: fontFor(),
     },
 
     cardTagSection: {
@@ -228,9 +231,9 @@ export const createHomeStyles = (theme) => {
 
     cardTagNumber: {
       fontSize: moderateScale(18),
-      fontWeight: "bold",
       color: COLORS.title,
       ...FONTS.heading,
+      fontFamily: fontFor("bold"),
     },
 
     cardDivider: {
@@ -259,10 +262,10 @@ export const createHomeStyles = (theme) => {
     cardDetailValue: {
       fontSize: moderateScale(12),
       color: COLORS.title,
-      fontWeight: "500",
       flex: 1,
       textAlign: "right",
       ...FONTS.text,
+      fontFamily: fontFor("500"),
     },
 
     cardGrandTotalRow: {
@@ -272,24 +275,24 @@ export const createHomeStyles = (theme) => {
 
     cardGrandTotalLabel: {
       fontSize: moderateScale(14),
-      fontWeight: "bold",
       color: COLORS.title,
       flex: 1,
       ...FONTS.heading,
+      fontFamily: fontFor("bold"),
     },
 
     cardGrandTotalValue: {
       fontSize: moderateScale(16),
-      fontWeight: "bold",
       color: COLORS.primary,
       flex: 1,
       textAlign: "right",
       ...FONTS.heading,
+      fontFamily: fontFor("bold"),
     },
 
     modalContainer: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: COLORS.backdrop,
       justifyContent: 'center',
       alignItems: 'center',
       padding: moderateScale(20),
@@ -318,23 +321,23 @@ export const createHomeStyles = (theme) => {
 
     modalTitle: {
       fontSize: moderateScale(20),
-      fontWeight: 'bold',
-      color: '#FFFFFF',
+      fontFamily: fontFor('bold'),
+      color: COLORS.buttonText,
     },
 
     closeButton: {
       width: moderateScale(30),
       height: moderateScale(30),
       borderRadius: moderateScale(15),
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      backgroundColor: COLORS.onPrimaryMuted,
       justifyContent: 'center',
       alignItems: 'center',
     },
 
     closeButtonText: {
       fontSize: moderateScale(20),
-      color: '#FFFFFF',
-      fontWeight: 'bold',
+      color: COLORS.buttonText,
+      fontFamily: fontFor('bold'),
     },
      employeeIdContainer: {
     flexDirection: 'row',
@@ -344,13 +347,13 @@ export const createHomeStyles = (theme) => {
   },
   employeeIdLabel: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fontFor('600'),
     color: theme.COLORS.text,
     marginRight: moderateScale(8),
   },
   employeeIdValue: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fontFor('700'),
     color: theme.COLORS.primary,
   },
 
@@ -374,6 +377,7 @@ export const createHomeStyles = (theme) => {
     fontSize: moderateScale(16),
     color: theme.COLORS.text,
     backgroundColor: theme.COLORS.cardBackground,
+    fontFamily: fontFor(),
   },
   scannerButton: {
     height: moderateScale(50),
@@ -393,12 +397,14 @@ export const createHomeStyles = (theme) => {
     fontSize: moderateScale(14),
     marginLeft: moderateScale(10),
     marginBottom: moderateScale(5),
+    fontFamily: fontFor(),
   },
   helperText: {
     color: theme.COLORS.placeholder,
     fontSize: moderateScale(12),
     marginLeft: moderateScale(10),
     fontStyle: 'italic',
+    fontFamily: fontFor(),
   },
   fetchButton: {
     backgroundColor: theme.COLORS.primary,
@@ -412,8 +418,8 @@ export const createHomeStyles = (theme) => {
     minWidth: moderateScale(80),
   },
   fetchButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: COLORS.buttonText,
+    fontFamily: fontFor('bold'),
     fontSize: moderateScale(14),
     textAlign: "center",
   },

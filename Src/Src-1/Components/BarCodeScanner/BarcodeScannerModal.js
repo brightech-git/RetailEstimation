@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useTheme } from "../../../Context/ThemeContext";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 export default function BarcodeScannerModal({
   visible,
@@ -36,7 +37,7 @@ export default function BarcodeScannerModal({
     return (
       <Modal visible={visible} transparent animationType="fade">
         <View style={[styles.centered, { backgroundColor: COLORS.background }]}>
-          <Text style={[styles.permissionText, { color: COLORS.textDark }]}>
+          <Text style={[styles.permissionText, { color: COLORS.title }]}>
             Camera permission required
           </Text>
 
@@ -71,7 +72,7 @@ export default function BarcodeScannerModal({
 
         {/* 🔥 FAST SCAN FOCUS FRAME (this makes detection instant) */}
         <View style={styles.overlayContainer}>
-          <View style={styles.focusFrame} />
+          <View style={[styles.focusFrame, { borderColor: COLORS.scannerFrame }]} />
           <Text style={[styles.scanText, { color: COLORS.white }]}>
             Align inside the box
           </Text>
@@ -81,7 +82,7 @@ export default function BarcodeScannerModal({
           onPress={onClose}
           style={[
             styles.closeButton,
-            { backgroundColor: "rgba(0,0,0,0.6)" },
+            { backgroundColor: COLORS.backdrop },
           ]}
         >
           <Text style={[styles.closeText, { color: COLORS.white }]}>✖</Text>
@@ -104,8 +105,9 @@ const styles = StyleSheet.create({
   },
 
   permissionText: {
-    fontSize: 16,
+    fontSize: SIZES.fontLg,
     marginBottom: 20,
+    fontFamily: fontFor(),
   },
 
   permissionButton: {
@@ -123,8 +125,8 @@ const styles = StyleSheet.create({
   },
 
   closeText: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: SIZES.h5,
+    fontFamily: fontFor("600"),
   },
 
   // 🔥 Overlay for fast QR scanning
@@ -138,14 +140,13 @@ const styles = StyleSheet.create({
     width: 260,
     height: 260,
     borderWidth: 4,
-    borderColor: "#00FF9A",
     borderRadius: 14,
     opacity: 0.85,
   },
 
   scanText: {
     marginTop: 20,
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: SIZES.fontLg,
+    fontFamily: fontFor("500"),
   },
 });

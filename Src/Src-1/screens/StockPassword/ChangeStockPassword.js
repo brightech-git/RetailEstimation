@@ -18,6 +18,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import { updateCompanyStockPassword } from "../../Service/StockPasswordUpdateService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const ChangeStockPassword = ({ navigation }) => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -278,7 +279,7 @@ const getStyles = (theme) =>
     // Sits on the dark gradient, so use the on-primary text colour
     headerTitle: {
       flex: 1,
-      fontSize: 20,
+      fontSize: SIZES.h4,
       fontFamily: theme.FONTS.heading.fontFamily,
       color: theme.COLORS.buttonText,
     },
@@ -286,24 +287,25 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.card,
       borderRadius: 12,
       padding: 20,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: theme.COLORS.text,
       marginBottom: 25,
       textAlign: "center",
+      fontFamily: fontFor(),
     },
     inputContainer: {
       marginBottom: 20,
     },
     label: {
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.text,
       marginBottom: 8,
     },
@@ -319,8 +321,9 @@ const getStyles = (theme) =>
       flex: 1,
       minWidth: 0,
       padding: 12,
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: theme.COLORS.text,
+      fontFamily: fontFor(),
     },
     eyeButton: {
       padding: 10,
@@ -332,15 +335,16 @@ const getStyles = (theme) =>
       marginBottom: 20,
     },
     requirementsTitle: {
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.info,
       marginBottom: 8,
     },
     requirement: {
-      fontSize: 12,
+      fontSize: SIZES.fontXs,
       color: theme.COLORS.text,
       marginBottom: 4,
+      fontFamily: fontFor(),
     },
     submitButton: {
       backgroundColor: theme.COLORS.primary,
@@ -354,8 +358,8 @@ const getStyles = (theme) =>
     },
     submitButtonText: {
       color: theme.COLORS.white,
-      fontSize: 16,
-      fontWeight: "bold",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("bold"),
     },
     successContainer: {
       flexDirection: "row",

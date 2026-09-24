@@ -1,5 +1,5 @@
 import { StyleSheet, Platform, Dimensions } from "react-native";
-import { scale, verticalScale, moderateScale } from "../../Utills/Scalling";
+import { scale, verticalScale, moderateScale } from "../../../Utills/Scalling";
 
 const { width } = Dimensions.get("window");
 const isTablet = width >= 768;
@@ -99,15 +99,13 @@ export default function getStyles(theme) {
     /* INFO CARD                                                             */
     /* --------------------------------------------------------------------- */
     infoCard: {
-      backgroundColor: theme.isDarkMode
-        ? COLORS.surfaceVariant
-        : "rgba(255,255,255,0.95)",
+      backgroundColor: COLORS.headerCard,
       borderRadius: moderateScale(12),
       paddingVertical: verticalScale(12),
       paddingHorizontal: scale(12),
       width: "100%",
       elevation: 3,
-      shadowColor: "#000",
+      shadowColor: COLORS.shadowDark,
       shadowOpacity: 0.08,
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 2 },

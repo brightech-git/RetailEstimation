@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { moderateScale } from '../../../Utills/Scalling';
+import { fontFor } from "../../../Utills/Theme";
 
 // This function will create styles based on the theme object from context
 export const createHomeStyles = (theme) => {
@@ -47,7 +48,7 @@ export const createHomeStyles = (theme) => {
     empNameText: {
       fontSize: moderateScale(10),
       color: COLORS.primary,
-      fontWeight: '600',
+      fontFamily: fontFor('600'),
       marginTop: moderateScale(2),
     },
     input: {
@@ -69,6 +70,7 @@ export const createHomeStyles = (theme) => {
     scanIcon: {
       fontSize: moderateScale(15),
       color: COLORS.iconPrimary,
+      fontFamily: fontFor(),
     },
     dropdown: {
       backgroundColor: COLORS.surface,
@@ -116,16 +118,16 @@ export const createHomeStyles = (theme) => {
       marginVertical: moderateScale(8),
     },
     finalAmount: {
-      fontWeight: 'bold',
+      fontFamily: fontFor('bold'),
       fontSize: moderateScale(SIZES.fontLg || SIZES.font + 2),
       color: COLORS.primary,
     },
     totalsSectionLabel: {
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: '700',
       color: COLORS.primary,
       marginBottom: moderateScale(4),
       ...FONTS.subheading,
+      fontFamily: fontFor('700'),
     },
     totalItem: {
       alignItems: 'center',
@@ -148,12 +150,12 @@ export const createHomeStyles = (theme) => {
     },
     totalValue: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: '600',
       color: COLORS.text,
       ...FONTS.text,
+      fontFamily: fontFor('600'),
     },
     grandTotal: {
-      fontWeight: 'bold',
+      fontFamily: fontFor('bold'),
       color: COLORS.primary,
     },
     loader: {
@@ -172,11 +174,11 @@ export const createHomeStyles = (theme) => {
     },
     headerCell: {
       color: COLORS.buttonText,
-      fontWeight: 'bold',
       paddingHorizontal: moderateScale(10),
       minWidth: moderateScale(80),
       textAlign: 'center',
       ...FONTS.fontSm,
+      fontFamily: fontFor('bold'),
     },
     dataRow: {
       flexDirection: 'row',
@@ -254,18 +256,18 @@ export const createHomeStyles = (theme) => {
       alignItems: 'center',
     },
     thermalButton: {
-      backgroundColor: '#007AFF',
+      backgroundColor: COLORS.info,
     },
     htmlButton: {
-      backgroundColor: '#34C759',
+      backgroundColor: COLORS.success,
     },
     quickButtonText: {
-      color: '#FFFFFF',
+      color: COLORS.buttonText,
       fontSize: moderateScale(14),
-      fontWeight: 'bold',
+      fontFamily: fontFor('bold'),
     },
     clearButton: {
-      backgroundColor: "#444",
+      backgroundColor: COLORS.neutralButton,
     },
     deleteButton: {
       backgroundColor: COLORS.danger,
@@ -275,7 +277,7 @@ export const createHomeStyles = (theme) => {
     },
     deleteButtonText: {
       color: COLORS.buttonText,
-      fontWeight: "bold",
+      fontFamily: fontFor("bold"),
       fontSize: moderateScale(SIZES.fontXs),
     },
     column: {
@@ -312,8 +314,8 @@ export const createHomeStyles = (theme) => {
     purchaseNavButtonText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: 'bold',
       ...FONTS.text,
+      fontFamily: fontFor('bold'),
     },
     purchaseSectionHeader: {
       marginTop: moderateScale(16),
@@ -324,9 +326,9 @@ export const createHomeStyles = (theme) => {
     },
     purchaseSectionTitle: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: '700',
       color: COLORS.secondary,
       ...FONTS.text,
+      fontFamily: fontFor('700'),
     },
 
   });

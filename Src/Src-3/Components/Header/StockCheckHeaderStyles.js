@@ -1,5 +1,6 @@
 // 📁 Src/Src-3/Components/Header/StockCheckHeaderStyles.js
 import { StyleSheet, Platform, StatusBar } from "react-native";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 export default function getStyles(theme) {
   const { COLORS } = theme;
@@ -11,7 +12,7 @@ export default function getStyles(theme) {
       borderBottomLeftRadius: 12,
       borderBottomRightRadius: 12,
       elevation: 6,
-      shadowColor: "#000",
+      shadowColor: COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
       shadowRadius: 4,
@@ -32,8 +33,8 @@ export default function getStyles(theme) {
     title: {
       flex: 1,
       textAlign: "center",
-      fontSize: 18,
-      fontWeight: "700",
+      fontSize: SIZES.h5,
+      fontFamily: fontFor("700"),
       color: COLORS.buttonText,
     },
   });

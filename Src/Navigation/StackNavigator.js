@@ -76,7 +76,7 @@ function MainDrawer() {
           width: isTablet ? 320 : "80%",
           backgroundColor: theme.COLORS.background,
         },
-        overlayColor: "rgba(0,0,0,0.4)",
+        overlayColor: theme.COLORS.backdrop,
         swipeEdgeWidth: 40,
       }}
     >
@@ -109,7 +109,7 @@ function AppStack() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6a1b9a" />
+        <ActivityIndicator size="large" color={theme.COLORS.primary} />
       </View>
     );
   }

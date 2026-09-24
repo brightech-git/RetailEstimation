@@ -1,6 +1,6 @@
 // 📁 Src/Src-2/Components/Header/QuickEstimateHeaderStyles.js
 import { StyleSheet, Platform, StatusBar } from "react-native";
-import { scale, verticalScale, moderateScale } from "../../Utills/Scalling";
+import { scale, verticalScale, moderateScale } from "../../../Utills/Scalling";
 
 export const createQuickEstimateHeaderStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;

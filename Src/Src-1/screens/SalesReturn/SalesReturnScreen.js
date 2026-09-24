@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import CommonHeader from "../../../Components/Header/CommonHeader";
-import Footer from "../../Components/Footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
 import BarcodeScannerModal from "../../Components/BarCodeScanner/BarcodeScannerModal";
 import ReturnRefModal from "../../Components/SalesReturn/ReturnRefModal/ReturnRefModal";
 import { useApiBaseUrl } from "../../../Config/Config";

@@ -12,7 +12,8 @@ import ToastMessage from "../../Components/Toast/Toast";
 import { useItemTagService } from "../../Service/ItemTagService";
 import FiltersComponent from "../../Components/MainComponents/Filters";
 import { useTheme } from "../../../Context/ThemeContext";
-import Footer from "../../Components/Footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const InventoryStatsCard = React.memo(({ stats, loading, refreshing, styles, theme }) => {
   const checkedPct =
@@ -343,14 +344,14 @@ const getStyles = (theme) =>
       borderRadius: 16,
       padding: 20,
       elevation: 4,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOpacity: 0.08,
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 4 },
     },
     title: {
-      fontSize: 20,
-      fontWeight: "700",
+      fontSize: SIZES.h4,
+      fontFamily: fontFor("700"),
       color: theme.COLORS.primary,
       marginBottom: 16,
     },
@@ -363,12 +364,12 @@ const getStyles = (theme) =>
       borderBottomWidth: 1,
       borderColor: theme.COLORS.border,
     },
-    totalLabel: { fontSize: 16, color: theme.COLORS.textLight, flexShrink: 0 },
+    totalLabel: { fontSize: SIZES.fontLg, color: theme.COLORS.textLight, flexShrink: 0, fontFamily: fontFor() },
     totalNumber: {
       flex: 1,
       textAlign: "right",
-      fontSize: 28,
-      fontWeight: "800",
+      fontSize: SIZES.h2,
+      fontFamily: fontFor("800"),
       color: theme.COLORS.primary,
     },
     bar: {
@@ -392,7 +393,7 @@ const getStyles = (theme) =>
     },
     legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
     dot: { width: 10, height: 10, borderRadius: 5 },
-    label: { fontSize: 14, color: theme.COLORS.text },
+    label: { fontSize: SIZES.font, color: theme.COLORS.text, fontFamily: fontFor() },
     loadingText: { marginTop: 12, color: theme.COLORS.textLight, textAlign: "center" },
   });
 

@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions } from "react-native";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const { width } = Dimensions.get("window");
 
@@ -20,7 +21,7 @@ const getStyles = (theme) =>
       borderRadius: 12,
       padding: 20,
       elevation: 2,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 2,
@@ -38,7 +39,7 @@ const getStyles = (theme) =>
     warningContainer: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.isDarkMode ? "rgba(255, 193, 7, 0.15)" : "#fff3cd",
+      backgroundColor: theme.COLORS.warningSurface,
       borderWidth: 1,
       borderColor: theme.COLORS.warning,
       borderRadius: 8,
@@ -48,8 +49,8 @@ const getStyles = (theme) =>
     warningText: {
       marginLeft: 10,
       color: theme.COLORS.warning,
-      fontSize: 14,
-      fontWeight: "500",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("500"),
       flex: 1,
     },
 
@@ -62,7 +63,7 @@ const getStyles = (theme) =>
       borderWidth: 1,
       borderColor: theme.COLORS.border,
       elevation: 2,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 2,
@@ -77,13 +78,13 @@ const getStyles = (theme) =>
       marginBottom: 12,
     },
     statsTitle: {
-      fontSize: 16,
-      fontWeight: "700",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("700"),
       color: theme.COLORS.primary,
     },
     statsTotal: {
-      fontSize: 16,
-      fontWeight: "700",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("700"),
       color: theme.COLORS.title,
     },
     progressBarContainer: {
@@ -124,14 +125,15 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.danger,
     },
     statLabel: {
-      fontSize: 16,
+      fontSize: SIZES.fontLg,
       color: theme.COLORS.textLight,
       marginRight: 6,
+      fontFamily: fontFor(),
     },
     statValue: {
       flexShrink: 1,
       fontSize: 22,
-      fontWeight: "600",
+      fontFamily: fontFor("600"),
     },
     checkedValue: {
       color: theme.COLORS.success,
@@ -152,8 +154,8 @@ const getStyles = (theme) =>
       borderLeftColor: theme.COLORS.primary,
     },
     filterSummaryTitle: {
-      fontSize: 16,
-      fontWeight: "700",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("700"),
       color: theme.COLORS.primary,
       marginBottom: 12,
     },
@@ -168,27 +170,28 @@ const getStyles = (theme) =>
     filterRowLabel: {
       width: 90,
       flexShrink: 0,
-      fontSize: 14,
+      fontSize: SIZES.font,
       color: theme.COLORS.textLight,
-      fontWeight: "600",
+      fontFamily: fontFor("600"),
     },
     filterRowValue: {
       flex: 1,
-      fontSize: 14,
+      fontSize: SIZES.font,
       color: theme.COLORS.primary,
-      fontWeight: "700",
+      fontFamily: fontFor("700"),
       marginLeft: 10,
     },
     filterTagId: {
       color: theme.COLORS.textLight,
-      fontWeight: "500",
-      fontSize: 13,
+      fontFamily: fontFor("500"),
+      fontSize: SIZES.fontSm,
     },
     filteredCount: {
-      fontSize: 14,
+      fontSize: SIZES.font,
       color: theme.COLORS.textLight,
       fontStyle: "italic",
       marginTop: 8,
+      fontFamily: fontFor(),
     },
 
     // Mode Toggle
@@ -199,8 +202,8 @@ const getStyles = (theme) =>
       borderBottomColor: theme.COLORS.border,
     },
     sectionTitle: {
-      fontSize: 16,
-      fontWeight: "600",
+      fontSize: SIZES.fontLg,
+      fontFamily: fontFor("600"),
       color: theme.COLORS.title,
       marginBottom: 12,
     },
@@ -224,10 +227,11 @@ const getStyles = (theme) =>
       marginLeft: 8,
       fontSize: 15,
       color: theme.COLORS.textLight,
+      fontFamily: fontFor(),
     },
     activeModeText: {
       color: theme.COLORS.primary,
-      fontWeight: "600",
+      fontFamily: fontFor("600"),
     },
 
     // Recently Updated
@@ -241,7 +245,7 @@ const getStyles = (theme) =>
       borderLeftWidth: 4,
       borderLeftColor: theme.COLORS.primary,
       elevation: 3,
-      shadowColor: "#000",
+      shadowColor: theme.COLORS.shadowDark,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 4,
@@ -258,8 +262,8 @@ const getStyles = (theme) =>
     recentUpdateTitle: {
       flex: 1,
       marginRight: 8,
-      fontSize: 14,
-      fontWeight: "700",
+      fontSize: SIZES.font,
+      fontFamily: fontFor("700"),
       color: theme.COLORS.primary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -273,9 +277,9 @@ const getStyles = (theme) =>
     },
     headerCell: {
       color: theme.COLORS.buttonText,
-      fontWeight: "700",
+      fontFamily: fontFor("700"),
       textAlign: "center",
-      fontSize: 14,
+      fontSize: SIZES.font,
     },
     tableRow: {
       flexDirection: "row",
@@ -285,7 +289,8 @@ const getStyles = (theme) =>
     cell: {
       textAlign: "center",
       color: theme.COLORS.text,
-      fontSize: 14,
+      fontSize: SIZES.font,
+      fontFamily: fontFor(),
     },
 
     // Loading
@@ -297,7 +302,8 @@ const getStyles = (theme) =>
     loadingText: {
       marginTop: 10,
       color: theme.COLORS.textLight,
-      fontSize: 14,
+      fontSize: SIZES.font,
+      fontFamily: fontFor(),
     },
   });
 

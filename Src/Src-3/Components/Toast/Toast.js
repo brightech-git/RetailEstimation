@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, Animated, StyleSheet } from "react-native";
+import { useTheme } from "../../../Context/ThemeContext";
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 const ToastMessage = ({ visible, message, color, onHide }) => {
+  const { theme } = useTheme();
+  const { COLORS } = theme;
+  const styles = getStyles(COLORS);
   const slideAnim = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
@@ -31,9 +36,8 @@ const ToastMessage = ({ visible, message, color, onHide }) => {
 
   if (!visible || !message) return null;
 
-  const backgroundColor = color === "red" ? "#dc3545" : 
-                         color === "green" ? "#28a745" : 
-                         color || "#1C467C";
+  const backgroundColor =
+    color === "red" ? COLORS.danger : color === "green" ? COLORS.success : color || COLORS.primary;
 
   return (
     <Animated.View 
@@ -52,7 +56,7 @@ const ToastMessage = ({ visible, message, color, onHide }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (COLORS) => StyleSheet.create({
   toastContainer: {
     position: "absolute",
     top: 0,
@@ -61,7 +65,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     zIndex: 9999,
     elevation: 10,
-    shadowColor: "#000",
+    shadowColor: COLORS.shadowDark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -71,10 +75,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   toastText: {
-    color: "#fff",
+    color: COLORS.buttonText,
     textAlign: "center",
-    fontWeight: "600",
-    fontSize: 14,
+    fontFamily: fontFor("600"),
+    fontSize: SIZES.font,
   },
 });
 

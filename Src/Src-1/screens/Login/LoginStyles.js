@@ -1,6 +1,7 @@
 // 📁 src/Screens/Login/LoginStyles.js
 import { StyleSheet, Dimensions } from "react-native";
-import { moderateScale } from "../../Utills/Scalling";
+import { moderateScale } from "../../../Utills/Scalling";
+import { fontFor } from "../../../Utills/Theme";
 
 const { width } = Dimensions.get("window");
 
@@ -112,11 +113,12 @@ export const getStyles = (theme) => {
       fontSize: moderateScale(14),
       color: COLORS.placeholder,
       marginLeft: moderateScale(8),
+      fontFamily: fontFor(),
     },
     // --- Modal Styles ---
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: COLORS.backdrop,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -128,7 +130,7 @@ export const getStyles = (theme) => {
       borderRadius: SIZES.radius_lg,
       padding: moderateScale(20),
       ...(theme.SHADOW?.medium || {
-        shadowColor: "#000",
+        shadowColor: COLORS.shadowDark,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
@@ -137,11 +139,11 @@ export const getStyles = (theme) => {
     },
     modalTitle: {
       fontSize: moderateScale(18),
-      fontWeight: "600",
       color: COLORS.title,
       marginBottom: moderateScale(16),
       textAlign: "center",
       ...FONTS.h5,
+      fontFamily: fontFor("600"),
     },
     modalItem: {
       paddingVertical: moderateScale(12),
@@ -159,7 +161,7 @@ export const getStyles = (theme) => {
     },
     modalItemTextSelected: {
       color: COLORS.primary,
-      fontWeight: "500",
+      fontFamily: fontFor("500"),
     },
     modalEmptyText: {
       textAlign: "center",
@@ -176,9 +178,9 @@ export const getStyles = (theme) => {
     },
     modalCloseText: {
       fontSize: moderateScale(16),
-      fontWeight: "500",
       color: COLORS.primary,
       ...FONTS.subheading,
+      fontFamily: fontFor("500"),
     },
     // --- Existing Styles ---
     button: {

@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { moderateScale } from "../../../Utills/Scalling";
+import { fontFor } from "../../../Utills/Theme";
 
 export const createPurchaseStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -16,10 +17,10 @@ export const createPurchaseStyles = (theme) => {
     },
     title: {
       fontSize: moderateScale(SIZES.h5),
-      fontWeight: "700",
       color: COLORS.title,
       marginBottom: moderateScale(16),
       ...FONTS.h5,
+      fontFamily: fontFor("700"),
     },
     inputRow: {
       flexDirection: "row",
@@ -55,6 +56,7 @@ export const createPurchaseStyles = (theme) => {
     categoryFieldCaret: {
       fontSize: moderateScale(SIZES.font),
       color: COLORS.iconPrimary,
+      fontFamily: fontFor(),
     },
     totalsContainer: {
       backgroundColor: COLORS.outline,
@@ -86,12 +88,12 @@ export const createPurchaseStyles = (theme) => {
     },
     totalValue: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "600",
       color: COLORS.text,
       ...FONTS.text,
+      fontFamily: fontFor("600"),
     },
     grandTotal: {
-      fontWeight: "bold",
+      fontFamily: fontFor("bold"),
       color: COLORS.primary,
     },
     tableContainer: {
@@ -107,10 +109,10 @@ export const createPurchaseStyles = (theme) => {
     },
     headerCell: {
       color: COLORS.buttonText,
-      fontWeight: "bold",
       paddingHorizontal: moderateScale(6),
       textAlign: "center",
       ...FONTS.fontSm,
+      fontFamily: fontFor("bold"),
     },
     dataRow: {
       flexDirection: "row",
@@ -140,9 +142,9 @@ export const createPurchaseStyles = (theme) => {
     cellCategory: {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.danger,
-      fontWeight: "700",
       textAlign: "center",
       ...FONTS.fontXs,
+      fontFamily: fontFor("700"),
     },
     cellInput: {
       width: "100%",
@@ -160,8 +162,8 @@ export const createPurchaseStyles = (theme) => {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.text,
       textAlign: "center",
-      fontWeight: "600",
       ...FONTS.fontXs,
+      fontFamily: fontFor("600"),
     },
     totalRowLine: {
       flexDirection: "row",
@@ -174,16 +176,16 @@ export const createPurchaseStyles = (theme) => {
     totalRowLabel: {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.danger,
-      fontWeight: "700",
       textAlign: "center",
       ...FONTS.fontXs,
+      fontFamily: fontFor("700"),
     },
     totalRowValue: {
       fontSize: moderateScale(SIZES.fontXs),
       color: COLORS.danger,
-      fontWeight: "700",
       textAlign: "center",
       ...FONTS.fontXs,
+      fontFamily: fontFor("700"),
     },
     actionButtonsContainer: {
       flexDirection: "row",
@@ -210,7 +212,7 @@ export const createPurchaseStyles = (theme) => {
       backgroundColor: COLORS.secondary,
     },
     clearButton: {
-      backgroundColor: "#444",
+      backgroundColor: COLORS.neutralButton,
     },
     disabledButton: {
       backgroundColor: COLORS.placeholder,
@@ -229,7 +231,7 @@ export const createPurchaseStyles = (theme) => {
     },
     deleteButtonText: {
       color: COLORS.buttonText,
-      fontWeight: "bold",
+      fontFamily: fontFor("bold"),
       fontSize: moderateScale(SIZES.fontXs),
     },
   });

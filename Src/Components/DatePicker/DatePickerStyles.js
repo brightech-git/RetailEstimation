@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { moderateScale } from "../../Utills/Scalling";
+import { fontFor } from "../../Utills/Theme";
 
 export const createDatePickerStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -39,13 +40,13 @@ export const createDatePickerStyles = (theme) => {
     navButtonText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(18),
-      fontWeight: "700",
+      fontFamily: fontFor("700"),
     },
     monthLabel: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: "700",
       ...FONTS.subheading,
+      fontFamily: fontFor("700"),
     },
     weekRow: {
       flexDirection: "row",
@@ -59,9 +60,9 @@ export const createDatePickerStyles = (theme) => {
     },
     weekDayText: {
       fontSize: moderateScale(SIZES.fontXs),
-      fontWeight: "700",
       color: COLORS.label,
       ...FONTS.fontXs,
+      fontFamily: fontFor("700"),
     },
     grid: {
       paddingHorizontal: moderateScale(8),
@@ -100,7 +101,7 @@ export const createDatePickerStyles = (theme) => {
     },
     dayTextSelected: {
       color: COLORS.buttonText,
-      fontWeight: "700",
+      fontFamily: fontFor("700"),
     },
     monthCell: {
       flex: 1,
@@ -131,9 +132,9 @@ export const createDatePickerStyles = (theme) => {
     },
     todayBtnText: {
       color: COLORS.primary,
-      fontWeight: "700",
       fontSize: moderateScale(SIZES.fontSm),
       ...FONTS.subheading,
+      fontFamily: fontFor("700"),
     },
     cancelBtn: {
       paddingVertical: moderateScale(8),

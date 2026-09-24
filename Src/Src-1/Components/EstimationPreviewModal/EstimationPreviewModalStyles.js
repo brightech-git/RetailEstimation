@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { moderateScale } from '../../../Utills/Scalling';
+import { fontFor, SIZES } from "../../../Utills/Theme";
 
 export const createEstimationPreviewModalStyles = (theme) => {
   const { COLORS, SIZES, FONTS } = theme;
@@ -58,8 +59,8 @@ export const createEstimationPreviewModalStyles = (theme) => {
     },
     printerStatusText: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: '600',
       ...FONTS.font,
+      fontFamily: fontFor('600'),
     },
     statusDescription: {
       fontSize: moderateScale(SIZES.fontSm),
@@ -176,14 +177,14 @@ export const createEstimationPreviewModalStyles = (theme) => {
     checkConnectionText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: '600',
       ...FONTS.fontSm,
+      fontFamily: fontFor('600'),
     },
     setupPrinterText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: '600',
       ...FONTS.fontSm,
+      fontFamily: fontFor('600'),
     },
     errorStateContainer: {
       alignItems: 'center',
@@ -238,14 +239,14 @@ export const createEstimationPreviewModalStyles = (theme) => {
     primaryButtonText: {
       fontSize: moderateScale(SIZES.font),
       color: COLORS.buttonText,
-      fontWeight: '600',
       ...FONTS.font,
+      fontFamily: fontFor('600'),
     },
     secondaryButtonText: {
       fontSize: moderateScale(SIZES.font),
       color: COLORS.primary,
-      fontWeight: '600',
       ...FONTS.font,
+      fontFamily: fontFor('600'),
     },
     quickPreview: {
       backgroundColor: COLORS.surfaceVariant,
@@ -273,11 +274,11 @@ export const createEstimationPreviewModalStyles = (theme) => {
       borderColor: COLORS.borderColor,
       borderRadius: SIZES.radius_sm,
       marginBottom: moderateScale(15),
-      backgroundColor: "#e0e0e0",
+      backgroundColor: COLORS.surfaceVariant,
     },
     previewWebView: {
       flex: 1,
-      backgroundColor: "#fff",
+      backgroundColor: COLORS.white,
     },
     previewContentContainer: {
       paddingBottom: moderateScale(20),
@@ -287,10 +288,10 @@ export const createEstimationPreviewModalStyles = (theme) => {
     },
     label: {
       fontSize: moderateScale(SIZES.fontSm),
-      fontWeight: 'bold',
       color: COLORS.text,
       marginBottom: moderateScale(2),
       ...FONTS.fontSm,
+      fontFamily: fontFor('bold'),
     },
     underline: {
       borderBottomWidth: 1,
@@ -349,9 +350,9 @@ export const createEstimationPreviewModalStyles = (theme) => {
     },
     boldText: {
       fontSize: moderateScale(SIZES.fontXs),
-      fontWeight: 'bold',
       color: COLORS.text,
       ...FONTS.fontXs,
+      fontFamily: fontFor('bold'),
     },
     totalsSection: {
       marginTop: moderateScale(10),
@@ -367,9 +368,9 @@ export const createEstimationPreviewModalStyles = (theme) => {
     },
     grandTotalText: {
       fontSize: moderateScale(SIZES.font),
-      fontWeight: 'bold',
       color: COLORS.primary,
       ...FONTS.font,
+      fontFamily: fontFor('bold'),
     },
     footer: {
       alignItems: "center",
@@ -420,8 +421,8 @@ export const createEstimationPreviewModalStyles = (theme) => {
     buttonText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),
-      fontWeight: '600',
       ...FONTS.font,
+      fontFamily: fontFor('600'),
     },
     connectionActions: {
       marginBottom: moderateScale(12),
@@ -442,8 +443,8 @@ printCountContainer: {
 },
 
 printCountLabel: {
-  fontSize: 16,
-  fontWeight: '600',
+  fontSize: SIZES.fontLg,
+  fontFamily: fontFor('600'),
   color: theme.COLORS.text,
 },
 
@@ -461,8 +462,8 @@ printCountSelector: {
 },
 
 printCountText: {
-  fontSize: 16,
-  fontWeight: '600',
+  fontSize: SIZES.fontLg,
+  fontFamily: fontFor('600'),
   color: theme.COLORS.primary,
   marginRight: 4,
 },
@@ -471,12 +472,12 @@ printOptionsDropdown: {
   position: 'absolute',
   top: 60,
   right: 16,
-  backgroundColor: "#fff",
+  backgroundColor: theme.COLORS.surface,
   borderRadius: 8,
   borderWidth: 1,
   borderColor: theme.COLORS.border,
   elevation: 5,
-  shadowColor: '#000',
+  shadowColor: theme.COLORS.shadowDark,
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.25,
   shadowRadius: 3.84,
@@ -490,7 +491,7 @@ printOption: {
   paddingHorizontal: 16,
   paddingVertical: 7,
   borderBottomWidth: 1,
-  borderBottomColor: theme.COLORS.borderLight,
+  borderBottomColor: theme.COLORS.outline,
 },
 
 printOptionSelected: {
@@ -498,20 +499,21 @@ printOptionSelected: {
 },
 
 printOptionText: {
-  fontSize: 14,
+  fontSize: SIZES.font,
   color: theme.COLORS.text,
+  fontFamily: fontFor(),
 },
 
 printOptionTextSelected: {
   color: theme.COLORS.primary,
-  fontWeight: '600',
+  fontFamily: fontFor('600'),
 },
 
 customPrintContainer: {
   flexDirection: 'row',
   padding: 12,
   borderTopWidth: 1,
-  borderTopColor: theme.COLORS.borderLight,
+  borderTopColor: theme.COLORS.outline,
   alignItems: 'center',
 },
 
@@ -523,9 +525,10 @@ customPrintInput: {
   borderRadius: 4,
   borderWidth: 1,
   borderColor: theme.COLORS.border,
-  fontSize: 14,
+  fontSize: SIZES.font,
   color: theme.COLORS.text,
   marginRight: 8,
+  fontFamily: fontFor(),
 },
 
 customPrintButton: {

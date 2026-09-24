@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Footer from "../../Components/Footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
 import CommonHeader from "../../../Components/Header/CommonHeader";
 import { useTheme } from "../../../Context/ThemeContext";
 import { createPurchaseStyles } from "./PurchaseStyles";

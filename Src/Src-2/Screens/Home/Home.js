@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import QuickEstimateHeader from "../../Components/Header/QuickEstimateHeader";
-import Footer from "../../Components/Footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
 import BarcodeScannerModal from "../../Components/Scanner/Scanner";
 import {
   printEstimationSlip,
