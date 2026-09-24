@@ -218,7 +218,7 @@ const handleScannedData = (data) => {
       const batchNo = await estimation.submitData(currentData);
       if (batchNo) {
         console.log("Submission successful. Batch No:", batchNo);
-        estimation.setEstBatchNo(batchNo);
+        estimation.setEstBatchNo(batchNo?.batchNo ?? batchNo);
         // Clear local data after successful submission
         setDisplayData([]);
         setCombinedInput("");

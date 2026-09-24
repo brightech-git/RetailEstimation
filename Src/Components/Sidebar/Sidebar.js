@@ -245,7 +245,7 @@ const Sidebar = (props) => {
           }}
         />
 
-        <NavItem
+        {/* <NavItem
           icon="return-up-back"
           iconSet={Ionicons}
           label="Sales Return"
@@ -254,7 +254,7 @@ const Sidebar = (props) => {
             closeDrawer();
             navigation.navigate("AppScreens", { screen: "SalesReturn" });
           }}
-        />
+        /> */}
 
         <NavItem
           icon="print"

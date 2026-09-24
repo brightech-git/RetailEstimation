@@ -18,7 +18,7 @@ export const createHomeStyles = (theme) => {
     },
     header: {
       flexDirection: 'row',
-      alignItems: 'stretch',
+      alignItems: 'flex-start',
       gap: moderateScale(8),
     },
     inputRow: {

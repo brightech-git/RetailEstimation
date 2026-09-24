@@ -309,6 +309,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId, purchas
         const stones = await fetchStonesForItem(item.itemid, item.tagno);
         const displayAmount = calcItemDisplayShare(item, baseAmount, offerDiscount, items.length);
         const itemRate = parseFloat(item.rate) || goldRate;
+        console.log(`[PrintItem] itemid=${item.itemid} tagno=${item.tagno} mcharge=${item.mcharge} wastage=${item.wastage}`);
         return { ...item, stones, displayAmount, rate: itemRate };
       })
     );
@@ -706,9 +707,16 @@ export const printEstimationToPrinter = async (
           printContent += formatStyledLine(
             `Rate:${rateValue} `,
             `${(item.grswt || 0).toFixed(3)}    ${
-              item.wastper && item.wastper > 0 ? item.wastper.toFixed(1) : ""
+              item.wastage && item.wastage > 0 ? item.wastage.toFixed(3) : ""
             }    ${((item.displayAmount ?? item.amount) || 0).toFixed(0)}`
           );
+
+          if (item.mcharge && item.mcharge > 0) {
+            printContent += formatStyledLine(
+              `MC: ${item.mcharge.toFixed(0)}`,
+              ""
+            );
+          }
 
           if (item.grswt !== item.netwt) {
             printContent += formatStyledLine(
@@ -932,6 +940,8 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       grswt: item.grswt,
       netwt: item.netwt,
       wastper: item.wastper,
+      wastage: item.wastage,
+      mcharge: item.mcharge,
       amount: item.amount,
       displayAmount: item.displayAmount,
       rate: item.rate,

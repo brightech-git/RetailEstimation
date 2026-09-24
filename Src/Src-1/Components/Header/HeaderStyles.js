@@ -1,8 +1,8 @@
-import { StyleSheet, Platform, Dimensions } from "react-native";
-import { scale, verticalScale, moderateScale } from "../../../Utills/Scalling";
+import { StyleSheet, Platform } from "react-native";
+import { scale, verticalScale, moderateScale, DEVICE } from "../../../Utills/Scalling";
 
-const { width } = Dimensions.get("window");
-const isTablet = width >= 768;
+// Same tablet test as the theme (shorter side >= 600dp) so every screen agrees
+const { isTablet } = DEVICE;
 
 /**
  * Responsive font sizes

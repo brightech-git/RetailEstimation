@@ -202,7 +202,13 @@ export const createPrinterSettingsStyles = (theme) => {
     // ===========================================
     // FORM SECTION
     // ===========================================
+    // Tablet: form + list in two columns; phone: stacked
+    columns: theme.LAYOUT.isTablet
+      ? { flexDirection: "row", alignItems: "flex-start", gap: moderateScale(16) }
+      : {},
+
     formSection: {
+      ...(theme.LAYOUT.isTablet && { flex: 1 }),
       backgroundColor: COLORS.surface,
       padding: moderateScale(SIZES.padding),
       borderRadius: moderateScale(SIZES.radius),
@@ -359,6 +365,7 @@ export const createPrinterSettingsStyles = (theme) => {
     // SAVED PRINTERS SECTION
     // ===========================================
     savedPrintersSection: {
+      ...(theme.LAYOUT.isTablet && { flex: 1 }),
       backgroundColor: COLORS.surface,
       padding: moderateScale(SIZES.padding),
       borderRadius: moderateScale(SIZES.radius),

@@ -190,10 +190,11 @@ const getStyles = (theme) =>
       color: theme.COLORS.danger,
       marginLeft: 4,
     },
-    filterContainer: {
-      // No flexDirection here as we're using column layout with rows inside
-    },
+    // Phone: two rows of two dropdowns. Tablet: both rows side by side, so
+    // all four filters sit on one line.
+    filterContainer: theme.LAYOUT.isTablet ? { flexDirection: "row", gap: 12 } : {},
     rowContainer: {
+      ...(theme.LAYOUT.isTablet && { flex: 1 }),
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: 16,

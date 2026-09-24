@@ -9,7 +9,7 @@ import {
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Dimensions } from "react-native";
+import { DEVICE } from "../Utills/Scalling";
 import AsynchStorage from "@react-native-async-storage/async-storage";
 
 // Screens
@@ -37,8 +37,8 @@ import { useTheme } from "../Context/ThemeContext";
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 const InnerStack = createNativeStackNavigator();
-const { width } = Dimensions.get("window");
-const isTablet = width >= 768;
+// Same tablet test as the theme (shorter side >= 600dp) so every screen agrees
+const { isTablet } = DEVICE;
 
 // Inner stack handles proper back navigation between screens
 function AppScreensStack() {

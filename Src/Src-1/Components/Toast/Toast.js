@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useTheme } from '../../../Context/ThemeContext';
-import { fontFor, SIZES } from "../../../Utills/Theme";
+import { fontFor, SIZES, LAYOUT } from "../../../Utills/Theme";
 
 const { width } = Dimensions.get('window');
 
@@ -146,6 +146,7 @@ const getStyles = (COLORS) =>
     },
     toast: {
       width: width - 40,
+      maxWidth: LAYOUT.toastMaxWidth,
       minHeight: 60,
       borderRadius: SIZES.radius,
       paddingHorizontal: 16,

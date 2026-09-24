@@ -119,8 +119,11 @@ const EstimationPreviewModal = ({
       items: (itemsWithStones || items || []).map((item) => ({
         itemid: item.itemid, tagno: item.tagno, itemname: item.itemname,
         pcs: item.pcs, grswt: item.grswt, netwt: item.netwt,
-        wastper: item.wastper, amount: item.amount, displayAmount: item.displayAmount,
+        wastper: item.wastper, wastage: item.wastage, mcharge: item.mcharge,
+        amount: item.amount, displayAmount: item.displayAmount,
         rate: item.rate,
+        // debug
+        ...(console.log('[PreviewItem] wastage:', item.wastage, '| mcharge:', item.mcharge) || {}),
         stones: (item.stones || []).map((s) => ({ stnwt: s.stnwt, stnamt: s.stnamt, stoneunit: s.stoneunit })),
       })),
       boardRate: getOfferBoardRate(slipData.offer),

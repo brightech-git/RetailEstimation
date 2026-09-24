@@ -1,9 +1,10 @@
 // 📁 Src/Components/Sidebar/SidebarStyles.js
-import { StyleSheet, Dimensions, Platform } from "react-native";
+import { StyleSheet, Platform } from "react-native";
+import { DEVICE } from "../../Utills/Scalling";
 import { fontFor, SIZES } from "../../Utills/Theme";
 
-const { width } = Dimensions.get("window");
-const isTablet = width >= 768;
+// Same tablet test as the theme (shorter side >= 600dp) so every screen agrees
+const { isTablet } = DEVICE;
 
 export default function getStyles(theme) {
   const { COLORS, FONTS } = theme;

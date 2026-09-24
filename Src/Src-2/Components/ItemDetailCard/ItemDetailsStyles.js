@@ -18,8 +18,9 @@ export const createItemDetailsStyles = (theme) =>
       elevation: 3,
       borderWidth: 1,
       borderColor: theme.COLORS.border,
-      alignSelf: "center",
-      width: "95%",
+      // two cards per row on tablets (the parent grid wraps), one on phones
+      alignSelf: theme.LAYOUT.isTablet ? "flex-start" : "center",
+      width: theme.LAYOUT.isTablet ? "48.5%" : "95%",
     },
     cardImageContainer: {
       alignItems: "center",

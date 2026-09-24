@@ -222,16 +222,16 @@ var rows = '';
 (P.items || []).forEach(function(item, idx){
   var itemName = (item.itemname || '').toUpperCase();
   var amount = (item.displayAmount != null ? item.displayAmount : item.amount) || 0;
-  var vaDisplay = item.wastper && item.wastper > 0 ? fmtVA(item.wastper) + '%' : '';
+  var vaDisplay = item.wastage != null && item.wastage > 0 ? fmtWt(item.wastage) : '';
 
   var stoneTotal = (item.stones || []).reduce(function(s, st){ return s + (st.stnamt || 0); }, 0);
   var displayAmt = ((item.displayAmount != null ? item.displayAmount : item.amount) || 0) - stoneTotal;
-  var itemRate = item.rate || 0;
+  var mcDisplay = item.mcharge != null && item.mcharge > 0 ? 'MC: ' + fmt(item.mcharge) : '';
   rows +=
     '<tr class="item-name-row"><td colspan="4">' + (idx + 1) + ' ' + esc(itemName) +
       ' (' + (item.pcs || 0) + ' Pcs) [' + esc(item.itemid) + '-' + esc(item.tagno) + ']</td></tr>' +
     '<tr>' +
-      '<td>' + (itemRate > 0 ? 'Rate: ' + fmt(itemRate) : '') + '</td>' +
+      '<td>' + mcDisplay + '</td>' +
       '<td class="r">' + fmtWt(item.grswt) + '</td>' +
       '<td class="r">' + vaDisplay + '</td>' +
       '<td class="r">' + fmt(displayAmt) + '</td>' +

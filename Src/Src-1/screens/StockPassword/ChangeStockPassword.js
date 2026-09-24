@@ -284,6 +284,9 @@ const getStyles = (theme) =>
       color: theme.COLORS.buttonText,
     },
     card: {
+      width: "100%",
+      maxWidth: theme.LAYOUT.formMaxWidth,
+      alignSelf: "center",
       backgroundColor: theme.COLORS.card,
       borderRadius: 12,
       padding: 20,

@@ -154,6 +154,18 @@ export const SIZES = {
 };
 
 /* -------------------------------------------------------------------------- */
+/* 📐 LAYOUT — tablet-first breakpoints shared by every screen                */
+/* -------------------------------------------------------------------------- */
+export const LAYOUT = {
+  isTablet: DEVICE.isTablet,
+  // item cards / form sections placed side by side on tablets
+  columns: DEVICE.isTablet ? 2 : 1,
+  // forms and dialogs stop growing past this width and centre themselves
+  formMaxWidth: 640,
+  toastMaxWidth: 560,
+};
+
+/* -------------------------------------------------------------------------- */
 /* 🔤 APP-WIDE FONT FAMILIES                                                  */
 /* Only Poppins is used across the entire app UI:                            */
 /*   - Poppins-Medium   : body / label / regular text                       */
@@ -320,7 +332,7 @@ export const FONTS = {
 export const getAppTheme = (isDarkMode = false) => {
   const COLORS = isDarkMode ? DARK_COLORS : LIGHT_COLORS;
   const FONTS = createFonts(COLORS);
-  return { COLORS, SIZES, FONTS, DEVICE, isDarkMode, PRINTER_COMMANDS };
+  return { COLORS, SIZES, FONTS, DEVICE, LAYOUT, isDarkMode, PRINTER_COMMANDS };
 };
 
 /* -------------------------------------------------------------------------- */

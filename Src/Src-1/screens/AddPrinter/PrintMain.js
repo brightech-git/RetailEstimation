@@ -617,6 +617,8 @@ const PrinterSettings = () => {
         </View>
       )} */}
 
+      {/* Form and printer list sit side by side on tablets */}
+      <View style={styles.columns}>
       {/* Add/Edit Form */}
       <View style={styles.formSection}>
         <View style={styles.formHeader}>
@@ -769,6 +771,7 @@ const PrinterSettings = () => {
             scrollEnabled={false}
           />
         )}
+      </View>
       </View>
 
       {/* Full List Modal */}
