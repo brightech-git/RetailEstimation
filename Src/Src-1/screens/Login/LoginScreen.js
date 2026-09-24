@@ -111,11 +111,13 @@ const LoginScreen = ({ navigation }) => {
           >
             {/* Logo */}
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-              <Text style={styles.title}>
+              <Text style={styles.title} adjustsFontSizeToFit minimumFontScale={0.7}>
                 Retail{"\n"}
                 <Text style={styles.titleAccent}>Jewellery Estimation</Text>
               </Text>
-              <Text style={styles.subtitle}>Exquisite Craftsmanship</Text>
+              <Text style={styles.subtitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                Exquisite Craftsmanship
+              </Text>
             </Animated.View>
 
             {/* Form */}

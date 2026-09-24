@@ -42,6 +42,7 @@ export const createItemDetailsStyles = (theme) =>
       marginBottom: 12,
     },
     cardTagNumber: {
+      maxWidth: "100%",
       fontSize: moderateScale(20),
       fontWeight: "bold",
       color: theme.COLORS.primary,
@@ -55,23 +56,27 @@ export const createItemDetailsStyles = (theme) =>
       backgroundColor: theme.COLORS.border,
       marginVertical: moderateScale(12),
     },
+    // Label keeps its natural width; the value fills the rest and wraps
+    // right-aligned (long item names) instead of pushing the label down.
     cardDetailRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
+      alignItems: "flex-start",
       marginBottom: moderateScale(8),
     },
     cardDetailLabel: {
-      fontSize: moderateScale(16),
+      fontSize: moderateScale(14),
       color: theme.COLORS.gray,
-      fontWeight: "500",
-      flex: 1,
+      fontFamily: theme.FONTS.body.fontFamily,
+      flexShrink: 0,
+      marginRight: moderateScale(12),
     },
     cardDetailValue: {
-      fontSize: moderateScale(17),
-      color: theme.COLORS.h2,
-      fontWeight: "600",
+      fontSize: moderateScale(15),
+      color: theme.COLORS.title,
+      fontFamily: theme.FONTS.subheading.fontFamily,
       flex: 1,
+      minWidth: 0,
       textAlign: "right",
     },
     cardGrandTotalRow: {
@@ -82,12 +87,17 @@ export const createItemDetailsStyles = (theme) =>
     },
     cardGrandTotalLabel: {
       fontSize: moderateScale(16),
-      fontWeight: "bold",
+      fontFamily: theme.FONTS.heading.fontFamily,
       color: theme.COLORS.primary,
+      flexShrink: 0,
+      marginRight: moderateScale(12),
     },
     cardGrandTotalValue: {
       fontSize: moderateScale(18),
-      fontWeight: "bold",
+      fontFamily: theme.FONTS.heading.fontFamily,
       color: theme.COLORS.success,
+      flex: 1,
+      minWidth: 0,
+      textAlign: "right",
     },
   });

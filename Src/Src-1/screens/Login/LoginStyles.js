@@ -21,6 +21,7 @@ export const getStyles = (theme) => {
       maxWidth: moderateScale(480),
     },
     logoContainer: {
+      width: "100%",
       alignItems: "center",
       marginBottom: moderateScale(25),
     },
@@ -28,18 +29,23 @@ export const getStyles = (theme) => {
       color: COLORS.warning,
       textAlign: "center",
       fontSize: moderateScale(28),
-      letterSpacing: 4,
+      lineHeight: moderateScale(38),
+      letterSpacing: 2,
       ...FONTS.heading,
     },
+    // Second line of the title; sized so "Jewellery Estimation" fits one line
     titleAccent: {
       color: COLORS.notification,
       ...FONTS.heading,
+      fontSize: moderateScale(22),
+      letterSpacing: 0.5,
     },
     subtitle: {
       color: COLORS.textLight,
       marginTop: moderateScale(6),
+      textAlign: "center",
       ...FONTS.body,
-      fontSize: moderateScale(26),
+      fontSize: moderateScale(16),
     },
     formContainer: {
       width: "100%",
@@ -116,6 +122,7 @@ export const getStyles = (theme) => {
     },
     modalContent: {
       width: width * 0.85,
+      maxWidth: 480,
       maxHeight: "70%",
       backgroundColor: COLORS.card,
       borderRadius: SIZES.radius_lg,
@@ -191,8 +198,9 @@ export const getStyles = (theme) => {
     buttonDisabled: { opacity: 0.6 },
     buttonText: {
       color: COLORS.buttonText,
-      fontSize: moderateScale(18),
       ...FONTS.subheading,
+      fontSize: moderateScale(18),
+      letterSpacing: 1,
     },
     toggleThemeBtn: { marginTop: 20, alignSelf: "center" },
     toggleThemeText: { color: COLORS.text, ...FONTS.text },

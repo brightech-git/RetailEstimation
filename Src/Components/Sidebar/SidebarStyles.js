@@ -38,9 +38,9 @@ export default function getStyles(theme) {
     drawerCompanyName: {
       ...FONTS.h5,
       color: COLORS.primary,
-      fontWeight: "700",
       letterSpacing: 0.3,
       fontSize: isTablet ? 20 : 17,
+      lineHeight: isTablet ? 28 : 24,
     },
     drawerUsername: {
       ...FONTS.fontSm,
@@ -87,9 +87,10 @@ export default function getStyles(theme) {
     },
     drawerText: {
       ...FONTS.fontLg,
+      flexShrink: 1,
       color: COLORS.text,
-      fontWeight: "600",
       fontSize: isTablet ? 17 : 15,
+      lineHeight: isTablet ? 24 : 21,
     },
     drawerTextActive: {
       color: COLORS.buttonText,
@@ -181,6 +182,7 @@ export default function getStyles(theme) {
     modalButton: {
       flex: 1,
       paddingVertical: 14,
+      paddingHorizontal: 8,
       borderRadius: 10,
       alignItems: "center",
       marginHorizontal: 5,

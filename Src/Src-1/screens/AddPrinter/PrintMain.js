@@ -467,7 +467,7 @@ const PrinterSettings = () => {
         >
           <View style={styles.printerInfo}>
             <View style={styles.printerNameRow}>
-              <Text style={styles.printerName}>{item.name}</Text>
+              <Text style={styles.printerName} numberOfLines={2}>{item.name}</Text>
               {isCurrent && (
                 <View style={styles.currentBadge}>
                   <View style={styles.activeDot} />
@@ -475,7 +475,7 @@ const PrinterSettings = () => {
                 </View>
               )}
             </View>
-            <Text style={styles.printerAddress}>
+            <Text style={styles.printerAddress} numberOfLines={1}>
               {item.ip_address}:{item.port}
             </Text>
             {status && (
@@ -571,7 +571,9 @@ const PrinterSettings = () => {
           />
         </TouchableOpacity>
 
-        <Text style={styles.mainTitle}>Printer Settings</Text>
+        <Text style={styles.mainTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+          Printer Settings
+        </Text>
 
         <TouchableOpacity
           style={[styles.refreshButton, isRefreshing && styles.disabledButton]}
@@ -781,7 +783,7 @@ const PrinterSettings = () => {
             <TouchableWithoutFeedback>
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>
+                  <Text style={styles.modalTitle} numberOfLines={1}>
                     Your Printers ({printerList.length})
                   </Text>
                   <TouchableOpacity 

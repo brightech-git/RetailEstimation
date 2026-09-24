@@ -63,7 +63,7 @@ const DropdownInput = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label} numberOfLines={1}>{label}</Text>
       
       <TouchableOpacity 
         style={[
@@ -99,7 +99,7 @@ const DropdownInput = ({
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Select {label}</Text>
+                  <Text style={styles.modalTitle} numberOfLines={1}>Select {label}</Text>
                   <TouchableOpacity
                     onPress={() => {
                       setModalVisible(false);
@@ -239,6 +239,7 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.cardBackground,
       borderRadius: 16,
       width: width * 0.9,
+      maxWidth: 520,
       maxHeight: height * 0.7,
       shadowColor: "#000",
       shadowOffset: {
@@ -258,6 +259,8 @@ const getStyles = (theme) =>
       borderBottomColor: theme.COLORS.border,
     },
     modalTitle: {
+      flex: 1,
+      marginRight: 8,
       fontSize: 18,
       fontWeight: "600",
       color: theme.COLORS.title,

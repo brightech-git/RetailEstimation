@@ -61,7 +61,7 @@ const getStyles = (theme) =>
     headerCell: {
       color: theme.COLORS.buttonText,
       fontWeight: "bold",
-      fontSize: 14,
+      fontSize: 13,
       textAlign: "center",
       paddingHorizontal: 4,
     },
@@ -149,6 +149,7 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.primary,
       paddingVertical: 14,
       borderRadius: 8,
+      paddingHorizontal: 12,
       alignItems: "center",
       marginTop: 16,
       elevation: 2,
@@ -163,6 +164,7 @@ const getStyles = (theme) =>
       justifyContent: "center",
     },
     loadMoreText: {
+      textAlign: "center",
       color: theme.COLORS.buttonText,
       fontWeight: "600",
       fontSize: 14,
@@ -170,11 +172,13 @@ const getStyles = (theme) =>
     allLoadedContainer: {
       backgroundColor: theme.COLORS.success,
       paddingVertical: 12,
+      paddingHorizontal: 12,
       borderRadius: 8,
       alignItems: "center",
       marginTop: 16,
     },
     allLoadedText: {
+      textAlign: "center",
       color: theme.COLORS.white,
       fontWeight: "600",
       fontSize: 14,

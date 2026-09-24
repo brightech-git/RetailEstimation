@@ -245,7 +245,7 @@ const CategorySelectModal = ({ visible, initialValue, onClose, onDone }) => {
           <TouchableWithoutFeedback onPress={() => {}}>
             <View style={styles.modalCard}>
               <View style={styles.modalHeaderBar}>
-                <Text style={styles.modalHeaderText}>BillPurchaseDetail</Text>
+                <Text style={styles.modalHeaderText} numberOfLines={1}>BillPurchaseDetail</Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeIconBtn}>
                   <Text style={styles.closeIconText}>✕</Text>
                 </TouchableOpacity>

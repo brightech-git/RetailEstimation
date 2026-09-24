@@ -41,7 +41,7 @@ const TableComponent = ({
   const sortedItems = [...checkedItems, ...uncheckedItems];
 
   const columnWidths = {
-    itemId: 60,
+    itemId: 70,
     tagNo: 90,
     pcs: 60,
     grswt: 90,
@@ -53,7 +53,8 @@ const TableComponent = ({
     itemtypename: 150,
   };
 
-  const totalWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0);
+  // + 8 for the row's horizontal padding (4 each side) so the last column isn't clipped
+  const totalWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0) + 8;
   
   const filterOptions = [
     { label: "All Items", value: "all" },
@@ -149,7 +150,7 @@ const TableComponent = ({
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.formTitle}>ITEM LIST</Text>
+        <Text style={styles.formTitle} numberOfLines={1}>ITEM LIST</Text>
       </View>
       
       <ScrollView 
@@ -160,16 +161,16 @@ const TableComponent = ({
         <View>
           {/* Table Header */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.headerCell, { width: columnWidths.itemId }]}>ITEMID</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.tagNo }]}>TAG NO</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.pcs }]}>PCS</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.grswt }]}>GROSS WT</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.netwt }]}>NET WT</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.recdate }]}>REC DATE</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.itemname }]}>ITEM NAME</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.subitemname }]}>SUBITEM</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.itemctrname }]}>COUNTER</Text>
-            <Text style={[styles.headerCell, { width: columnWidths.itemtypename }]}>ITEM TYPE</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemId }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>ITEMID</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.tagNo }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>TAG NO</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.pcs }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>PCS</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.grswt }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>GROSS WT</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.netwt }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>NET WT</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.recdate }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>REC DATE</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemname }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>ITEM NAME</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.subitemname }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>SUBITEM</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemctrname }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>COUNTER</Text>
+            <Text style={[styles.headerCell, { width: columnWidths.itemtypename }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>ITEM TYPE</Text>
           </View>
 
           {/* Table Body */}

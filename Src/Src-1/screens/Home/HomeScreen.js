@@ -191,13 +191,13 @@ const HomeScreen = () => {
             onPress={() => navigation.navigate("Purchase")}
             disabled={isSubmitted}
           >
-            <Text style={styles.purchaseNavButtonText}>🛒  Go to Purchase</Text>
+            <Text style={styles.purchaseNavButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>🛒  Go to Purchase</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.purchaseNavButton}
             onPress={() => navigation.navigate("SalesReturn")}
           >
-            <Text style={styles.purchaseNavButtonText}>🛒  Go to SalesReturn</Text>
+            <Text style={styles.purchaseNavButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>🛒  Go to SalesReturn</Text>
           </TouchableOpacity>
           </View>
          
@@ -220,26 +220,26 @@ const HomeScreen = () => {
                     <View style={styles.totalsRow}>
                       {estimation.totalGross > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>Gross Amt</Text>
-                          <Text style={styles.totalValue}>₹{estimation.totalGross.toFixed(2)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>Gross Amt</Text>
+                          <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{estimation.totalGross.toFixed(2)}</Text>
                         </View>
                       )}
                       {estimation.totalDiscount > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>Discount</Text>
-                          <Text style={styles.totalValue}>₹{estimation.totalDiscount.toFixed(2)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>Discount</Text>
+                          <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{estimation.totalDiscount.toFixed(2)}</Text>
                         </View>
                       )}
                       {estimation.totalGST > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>GST Amt</Text>
-                          <Text style={styles.totalValue}>₹{estimation.totalGST.toFixed(2)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>GST Amt</Text>
+                          <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{estimation.totalGST.toFixed(2)}</Text>
                         </View>
                       )}
                       {estimation.totalGrand > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>Grand Total</Text>
-                          <Text style={[styles.totalValue, styles.grandTotal]}>₹{estimation.totalGrand.toFixed(2)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>Grand Total</Text>
+                          <Text style={[styles.totalValue, styles.grandTotal]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{estimation.totalGrand.toFixed(2)}</Text>
                         </View>
                       )}
                     </View>
@@ -251,20 +251,20 @@ const HomeScreen = () => {
                     <View style={styles.totalsRow}>
                       {purchaseTotals.grswt > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>Gross Wt</Text>
-                          <Text style={styles.totalValue}>{purchaseTotals.grswt.toFixed(3)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>Gross Wt</Text>
+                          <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{purchaseTotals.grswt.toFixed(3)}</Text>
                         </View>
                       )}
                       {purchaseTotals.netwt > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>Net Wt</Text>
-                          <Text style={styles.totalValue}>{purchaseTotals.netwt.toFixed(3)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>Net Wt</Text>
+                          <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{purchaseTotals.netwt.toFixed(3)}</Text>
                         </View>
                       )}
                       {purchaseTotals.amount > 0 && (
                         <View style={styles.totalItem}>
-                          <Text style={styles.totalLabel}>Amount</Text>
-                          <Text style={[styles.totalValue, styles.grandTotal]}>₹{purchaseTotals.amount.toFixed(2)}</Text>
+                          <Text style={styles.totalLabel} numberOfLines={1}>Amount</Text>
+                          <Text style={[styles.totalValue, styles.grandTotal]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{purchaseTotals.amount.toFixed(2)}</Text>
                         </View>
                       )}
                     </View>
@@ -278,15 +278,15 @@ const HomeScreen = () => {
                         const finalBase = estimation.totalGross - purchaseTotals.amount;
                         const finalTotal = finalBase + estimation.totalGST;
                         return (
-                          <View style={styles.totalItem}>
+                          <View style={styles.finalAmountItem}>
                             <Text style={styles.totalsSectionLabel}>Final Amount</Text>
-                            <Text style={styles.totalLabel}>
+                            <Text style={[styles.totalLabel, styles.finalAmountBreakdown]}>
                               ₹{estimation.totalGross.toFixed(2)} - ₹{purchaseTotals.amount.toFixed(2)} = ₹{finalBase.toFixed(2)}
                             </Text>
                             {estimation.totalGST > 0 && (
-                              <Text style={styles.totalLabel}>+ GST ₹{estimation.totalGST.toFixed(2)}</Text>
+                              <Text style={[styles.totalLabel, styles.finalAmountBreakdown]}>+ GST ₹{estimation.totalGST.toFixed(2)}</Text>
                             )}
-                            <Text style={[styles.totalValue, styles.finalAmount]}>₹{finalTotal.toFixed(2)}</Text>
+                            <Text style={[styles.totalValue, styles.finalAmount]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{finalTotal.toFixed(2)}</Text>
                           </View>
                         );
                       })()}
@@ -373,7 +373,7 @@ const HomeScreen = () => {
                 returnKeyType="done"
               />
               {!!estimation.empName && (
-                <Text style={styles.empNameText}>{estimation.empName}</Text>
+                <Text style={styles.empNameText} numberOfLines={1}>{estimation.empName}</Text>
               )}
             </View>
           </View>
@@ -441,12 +441,12 @@ const HomeScreen = () => {
                     "CompanyID",
                   ].map((label, idx) => (
                     <View key={`header-${idx}`} style={styles.column}>
-                      <Text style={styles.headerCell}>{label}</Text>
+                      <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
                     </View>
                   ))}
                   {/* DELETE HEADER */}
                   <View style={styles.deleteCol}>
-                    <Text style={styles.headerCell}>Delete</Text>
+                    <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Delete</Text>
                   </View>
                 </View>
 
@@ -531,7 +531,7 @@ const HomeScreen = () => {
           {/* Transaction Number Display */}
           {estimation.tranno && (
             <View style={styles.trannoContainer}>
-              <Text style={styles.trannoText}>
+              <Text style={styles.trannoText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                 Last Submitted TRANNO: {estimation.tranno}
               </Text>
             </View>
@@ -539,7 +539,7 @@ const HomeScreen = () => {
 
           {purchaseTranno && (
             <View style={styles.trannoContainer}>
-              <Text style={styles.trannoText}>
+              <Text style={styles.trannoText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                 Purchase TRANNO: {purchaseTranno}
               </Text>
             </View>
@@ -560,7 +560,7 @@ const HomeScreen = () => {
                   <View style={styles.headerRow}>
                     {["Category","Purity","Pcs","Grswt","DustWt","W%","Wastage","Stn Wt","Net Wt","Rate","GST","Amount","Emp"].map((label, idx) => (
                       <View key={`ph-${idx}`} style={styles.column}>
-                        <Text style={styles.headerCell}>{label}</Text>
+                        <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
                       </View>
                     ))}
                   </View>
@@ -617,7 +617,7 @@ const HomeScreen = () => {
                   }
                 }}
               >
-                <Text style={styles.submitButtonText}>
+                <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {estimation.loading || submitting ? "Saving..." : "Submit"}
                 </Text>
               </TouchableOpacity>
@@ -631,7 +631,7 @@ const HomeScreen = () => {
                 onPress={handlePrint}
                 disabled={!estimation.estBatchNo}
               >
-                <Text style={styles.submitButtonText}>Print Slip</Text>
+                <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Print Slip</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -644,7 +644,7 @@ const HomeScreen = () => {
                   clearPurchaseAll();
                 }}
               >
-                <Text style={styles.submitButtonText}>Clear All</Text>
+                <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Clear All</Text>
               </TouchableOpacity>
             </View>
           )}

@@ -31,6 +31,8 @@ export const createCategorySelectModalStyles = (theme) => {
       paddingHorizontal: moderateScale(14),
     },
     modalHeaderText: {
+      flex: 1,
+      marginRight: moderateScale(8),
       color: COLORS.buttonText,
       fontWeight: "700",
       fontSize: moderateScale(SIZES.font),
@@ -71,7 +73,10 @@ export const createCategorySelectModalStyles = (theme) => {
     dropdownFieldDisabled: {
       opacity: 0.5,
     },
+    // Takes the remaining width so long values ellipsize before the caret
     dropdownFieldText: {
+      flex: 1,
+      marginRight: moderateScale(8),
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
       ...FONTS.font,
@@ -107,6 +112,7 @@ export const createCategorySelectModalStyles = (theme) => {
     },
     searchInput: {
       flex: 1,
+      minWidth: 0,
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
       paddingVertical: moderateScale(4),
@@ -147,6 +153,7 @@ export const createCategorySelectModalStyles = (theme) => {
       flexDirection: "row",
       alignItems: "center",
       width: "50%",
+      paddingRight: moderateScale(6),
       marginBottom: moderateScale(10),
     },
     radioOuter: {
@@ -169,6 +176,7 @@ export const createCategorySelectModalStyles = (theme) => {
       backgroundColor: COLORS.primary,
     },
     ownershipLabel: {
+      flexShrink: 1,
       fontSize: moderateScale(SIZES.fontSm),
       color: COLORS.text,
       ...FONTS.font,

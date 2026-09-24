@@ -46,7 +46,9 @@ const WebViewPrintScreen = () => {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
         
-        <Text style={styles.title}>Print Estimation</Text>
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+          Print Estimation
+        </Text>
         
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
@@ -85,7 +87,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     backgroundColor: '#f8f8f8',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
@@ -98,17 +102,19 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
   title: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 6,
   },
   printButton: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
   },
@@ -119,7 +125,7 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     backgroundColor: '#34C759',
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 6,
   },

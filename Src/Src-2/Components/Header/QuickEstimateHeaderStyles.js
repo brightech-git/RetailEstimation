@@ -13,7 +13,8 @@ export const createQuickEstimateHeaderStyles = (theme) => {
     },
     headerContainer: {
       backgroundColor: "transparent",
-      paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+      // The app root is already wrapped in a SafeAreaView (edge-to-edge is on),
+      // so adding StatusBar.currentHeight here would double the top gap.
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: verticalScale(4) },
       shadowOpacity: 0.6,
@@ -27,20 +28,19 @@ export const createQuickEstimateHeaderStyles = (theme) => {
     },
     menuButton: {
       position: "absolute",
-      top:
-        Platform.OS === "android"
-          ? (StatusBar.currentHeight || 0) + scale(6)
-          : scale(10),
+      top: scale(10),
       right: scale(10),
       zIndex: 10,
       padding: scale(6),
     },
+    // Horizontal padding keeps the name clear of the absolutely positioned
+    // menu button on the right (mirrored on the left to stay centred).
     companySection: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: scale(8),
-      marginTop: scale(-15),
+      paddingHorizontal: scale(48),
+      marginTop: scale(12),
     },
     companyLogo: {
       width: scale(40),
@@ -48,6 +48,9 @@ export const createQuickEstimateHeaderStyles = (theme) => {
       borderRadius: moderateScale(20), 
       marginRight: scale(10),
       marginTop: verticalScale(5),
+    },
+    companyNameWrapper: {
+      flexShrink: 1,
     },
     companyName: {
       color: COLORS.buttonText,
@@ -72,9 +75,11 @@ export const createQuickEstimateHeaderStyles = (theme) => {
     },
     dateTimeContainer: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "center",
       alignItems: "center",
-      gap: scale(18),
+      columnGap: scale(18),
+      rowGap: verticalScale(4),
     },
     timeContainer: {
       flexDirection: "row",

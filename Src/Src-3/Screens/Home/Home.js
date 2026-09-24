@@ -33,8 +33,15 @@ const InventoryStatsCard = React.memo(({ stats, loading, refreshing, styles, the
     <View style={styles.card}>
       <Text style={styles.title}>Inventory Status</Text>
       <View style={styles.total}>
-        <Text style={styles.totalLabel}>Total Items</Text>
-        <Text style={styles.totalNumber}>{stats.totalCount}</Text>
+        <Text style={styles.totalLabel} numberOfLines={1}>Total Items</Text>
+        <Text
+          style={styles.totalNumber}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.6}
+        >
+          {stats.totalCount}
+        </Text>
       </View>
       <View style={styles.bar}>
         <View style={[styles.barFill, styles.checked, { flex: checkedPct }]} />
@@ -45,11 +52,11 @@ const InventoryStatsCard = React.memo(({ stats, loading, refreshing, styles, the
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.dot, styles.checked]} />
-          <Text style={styles.label}>Checked • {stats.totalChecked}</Text>
+          <Text style={styles.label} numberOfLines={1}>Checked • {stats.totalChecked}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, styles.unchecked]} />
-          <Text style={styles.label}>Unchecked • {stats.totalUnchecked}</Text>
+          <Text style={styles.label} numberOfLines={1}>Unchecked • {stats.totalUnchecked}</Text>
         </View>
       </View>
     </View>
@@ -350,12 +357,20 @@ const getStyles = (theme) =>
     total: {
       flexDirection: "row",
       justifyContent: "space-between",
+      alignItems: "center",
+      gap: 12,
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderColor: theme.COLORS.border,
     },
-    totalLabel: { fontSize: 16, color: theme.COLORS.textLight },
-    totalNumber: { fontSize: 28, fontWeight: "800", color: theme.COLORS.primary },
+    totalLabel: { fontSize: 16, color: theme.COLORS.textLight, flexShrink: 0 },
+    totalNumber: {
+      flex: 1,
+      textAlign: "right",
+      fontSize: 28,
+      fontWeight: "800",
+      color: theme.COLORS.primary,
+    },
     bar: {
       height: 14,
       borderRadius: 7,
@@ -367,10 +382,17 @@ const getStyles = (theme) =>
     barFill: { height: "100%" },
     checked: { backgroundColor: theme.COLORS.success },
     unchecked: { backgroundColor: theme.COLORS.danger },
-    legend: { flexDirection: "row", justifyContent: "space-around" },
+    // Legend items wrap onto a second line together rather than overflowing.
+    legend: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-around",
+      rowGap: 8,
+      columnGap: 12,
+    },
     legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
     dot: { width: 10, height: 10, borderRadius: 5 },
-    label: { fontSize: 16, color: theme.COLORS.text },
+    label: { fontSize: 14, color: theme.COLORS.text },
     loadingText: { marginTop: 12, color: theme.COLORS.textLight, textAlign: "center" },
   });
 

@@ -117,9 +117,16 @@ const ChangeStockPassword = ({ navigation }) => {
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.COLORS.title} />
+              <Ionicons name="arrow-back" size={24} color={theme.COLORS.buttonText} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Change Stock Password</Text>
+            <Text
+              style={styles.headerTitle}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
+              Change Stock Password
+            </Text>
           </View>
 
           <View style={styles.card}>
@@ -265,12 +272,15 @@ const getStyles = (theme) =>
       marginBottom: 20,
     },
     backButton: {
-      marginRight: 15,
+      marginRight: 12,
+      padding: 4,
     },
+    // Sits on the dark gradient, so use the on-primary text colour
     headerTitle: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: theme.COLORS.title,
+      flex: 1,
+      fontSize: 20,
+      fontFamily: theme.FONTS.heading.fontFamily,
+      color: theme.COLORS.buttonText,
     },
     card: {
       backgroundColor: theme.COLORS.card,
@@ -303,10 +313,11 @@ const getStyles = (theme) =>
       borderWidth: 1,
       borderColor: theme.COLORS.border,
       borderRadius: 8,
-      backgroundColor: theme.COLORS.inputBackground,
+      backgroundColor: theme.COLORS.input,
     },
     textInput: {
       flex: 1,
+      minWidth: 0,
       padding: 12,
       fontSize: 16,
       color: theme.COLORS.text,
@@ -315,7 +326,7 @@ const getStyles = (theme) =>
       padding: 10,
     },
     requirementsContainer: {
-      backgroundColor: theme.COLORS.infoLight,
+      backgroundColor: theme.COLORS.primaryLight,
       padding: 15,
       borderRadius: 8,
       marginBottom: 20,
@@ -349,7 +360,7 @@ const getStyles = (theme) =>
     successContainer: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.COLORS.successLight,
+      backgroundColor: theme.COLORS.success + "22",
       padding: 15,
       borderRadius: 8,
       marginBottom: 10,
@@ -362,7 +373,7 @@ const getStyles = (theme) =>
     errorContainer: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.COLORS.dangerLight,
+      backgroundColor: theme.COLORS.danger + "22",
       padding: 15,
       borderRadius: 8,
     },

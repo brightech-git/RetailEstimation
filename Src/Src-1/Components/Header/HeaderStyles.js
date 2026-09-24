@@ -104,7 +104,7 @@ export default function getStyles(theme) {
         : "rgba(255,255,255,0.95)",
       borderRadius: moderateScale(12),
       paddingVertical: verticalScale(12),
-      paddingHorizontal: scale(15),
+      paddingHorizontal: scale(12),
       width: "100%",
       elevation: 3,
       shadowColor: "#000",
@@ -121,7 +121,7 @@ export default function getStyles(theme) {
     columnDivider: {
       width: 1,
       // backgroundColor: COLORS.borderColor,
-      marginHorizontal: scale(8),
+      marginHorizontal: scale(6),
     },
     infoRow: {
       flexDirection: "row",
@@ -131,17 +131,21 @@ export default function getStyles(theme) {
       borderBottomWidth: 0.3,
       borderBottomColor: COLORS.borderColor,
     },
+    // Label keeps its natural width; the value takes the remaining space and
+    // shrinks/ellipsizes instead of pushing either onto a second line.
     label: {
       ...FONTS.subheading,
       color: COLORS.text,
-      fontSize: SIZES.h6,
-      flexShrink: 1,
+      fontSize: moderateScale(FONT_SIZES.small),
+      flexShrink: 0,
+      marginRight: scale(4),
     },
     value: {
       ...FONTS.text,
       color: COLORS.primary,
-      fontWeight: "600",
-      flexShrink: 1,
+      fontSize: moderateScale(FONT_SIZES.small),
+      flex: 1,
+      minWidth: 0,
       textAlign: "right",
     },
     updatedText: {

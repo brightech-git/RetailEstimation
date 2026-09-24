@@ -23,7 +23,7 @@ const Footer = ({
       accessible={true}
       accessibilityLabel="App footer"
     >
-      <Text style={styles.companyName}>{companyName}</Text>
+      <Text style={styles.companyName} numberOfLines={1}>{companyName}</Text>
     </View>
   );
 };

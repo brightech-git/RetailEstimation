@@ -77,7 +77,7 @@ const ItemDetailsCard = ({ item, index, theme }) => {
       </View> */}
 
       <View style={styles.cardTagSection}>
-        <Text style={styles.cardTagNumber}>
+        <Text style={styles.cardTagNumber} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
           {item.ITEMID || "N/A"}-{item.TAGNO || "N/A"}
         </Text>
       </View>
@@ -175,8 +175,8 @@ const ItemDetailsCard = ({ item, index, theme }) => {
 
         {/* <View style={styles.cardDivider} /> */}
         <View style={[styles.cardDetailRow, styles.cardGrandTotalRow]}>
-          <Text style={styles.cardGrandTotalLabel}>Grand Total</Text>
-          <Text style={styles.cardGrandTotalValue}>
+          <Text style={styles.cardGrandTotalLabel} numberOfLines={1}>Grand Total</Text>
+          <Text style={styles.cardGrandTotalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             ₹ {grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 0 })}
           </Text>
         </View>

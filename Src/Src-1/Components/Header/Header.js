@@ -99,7 +99,12 @@ const MainHeader = () => {
 
           {/* Center: Company Logo + Name */}
           <View style={styles.companySection}>
-            <Text style={styles.companyName}>
+            <Text
+              style={styles.companyName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {companyName || "Company Name"}
             </Text>
           </View>
@@ -124,8 +129,8 @@ const MainHeader = () => {
             {/* Left Column */}
             <View style={styles.infoColumn}>
               <View style={styles.infoRow}>
-                <Text style={styles.label}>📅 Date :</Text>
-                <Text style={styles.value}>{date}</Text>
+                <Text style={styles.label} numberOfLines={1}>📅 Date :</Text>
+                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{date}</Text>
               </View>
               <View
                 style={[
@@ -133,13 +138,13 @@ const MainHeader = () => {
                   !selectedCostId && { borderBottomWidth: 0 },
                 ]}
               >
-                <Text style={styles.label}>👤 User :</Text>
-                <Text style={styles.value} numberOfLines={1}>{username || "N/A"}</Text>
+                <Text style={styles.label} numberOfLines={1}>👤 User :</Text>
+                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{username || "N/A"}</Text>
               </View>
               {selectedCostId ? (
                 <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
-                  <Text style={styles.label}>💰 Cost ID :</Text>
-                  <Text style={styles.value}>{selectedCostId}</Text>
+                  <Text style={styles.label} numberOfLines={1}>💰 Cost ID :</Text>
+                  <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedCostId}</Text>
                 </View>
               ) : null}
             </View>
@@ -150,20 +155,20 @@ const MainHeader = () => {
             {/* Right Column */}
             <View style={styles.infoColumn}>
               <View style={styles.infoRow}>
-                <Text style={styles.label}>🏅 Gold :</Text>
-                <Text style={styles.value}>
+                <Text style={styles.label} numberOfLines={1}>🏅 Gold :</Text>
+                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                   ₹ {loadingRates ? "..." : error ? "Err" : (goldRate?.toLocaleString() ?? "N/A")}
                 </Text>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.label}>🥈 Silver :</Text>
-                <Text style={styles.value}>
+                <Text style={styles.label} numberOfLines={1}>🥈 Silver :</Text>
+                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                   ₹ {loadingRates ? "..." : error ? "Err" : (silverRate?.toLocaleString() ?? "N/A")}
                 </Text>
               </View>
               <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
-                <Text style={styles.label}>🕒 Updated :</Text>
-                <Text style={styles.value} numberOfLines={1}>{rateUpdated || "--"}</Text>
+                <Text style={styles.label} numberOfLines={1}>🕒 Updated :</Text>
+                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{rateUpdated || "--"}</Text>
               </View>
             </View>
           </View>

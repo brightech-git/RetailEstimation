@@ -134,6 +134,7 @@ const getStyles = (theme) =>
     },
     inputContainer: {
       flex: 1,
+      minWidth: 0,
     },
     label: {
       fontSize: 14,
@@ -154,6 +155,7 @@ const getStyles = (theme) =>
     submitButton: {
       backgroundColor: theme.COLORS.primary,
       paddingVertical: 12,
+      paddingHorizontal: 12,
       borderRadius: 8,
       alignItems: "center",
       elevation: 2,

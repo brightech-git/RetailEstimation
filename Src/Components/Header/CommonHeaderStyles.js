@@ -7,7 +7,8 @@ export const createCommonHeaderStyles = (theme) => {
 
   return StyleSheet.create({
     gradientBackground: {
-      paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+      // The app root is already wrapped in a SafeAreaView (edge-to-edge is on),
+      // so adding StatusBar.currentHeight here would double the top gap.
       borderBottomLeftRadius: moderateScale(12),
       borderBottomRightRadius: moderateScale(12),
       elevation: 6,

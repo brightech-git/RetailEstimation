@@ -412,6 +412,9 @@ const itemCtrId = filters.itemCtrId || null;
                 <Text
                   key={col.key}
                   style={[styles.headerCell, { width: col.width }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
                 >
                   {col.label}
                 </Text>
@@ -484,8 +487,8 @@ const itemCtrId = filters.itemCtrId || null;
     () => (
       <View style={styles.statsContainerTop}>
         <View style={styles.statsHeader}>
-          <Text style={styles.statsTitle}>Inventory Status</Text>
-          <Text style={styles.statsTotal}>TOTAL: {totalCount}</Text>
+          <Text style={styles.statsTitle} numberOfLines={1}>Inventory Status</Text>
+          <Text style={styles.statsTotal} numberOfLines={1}>TOTAL: {totalCount}</Text>
         </View>
         <View style={styles.progressBarContainer}>
           <View

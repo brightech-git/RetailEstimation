@@ -272,7 +272,7 @@ const handleScannedData = (data) => {
                 onPress={fetchApiData}
                 disabled={loadingApiData}
               >
-                <Text style={styles.fetchButtonText}>
+                <Text style={styles.fetchButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {loadingApiData ? "Fetching..." : "Fetch"}
                 </Text>
               </TouchableOpacity>
@@ -332,7 +332,7 @@ const handleScannedData = (data) => {
               {isSubmitting || estimation.loading ? (
                 <ActivityIndicator size="small" color={theme.COLORS.white} />
               ) : (
-                <Text style={styles.submitButtonText}>
+                <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {isSubmitting || estimation.loading
                     ? "Submitting..."
                     : "Submit"}
@@ -349,7 +349,7 @@ const handleScannedData = (data) => {
               onPress={handlePrint}
               disabled={!estimation.estBatchNo}
             >
-              <Text style={styles.submitButtonText}>Print Slip</Text>
+              <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Print Slip</Text>
             </TouchableOpacity>
           </View>
 

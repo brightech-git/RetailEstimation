@@ -379,7 +379,9 @@ const getStyles = (theme) => {
     },
     continueWithoutButton: {
       width: "100%",
-      height: moderateScale(46),
+      minHeight: moderateScale(46),
+      paddingHorizontal: moderateScale(12),
+      paddingVertical: moderateScale(8),
       borderRadius: SIZES.radius,
       backgroundColor: COLORS.primary,
       alignItems: "center",
@@ -387,6 +389,7 @@ const getStyles = (theme) => {
       marginBottom: moderateScale(12),
     },
     continueWithoutText: {
+      textAlign: "center",
       color: COLORS.buttonText,
       fontSize: moderateScale(15),
       ...FONTS.subheading,

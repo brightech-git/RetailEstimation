@@ -136,7 +136,7 @@ const SalesReturnScreen = () => {
                 returnKeyType="done"
               />
               {!!estimation.empName && (
-                <Text style={styles.empNameText}>{estimation.empName}</Text>
+                <Text style={styles.empNameText} numberOfLines={1}>{estimation.empName}</Text>
               )}
             </View>
           </View>
@@ -183,11 +183,11 @@ const SalesReturnScreen = () => {
               <View style={styles.headerRow}>
                 {TABLE_COLUMNS.map((col, idx) => (
                   <View key={`header-${idx}`} style={styles.column}>
-                    <Text style={styles.headerCell}>{col.label}</Text>
+                    <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{col.label}</Text>
                   </View>
                 ))}
                 <View style={styles.deleteCol}>
-                  <Text style={styles.headerCell}>Delete</Text>
+                  <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Delete</Text>
                 </View>
               </View>
 
@@ -258,7 +258,7 @@ const SalesReturnScreen = () => {
                 style={[styles.submitButton, styles.clearButton]}
                 onPress={estimation.clearAll}
               >
-                <Text style={styles.submitButtonText}>Clear All</Text>
+                <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Clear All</Text>
               </TouchableOpacity>
             </View>
           )}

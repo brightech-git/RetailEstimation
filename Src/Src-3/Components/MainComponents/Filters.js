@@ -30,7 +30,7 @@ const FiltersComponent = ({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.formTitle}>FILTERS</Text>
+        <Text style={styles.formTitle} numberOfLines={1}>FILTERS</Text>
 
         <TouchableOpacity onPress={clearFilter} style={styles.clearButton}>
           <Ionicons name="close" size={18} color={theme.COLORS.danger} />
@@ -82,7 +82,7 @@ const FiltersComponent = ({
             {loadingStates.items ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={theme.COLORS.warning} />
-                <Text style={styles.loadingText}>Loading items...</Text>
+                <Text style={styles.loadingText} numberOfLines={1}>Loading items...</Text>
               </View>
             ) : (
               <DropdownInput
@@ -107,7 +107,7 @@ const FiltersComponent = ({
             {loadingStates.subItems ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={theme.COLORS.warning} />
-                <Text style={styles.loadingText}>Loading subitems...</Text>
+                <Text style={styles.loadingText} numberOfLines={1}>Loading subitems...</Text>
               </View>
             ) : (
               <DropdownInput
@@ -136,7 +136,7 @@ const FiltersComponent = ({
           onPress={applyFilter}
           activeOpacity={0.8}
         >
-          <Text style={styles.applyButtonText}>APPLY FILTER</Text>
+          <Text style={styles.applyButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>APPLY FILTER</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -144,7 +144,7 @@ const FiltersComponent = ({
           onPress={showAll}
           activeOpacity={0.8}
         >
-          <Text style={styles.allButtonText}>SHOW ALL</Text>
+          <Text style={styles.allButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>SHOW ALL</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -167,6 +167,8 @@ const getStyles = (theme) =>
       paddingHorizontal: 10,
     },
     formTitle: {
+      flexShrink: 1,
+      marginRight: 8,
       fontSize: 18,
       fontWeight: "600",
       color: theme.COLORS.title,
@@ -198,6 +200,7 @@ const getStyles = (theme) =>
     },
     halfWidth: {
       flex: 1,
+      minWidth: 0, // allow the two dropdowns to share a narrow row
     },
     loadingContainer: {
       width: "100%",
@@ -209,8 +212,10 @@ const getStyles = (theme) =>
       justifyContent: "center",
       alignItems: "center",
       flexDirection: "row",
+      paddingHorizontal: 8,
     },
     loadingText: {
+      flexShrink: 1,
       marginLeft: 8,
       color: theme.COLORS.textLight,
       fontSize: 12,
@@ -225,6 +230,7 @@ const getStyles = (theme) =>
       flex: 1,
       backgroundColor: theme.COLORS.warning,
       paddingVertical: 14,
+      paddingHorizontal: 8,
       borderRadius: 8,
       alignItems: "center",
       elevation: 2,
@@ -240,6 +246,7 @@ const getStyles = (theme) =>
       borderWidth: 2,
       borderColor: theme.COLORS.warning,
       paddingVertical: 14,
+      paddingHorizontal: 8,
       borderRadius: 8,
       alignItems: "center",
     },

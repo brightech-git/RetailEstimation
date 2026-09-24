@@ -137,17 +137,23 @@ export const SIZES = {
 
 /* -------------------------------------------------------------------------- */
 /* 🔤 APP-WIDE FONT FAMILIES                                                  */
-/* Only Poppins is used across the entire app UI, in three weights:          */
-/*   - Poppins-Regular : body / label / regular text                        */
-/*   - Poppins-Medium  : subheadings                                        */
-/*   - Poppins-Bold    : headings / emphasis / buttons                      */
+/* Only Poppins is used across the entire app UI:                            */
+/*   - Poppins-Medium   : body / label / regular text                       */
+/*   - Poppins-SemiBold : subheadings                                       */
+/*   - Poppins-Bold     : headings / emphasis / buttons                     */
+/* Heavier weights (Black, Bold for body) are noticeably wider and push      */
+/* labels/values onto a second line on narrow phones.                        */
 /* -------------------------------------------------------------------------- */
 export const FONT_FAMILIES = {
-  heading: "Poppins-Black",
+  heading: "Poppins-Bold",
   subheading: "Poppins-SemiBold",
-  body: "Poppins-Bold",
+  body: "Poppins-Medium",
   bold: "Poppins-Bold",
 };
+
+// Line height proportional to the font size. Fixed line heights clip or
+// overlap text once moderateScale() enlarges the font on bigger screens.
+const lh = (size, ratio = 1.45) => Math.round(size * ratio);
 
 /* -------------------------------------------------------------------------- */
 /* 🧾 FUNCTION TO BUILD FONTS BASED ON COLOR PALETTE                          */
@@ -156,64 +162,64 @@ export const createFonts = (COLORS) => ({
   fontLg: {
     fontSize: moderateScale(SIZES.fontLg),
     color: COLORS.text,
-    lineHeight: DEVICE.isTablet ? 28 : 24,
+    lineHeight: lh(moderateScale(SIZES.fontLg)),
     fontFamily: FONT_FAMILIES.body,
   },
   font: {
     fontSize: moderateScale(SIZES.font),
     color: COLORS.text,
-    lineHeight: DEVICE.isTablet ? 24 : 20,
+    lineHeight: lh(moderateScale(SIZES.font)),
     fontFamily: FONT_FAMILIES.body,
   },
   fontSm: {
     fontSize: moderateScale(SIZES.fontSm),
     color: COLORS.text,
-    lineHeight: DEVICE.isTablet ? 22 : 18,
+    lineHeight: lh(moderateScale(SIZES.fontSm)),
     fontFamily: FONT_FAMILIES.body,
   },
   fontXs: {
     fontSize: moderateScale(SIZES.fontXs),
     color: COLORS.text,
-    lineHeight: DEVICE.isTablet ? 20 : 16,
+    lineHeight: lh(moderateScale(SIZES.fontXs)),
     fontFamily: FONT_FAMILIES.body,
   },
   h1: {
     fontSize: moderateScale(SIZES.h1),
     color: COLORS.title,
     fontFamily: FONT_FAMILIES.heading,
-    lineHeight: DEVICE.isTablet ? 48 : 40,
+    lineHeight: lh(moderateScale(SIZES.h1)),
   },
   h2: {
     fontSize: moderateScale(SIZES.h2),
     color: COLORS.title,
     fontFamily: FONT_FAMILIES.heading,
-    lineHeight: DEVICE.isTablet ? 44 : 36,
+    lineHeight: lh(moderateScale(SIZES.h2)),
   },
   h3: {
     fontSize: moderateScale(SIZES.h3),
     color: COLORS.title,
     fontFamily: FONT_FAMILIES.heading,
-    lineHeight: DEVICE.isTablet ? 38 : 32,
+    lineHeight: lh(moderateScale(SIZES.h3)),
   },
   h4: {
     fontSize: moderateScale(SIZES.h4),
     color: COLORS.title,
     fontFamily: FONT_FAMILIES.heading,
-    lineHeight: DEVICE.isTablet ? 34 : 28,
+    lineHeight: lh(moderateScale(SIZES.h4)),
   },
   h5: {
     fontSize: moderateScale(SIZES.h5),
     color: COLORS.title,
     fontFamily: FONT_FAMILIES.heading,
-    lineHeight: DEVICE.isTablet ? 30 : 26,
+    lineHeight: lh(moderateScale(SIZES.h5)),
   },
   h6: {
     fontSize: moderateScale(SIZES.h6),
     color: COLORS.title,
     fontFamily: FONT_FAMILIES.heading,
-    lineHeight: DEVICE.isTablet ? 28 : 24,
+    lineHeight: lh(moderateScale(SIZES.h6)),
   },
-  heading: { fontFamily: FONT_FAMILIES.heading, lineHeight: DEVICE.isTablet ? 40 : 35 },
+  heading: { fontFamily: FONT_FAMILIES.heading },
   subheading: { fontFamily: FONT_FAMILIES.subheading },
   body: { fontFamily: FONT_FAMILIES.body },
   text: { fontFamily: FONT_FAMILIES.body },

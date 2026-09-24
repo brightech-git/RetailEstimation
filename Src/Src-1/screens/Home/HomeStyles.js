@@ -17,9 +17,9 @@ export const createHomeStyles = (theme) => {
     },
     header: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      },
+      alignItems: 'stretch',
+      gap: moderateScale(8),
+    },
     inputRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -30,19 +30,19 @@ export const createHomeStyles = (theme) => {
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginHorizontal: moderateScale(0), // Remove horizontal margin since we have gap
+      minWidth: 0, // let flex children shrink instead of overflowing the row
     },
-    // Specific widths for each input wrapper
+    // Relative widths for each input wrapper (Item ID : Tag No : Emp ID = 4 : 4 : 3)
     itemIdWrapper: {
-      flex: 0.45, // 45% width for Item ID
+      flex: 4,
     },
     tagNoWrapper: {
-      flex: 0.45, // 45% width for Tag No
+      flex: 4,
     },
     empIdWrapper: {
-      flex: 0.25,
+      flex: 3,
       flexDirection: 'column',
-      alignItems: 'flex-start',
+      alignItems: 'stretch',
     },
     empNameText: {
       fontSize: moderateScale(10),
@@ -52,11 +52,12 @@ export const createHomeStyles = (theme) => {
     },
     input: {
       flex: 1,
+      minWidth: 0,
       borderWidth: 1,
       borderColor: COLORS.borderColor,
       borderRadius: SIZES.radius_sm,
       backgroundColor: COLORS.input,
-      paddingHorizontal: SIZES.padding,
+      paddingHorizontal: moderateScale(10),
       paddingVertical: moderateScale(6),
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
@@ -101,9 +102,13 @@ export const createHomeStyles = (theme) => {
       borderWidth: 1,
       borderColor: COLORS.borderColor,
     },
+    // Totals wrap onto a new line as whole items instead of squeezing each
+    // label/amount pair onto two lines.
     totalsRow: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       justifyContent: 'space-around',
+      rowGap: moderateScale(8),
     },
     finalAmountDivider: {
       borderTopWidth: 1,
@@ -124,6 +129,17 @@ export const createHomeStyles = (theme) => {
     },
     totalItem: {
       alignItems: 'center',
+      flexGrow: 1,
+      flexBasis: '22%',
+      minWidth: moderateScale(80),
+      paddingHorizontal: moderateScale(4),
+    },
+    finalAmountItem: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    finalAmountBreakdown: {
+      textAlign: 'center',
     },
     totalLabel: {
       fontSize: moderateScale(SIZES.fontSm),
@@ -202,7 +218,8 @@ export const createHomeStyles = (theme) => {
       alignItems: 'center',
       justifyContent: 'center',
       flex: 1,
-      height: moderateScale(50),
+      minHeight: moderateScale(50),
+      paddingHorizontal: moderateScale(6),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
@@ -247,7 +264,7 @@ export const createHomeStyles = (theme) => {
       fontSize: moderateScale(14),
       fontWeight: 'bold',
     },
-        clearButton: {
+    clearButton: {
       backgroundColor: "#444",
     },
     deleteButton: {
@@ -278,10 +295,13 @@ export const createHomeStyles = (theme) => {
       borderColor: COLORS.borderColor,
     },
     purchaseNavButton: {
+      flex: 1,
       backgroundColor: COLORS.secondary,
       borderRadius: SIZES.radius,
-      padding: moderateScale(12),
+      paddingVertical: moderateScale(12),
+      paddingHorizontal: moderateScale(8),
       alignItems: 'center',
+      justifyContent: 'center',
       marginBottom: moderateScale(14),
       elevation: 3,
       shadowColor: COLORS.shadow,

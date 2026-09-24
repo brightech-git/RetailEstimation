@@ -46,6 +46,8 @@ export const createPurchaseStyles = (theme) => {
       paddingVertical: moderateScale(12),
     },
     categoryFieldText: {
+      flex: 1,
+      marginRight: moderateScale(8),
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
       ...FONTS.font,
@@ -62,12 +64,20 @@ export const createPurchaseStyles = (theme) => {
       borderWidth: 1,
       borderColor: COLORS.borderColor,
     },
+    // Totals wrap onto a new line as whole items instead of squeezing each
+    // label/amount pair onto two lines.
     totalsRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-around",
+      rowGap: moderateScale(8),
     },
     totalItem: {
       alignItems: "center",
+      flexGrow: 1,
+      flexBasis: "30%",
+      minWidth: moderateScale(80),
+      paddingHorizontal: moderateScale(4),
     },
     totalLabel: {
       fontSize: moderateScale(SIZES.fontSm),
@@ -188,7 +198,8 @@ export const createPurchaseStyles = (theme) => {
       alignItems: "center",
       justifyContent: "center",
       flex: 1,
-      height: moderateScale(50),
+      minHeight: moderateScale(50),
+      paddingHorizontal: moderateScale(6),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
@@ -200,6 +211,10 @@ export const createPurchaseStyles = (theme) => {
     },
     clearButton: {
       backgroundColor: "#444",
+    },
+    disabledButton: {
+      backgroundColor: COLORS.placeholder,
+      opacity: 0.6,
     },
     submitButtonText: {
       color: COLORS.buttonText,

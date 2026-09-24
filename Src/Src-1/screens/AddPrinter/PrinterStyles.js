@@ -234,6 +234,7 @@ export const createPrinterSettingsStyles = (theme) => {
     formTitleRow: {
       flexDirection: "row",
       alignItems: "center",
+      flexShrink: 1,
       gap: moderateScale(8),
     },
     
@@ -462,10 +463,14 @@ export const createPrinterSettingsStyles = (theme) => {
     // ===========================================
     // PRINTER ITEM
     // ===========================================
+    // On narrow screens the action buttons wrap below the printer details
+    // instead of squeezing the name into a thin column.
     printerItem: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "center",
+      rowGap: moderateScale(8),
       padding: moderateScale(12),
       borderWidth: 1,
       borderColor: COLORS.borderColor,
@@ -504,7 +509,9 @@ export const createPrinterSettingsStyles = (theme) => {
     },
     
     printerInfo: {
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: moderateScale(150),
       marginRight: moderateScale(10),
     },
 
@@ -517,6 +524,7 @@ export const createPrinterSettingsStyles = (theme) => {
     },
     
     printerName: {
+      flexShrink: 1,
       fontSize: moderateScale(SIZES.font),
       color: COLORS.text,
       fontWeight: "700",
@@ -558,6 +566,7 @@ export const createPrinterSettingsStyles = (theme) => {
     printerActions: {
       flexDirection: "row",
       gap: moderateScale(6),
+      marginLeft: "auto",
     },
     
     actionButton: {
@@ -677,6 +686,8 @@ export const createPrinterSettingsStyles = (theme) => {
     },
     
     modalTitle: {
+      flex: 1,
+      marginRight: moderateScale(8),
       fontSize: moderateScale(SIZES.h5),
       color: COLORS.title,
       fontWeight: "800",

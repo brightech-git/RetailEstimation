@@ -125,7 +125,7 @@ const Toast = ({ visible, message, type = 'info', duration = 3000, onHide }) => 
         <View style={styles.iconContainer}>
           <Text style={styles.icon}>{getIcon()}</Text>
         </View>
-        <Text style={[styles.message, FONTS.font]} numberOfLines={2}>
+        <Text style={[FONTS.font, styles.message]} numberOfLines={2}>
           {message}
         </Text>
       </TouchableOpacity>

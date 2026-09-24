@@ -168,7 +168,9 @@ const EstimationPreviewModal = ({
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Estimation Slip Preview</Text>
+            <Text style={styles.modalTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                Estimation Slip Preview
+              </Text>
             <View style={styles.errorContainer}>
               <MaterialIcons
                 name="error-outline"
@@ -340,7 +342,7 @@ const EstimationPreviewModal = ({
                   {statusDisplay.text}
                 </Text>
                 {currentPrinter && (
-                  <Text style={styles.printerInfo}>
+                  <Text style={styles.printerInfo} numberOfLines={1}>
                     {currentPrinter.ip_address}:{currentPrinter.port}
                   </Text>
                 )}
@@ -448,7 +450,7 @@ const EstimationPreviewModal = ({
                   size={18}
                   color={theme.COLORS.buttonText}
                 />
-                <Text style={styles.buttonText}>Cancel</Text>
+                <Text style={styles.buttonText} numberOfLines={1}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -468,7 +470,7 @@ const EstimationPreviewModal = ({
                       size={18}
                       color={theme.COLORS.buttonText}
                     />
-                    <Text style={styles.buttonText}>
+                    <Text style={styles.buttonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                       {printerStatus.connected ? `Print (${printCount})` : "Setup Printer"}
                     </Text>
                   </>

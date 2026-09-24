@@ -160,6 +160,9 @@ const Sidebar = (props) => {
               danger && { color: theme.COLORS.danger },
               focused && styles.drawerTextActive,
             ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
             {label}
           </Text>
@@ -187,8 +190,14 @@ const Sidebar = (props) => {
             style={styles.drawerLogo}
             resizeMode="cover"
           />
-          <Text style={styles.drawerCompanyName}>{companyName || "Company Name"}</Text>
-          {!!username && <Text style={styles.drawerUsername}>👤 {username}</Text>}
+          <Text style={styles.drawerCompanyName} numberOfLines={2}>
+            {companyName || "Company Name"}
+          </Text>
+          {!!username && (
+            <Text style={styles.drawerUsername} numberOfLines={1}>
+              👤 {username}
+            </Text>
+          )}
         </View>
 
         {/* Theme toggle */}
@@ -199,7 +208,9 @@ const Sidebar = (props) => {
               size={22}
               color={theme.COLORS.iconPrimary}
             />
-            <Text style={styles.drawerText}>{isDarkMode ? "Dark Mode" : "Light Mode"}</Text>
+            <Text style={styles.drawerText} numberOfLines={1}>
+              {isDarkMode ? "Dark Mode" : "Light Mode"}
+            </Text>
           </View>
           <Switch
             value={isDarkMode}
@@ -332,14 +343,16 @@ const Sidebar = (props) => {
                   setAdminAuthError(false);
                 }}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText} numberOfLines={1}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalButton, styles.submitButton]}
                 onPress={handleAdminAuthentication}
               >
-                <Text style={styles.submitButtonText}>Authenticate</Text>
+                <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                  Authenticate
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -69,17 +69,20 @@ const getStyles = (theme) =>
     },
     statsHeader: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "center",
+      columnGap: 12,
+      rowGap: 4,
       marginBottom: 12,
     },
     statsTitle: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: "700",
       color: theme.COLORS.primary,
     },
     statsTotal: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: "700",
       color: theme.COLORS.title,
     },
@@ -121,12 +124,13 @@ const getStyles = (theme) =>
       backgroundColor: theme.COLORS.danger,
     },
     statLabel: {
-      fontSize: 18,
+      fontSize: 16,
       color: theme.COLORS.textLight,
       marginRight: 6,
     },
     statValue: {
-      fontSize: 24,
+      flexShrink: 1,
+      fontSize: 22,
       fontWeight: "600",
     },
     checkedValue: {
@@ -163,6 +167,7 @@ const getStyles = (theme) =>
     },
     filterRowLabel: {
       width: 90,
+      flexShrink: 0,
       fontSize: 14,
       color: theme.COLORS.textLight,
       fontWeight: "600",
@@ -201,12 +206,13 @@ const getStyles = (theme) =>
     },
     modeToggle: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
+      gap: 12,
     },
     modeOption: {
       flexDirection: "row",
       alignItems: "center",
-      marginRight: 32,
       paddingVertical: 6,
       paddingHorizontal: 12,
       borderRadius: 8,
@@ -250,6 +256,8 @@ const getStyles = (theme) =>
       borderBottomColor: theme.COLORS.border,
     },
     recentUpdateTitle: {
+      flex: 1,
+      marginRight: 8,
       fontSize: 14,
       fontWeight: "700",
       color: theme.COLORS.primary,

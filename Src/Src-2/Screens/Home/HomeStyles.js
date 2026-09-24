@@ -79,10 +79,16 @@ export const createHomeStyles = (theme) => {
     },
     totalsRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       justifyContent: "space-around",
+      rowGap: moderateScale(8),
     },
     totalItem: {
       alignItems: "center",
+      flexGrow: 1,
+      flexBasis: "30%",
+      minWidth: moderateScale(80),
+      paddingHorizontal: moderateScale(4),
     },
     totalLabel: {
       fontSize: moderateScale(SIZES.fontSm),
@@ -127,7 +133,8 @@ export const createHomeStyles = (theme) => {
       alignItems: 'center',
       justifyContent: 'center',
       flex: 1,
-      height: moderateScale(50),
+      minHeight: moderateScale(50),
+      paddingHorizontal: moderateScale(6),
       shadowColor: COLORS.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 1,
@@ -358,6 +365,7 @@ export const createHomeStyles = (theme) => {
   },
   combinedInput: {
     flex: 1,
+    minWidth: 0,
     height: moderateScale(50),
     borderWidth: 1,
     borderColor: theme.COLORS.border,
@@ -401,7 +409,7 @@ export const createHomeStyles = (theme) => {
     justifyContent: 'center',
     alignItems: 'center',
     height: moderateScale(50),
-    width: moderateScale(80),
+    minWidth: moderateScale(80),
   },
   fetchButtonText: {
     color: '#fff',

@@ -102,8 +102,15 @@ const QuickEstimateHeader = () => {
             style={styles.companyLogo}
             resizeMode="contain"
           />
-          <View>
-            <Text style={styles.companyName}>{companyName}</Text>
+          <View style={styles.companyNameWrapper}>
+            <Text
+              style={styles.companyName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              {companyName}
+            </Text>
             {/* <Text style={styles.pageTitle}>Quick Estimate</Text> */}
           </View>
         </View>
@@ -111,12 +118,12 @@ const QuickEstimateHeader = () => {
         <View style={styles.bottomSection}>
           <View style={styles.dateTimeContainer}>
             <View style={styles.timeContainer}>
-              <Text style={styles.timeLabel}>📅 DATE :</Text>
-              <Text style={styles.dateText}>{date}</Text>
+              <Text style={styles.timeLabel} numberOfLines={1}>📅 DATE :</Text>
+              <Text style={styles.dateText} numberOfLines={1}>{date}</Text>
             </View>
             <View style={styles.timeContainer}>
-              <Text style={styles.timeLabel}>🕒 TIME :</Text>
-              <Text style={styles.dateText}>{time}</Text>
+              <Text style={styles.timeLabel} numberOfLines={1}>🕒 TIME :</Text>
+              <Text style={styles.dateText} numberOfLines={1}>{time}</Text>
             </View>
           </View>
         </View>
