@@ -16,6 +16,7 @@ import { createEstimationPreviewModalStyles } from "./EstimationPreviewModalStyl
 import { MaterialIcons } from "@expo/vector-icons";
 import { LoginContext } from "../../../Context/LoginContext";
 import { buildHtml } from "../../../Utills/buildReceiptHtml";
+import { buildHtml2 } from "../../../Utills/buildReceiptHtml2";
 import { formatDate, getCurrentTime } from "../../Service/EstimationPrinterService";
 import {
   getOfferBoardRate,
@@ -46,6 +47,7 @@ const EstimationPreviewModal = ({
   onRefreshPrinter,
   navigation,
   offerPrintGst = "N",
+  estTabPrint = "N",
 }) => {
   const { theme } = useTheme();
   const styles = createEstimationPreviewModalStyles(theme);
@@ -136,8 +138,8 @@ const EstimationPreviewModal = ({
         purity:   p.purity   || 0,
       })),
     };
-    return buildHtml(params, previewWidth);
-  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, userId, offerPrintGst]);
+    return estTabPrint === 'Y' ? buildHtml2(params, previewWidth) : buildHtml(params, previewWidth);
+  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, offerPrintGst, estTabPrint]);
 
   if (!slipData) {
     return (

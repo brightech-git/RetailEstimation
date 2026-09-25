@@ -135,44 +135,7 @@ const HomeScreen = () => {
     }
   };
 
-  // Helper function to render individual table cells
-  // const renderTableData = () => {
-  //   return estimation.tableData.map((item, rowIdx) => (
-  //     <View key={`row-${rowIdx}`} style={styles.dataRow}>
-  //       {/* 🗑️ DELETE BUTTON (Before ItemID) */}
-  //       <TouchableOpacity
-  //         onPress={() => estimation.removeRow(rowIdx)}
-  //         style={styles.deleteButton}
-  //       >
-  //         <Text style={styles.deleteButtonText}>🗑️</Text>
-  //       </TouchableOpacity>
-
-  //       <Text style={styles.cell}>{item.ITEMID ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.TAGNO ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.PCS ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.GRSWT ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.NETWT ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.Rate ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.Wastage ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.MC ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.StoneAmount ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.MiscAmount ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>
-  //         {estimation.calculateGrossAmount(item).toFixed(2)}
-  //       </Text>
-  //       <Text style={styles.cell}>
-  //         {estimation.calculateGST(item).toFixed(2)}
-  //       </Text>
-  //       <Text style={styles.cell}>
-  //         {estimation.calculateGrandTotal(item).toFixed(2)}
-  //       </Text>
-  //       <Text style={styles.cell}>{item.EMP ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.COSTID ?? "N/A"}</Text>
-  //       <Text style={styles.cell}>{item.COMPANYID ?? "N/A"}</Text>
-  //     </View>
-  //   ));
-  // };
-
+ 
   return (
     <>
       <ScrollView
@@ -193,13 +156,13 @@ const HomeScreen = () => {
           >
             <Text style={styles.purchaseNavButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>🛒  Go to Purchase</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
              style={[styles.purchaseNavButton, isSubmitted && styles.disabledButton]}
             onPress={() => navigation.navigate("SalesReturn")}
             disabled={isSubmitted}
           >
             <Text style={styles.purchaseNavButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>🛒  Go to SalesReturn</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           </View>
          
           {/* Totals Display */}

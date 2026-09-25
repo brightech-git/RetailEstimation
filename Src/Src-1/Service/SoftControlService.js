@@ -6,27 +6,22 @@ export class SoftControlService {
     this.api = createApiInstance(apiBaseUrl);
   }
 
-  /**
-   * Fetch all soft controls for a given costId.
-   * @param {string} costId
-   * @returns {Promise<import("../types/SoftControl").SoftControl[]>}
-   */
   async getSoftControls(costId) {
     const response = await this.api.get(ENDPOINTS.SOFT_CONTROL, {
       params: { costId },
     });
-    return Array.isArray(response.data) ? response.data : [];
+    const data = Array.isArray(response.data) ? response.data : [];
+    console.log('📋 SoftControls count:', data.length, '| keys:', data[0] ? Object.keys(data[0]) : 'empty');
+    return data;
   }
 
-  /**
-   * Get a single soft control value by ctlId.
-   * @param {string} costId
-   * @param {string} ctlId
-   * @returns {Promise<string>} ctlText value or ""
-   */
   async getControlValue(costId, ctlId) {
     const controls = await this.getSoftControls(costId);
-    const found = controls.find((c) => c.ctlId === ctlId);
-    return found?.ctlText || "";
+    const found = controls.find(
+      (c) => (c.ctlId || c.ctl_id) === ctlId
+    );
+    const val = found?.ctlText ?? found?.ctl_text ?? "";
+    console.log('🔎 getControlValue(', ctlId, ') =>', val || 'NOT FOUND');
+    return val;
   }
 }

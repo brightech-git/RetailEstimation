@@ -67,7 +67,8 @@ export const useEstimationPreview = (employeeId, { autoPrint = false } = {}) => 
   const [previewVisible, setPreviewVisible] = useState(false);
   const [slipData, setSlipData] = useState(null);
   const [offerPrintGst, setOfferPrintGst] = useState('N');
-  // slipData the OFFERPRINTGST lookup has finished for
+  const [estTabPrint, setEstTabPrint] = useState('N');
+  // slipData the soft-control lookups have finished for
   const [offerReadyFor, setOfferReadyFor] = useState(null);
   // slipData waiting to be auto-printed
   const [autoPrintPending, setAutoPrintPending] = useState(null);
@@ -341,11 +342,15 @@ const loadActivePrinter = useCallback(async () => {
       setOfferReadyFor(slipData);
       return;
     }
-    new SoftControlService(API_BASE_URL)
-      .getControlValue(selectedCostId, 'OFFERPRINTGST')
-      .then((val) => setOfferPrintGst(val || 'N'))
-      .catch(() => setOfferPrintGst('N'))
-      .finally(() => setOfferReadyFor(slipData));
+    const svc = new SoftControlService(API_BASE_URL);
+    Promise.all([
+      svc.getControlValue(selectedCostId, 'OFFERPRINTGST').catch(() => 'N'),
+      svc.getControlValue(selectedCostId, 'ESTTABPRINT').catch(() => 'N'),
+    ]).then(([offerVal, tabVal]) => {
+      setOfferPrintGst(offerVal || 'N');
+      setEstTabPrint(tabVal || 'N');
+      console.log('🖨️ ESTTABPRINT soft control value:', tabVal, '| applied:', tabVal || 'N');
+    }).finally(() => setOfferReadyFor(slipData));
   }, [slipData, API_BASE_URL, selectedCostId]);
 
   // Resolve empDisplay — prefer the employeeId passed from the screen (typed input),
@@ -380,12 +385,13 @@ const loadActivePrinter = useCallback(async () => {
       imageProcessorRef,
       companyInfo,
       576,
-      offerPrintGst
+      offerPrintGst,
+      estTabPrint
     ).catch((err) => {
       console.warn("⚠️ Pre-warm bitmap render failed:", err);
       return null;
     });
-  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst]);
+  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst, estTabPrint]);
 
 const executePrint = useCallback(async (printCount = 1) => {
   try {
@@ -471,7 +477,7 @@ const executePrint = useCallback(async (printCount = 1) => {
         }
         if (!bitmap) {
           console.log("🖼️ No pre-warmed bitmap available, rendering now...");
-          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, offerPrintGst);
+          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, offerPrintGst, estTabPrint);
         }
 
         // Send every copy over a single TCP connection instead of
@@ -521,6 +527,7 @@ const executePrint = useCallback(async (printCount = 1) => {
   selectedCostId,
   empDisplay,
   offerPrintGst,
+  estTabPrint,
 ]);
 
   // Auto-print: once the queued slip's receipt details are resolved and the
@@ -599,6 +606,7 @@ const executePrint = useCallback(async (printCount = 1) => {
           onRefreshPrinter={refreshPrinter}
           navigation={navigation}
           offerPrintGst={offerPrintGst}
+          estTabPrint={estTabPrint}
         />
         {/* Hidden WebView that renders the Trajan-Pro receipt HTML and
             captures it to a 1-bit bitmap for printing. */}
@@ -616,6 +624,7 @@ const executePrint = useCallback(async (printCount = 1) => {
       refreshPrinter,
       navigation,
       offerPrintGst,
+      estTabPrint,
     ]
   );
 

@@ -41,6 +41,7 @@ import { WebView } from "react-native-webview";
 import { decode as decodeBase64 } from "base64-arraybuffer";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buildHtml } from "./buildReceiptHtml";
+import { buildHtml2 } from "./buildReceiptHtml2";
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -55,8 +56,9 @@ export const ImageBitmapProcessor = forwardRef((_, ref) => {
     async process(params, printerWidthPx = 576) {
       const stored = await AsyncStorage.getItem('COMPANY_DATA');
       const companyData = stored ? JSON.parse(stored) : {};
-      const enrichedParams = { ...params, userId: companyData.USERID || null };
-      console.log('🖨️ userId for receipt:', enrichedParams.userId, typeof enrichedParams.userId);
+      const enrichedParams = { ...params };
+      console.log('🖨️ estTabPrint for receipt:', enrichedParams.estTabPrint);
+      const htmlBuilder = enrichedParams.estTabPrint === 'Y' ? buildHtml2 : buildHtml;
 
       return new Promise((resolve, reject) => {
         if (pendingRef.current) {
@@ -78,7 +80,7 @@ export const ImageBitmapProcessor = forwardRef((_, ref) => {
         }, 45000);
 
         pendingRef.current = { resolve, reject, timeoutId };
-        setSource({ html: buildHtml(enrichedParams, printerWidthPx) });
+        setSource({ html: htmlBuilder(enrichedParams, printerWidthPx) });
       });
     },
   }));

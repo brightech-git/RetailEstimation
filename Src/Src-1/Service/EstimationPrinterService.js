@@ -996,7 +996,8 @@ export const renderReceiptBitmap = async (
   processorRef,
   companyInfo = {},
   printerWidthPx = 576,
-  offerPrintGst = 'N'
+  offerPrintGst = 'N',
+  estTabPrint = 'N'
 ) => {
   if (!processorRef || !processorRef.current) {
     throw new Error(
@@ -1004,6 +1005,7 @@ export const renderReceiptBitmap = async (
     );
   }
   const params = buildReceiptImageParams(slipData, companyInfo, offerPrintGst);
+  params.estTabPrint = estTabPrint;
   return processorRef.current.process(params, printerWidthPx);
 };
 

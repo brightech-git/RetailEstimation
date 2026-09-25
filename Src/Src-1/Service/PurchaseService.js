@@ -22,7 +22,7 @@ export class PurchaseService {
    * @returns {Promise<{tranno, estbatchno}|undefined>} first saved record
    */
   async saveReceipt(payload) {
-    const response = await this.api.post(`${ENDPOINTS.EST_RECEIPT}?costId=`, payload);
+    const response = await this.api.post(`${ENDPOINTS.EST_RECEIPT}`, payload);
     console.log("✅ Purchase response:", JSON.stringify(response?.data, null, 2));
     return Array.isArray(response?.data) ? response.data[0] : response?.data;
   }
