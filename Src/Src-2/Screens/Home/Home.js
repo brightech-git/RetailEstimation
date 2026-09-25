@@ -22,7 +22,7 @@ import { createHomeStyles } from "./HomeStyles";
 import { useEstimation } from "../../../Src-1/Hook/UseEstimation";
 import { LoginContext } from "../../../Context/LoginContext";
 import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard";
-import useTagLookup from "../../Hooks/useTagLookup";
+import useTagLookup from "../../../Src-1/Hook/useTagLookup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeScreen1 = () => {
@@ -60,10 +60,7 @@ const HomeScreen1 = () => {
     const getEmployeeId = async () => {
       try {
         const empId = await AsyncStorage.getItem("EMPLOYEE_ID");
-        if (empId) {
-          setEmployeeId(empId);
-          estimation.setEmp(empId); // Set in estimation hook too
-        }
+        if (empId) setEmployeeId(empId);
       } catch (error) {
         console.error("Error fetching employee ID:", error);
       }
@@ -166,7 +163,13 @@ const handleScannedData = (data) => {
     try {
       // Set data to estimation hook before submitting
 
-      const batchNo = await estimation.submitData(currentData);
+      // submitData saves empid from each row's EMP
+      const rows = currentData.map((row) => ({
+        ...row,
+        EMP: row.EMP || employeeId,
+        EMPID: row.EMPID || employeeId,
+      }));
+      const batchNo = await estimation.submitData(rows);
       if (batchNo) {
         console.log("Submission successful. Batch No:", batchNo);
         estimation.setEstBatchNo(batchNo?.batchNo ?? batchNo);

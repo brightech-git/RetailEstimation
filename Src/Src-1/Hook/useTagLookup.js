@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
-import { EstimationService } from "../../Src-1/Service/EstimationService";
+import { EstimationService } from "../Service/EstimationService";
 import { calcOfferDiscount, getOfferBoardRate } from "../../shared/EstimationCalculations";
 
 /**

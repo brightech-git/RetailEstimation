@@ -19,12 +19,17 @@ import useEmployeeDisplay from "../../Hook/useEmployeeDisplay";
 import { SoftControlService } from "../../Service/SoftControlService";
 
 // Preview management for estimation slips
-let estimationPreviewCallback = null;
+// One entry per mounted screen using useEstimationPreview; the most recent
+// (top of the navigation stack) shows the preview. A stack rather than a
+// single slot so leaving e.g. Quick Estimate hands the preview back to the
+// Home screen underneath instead of clearing it.
+const estimationPreviewCallbacks = [];
 
 export const showEstimationPreview = (slipData) => {
   console.log("🎬 showEstimationPreview called with slip data");
-  if (estimationPreviewCallback) {
-    estimationPreviewCallback(slipData);
+  const callback = estimationPreviewCallbacks[estimationPreviewCallbacks.length - 1];
+  if (callback) {
+    callback(slipData);
   } else {
     console.log("❌ No preview callback registered");
   }
@@ -54,11 +59,19 @@ export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empI
   }
 };
 
-// Main hook for estimation printing
-export const useEstimationPreview = (employeeId) => {
+// Main hook for estimation printing.
+// options.autoPrint: skip the preview and send the slip straight to the
+// current printer (one copy) as soon as it and its receipt details
+// (employee name, OFFERPRINTGST) are ready.
+export const useEstimationPreview = (employeeId, { autoPrint = false } = {}) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [slipData, setSlipData] = useState(null);
   const [offerPrintGst, setOfferPrintGst] = useState('N');
+  // slipData the OFFERPRINTGST lookup has finished for
+  const [offerReadyFor, setOfferReadyFor] = useState(null);
+  // slipData waiting to be auto-printed
+  const [autoPrintPending, setAutoPrintPending] = useState(null);
+  const [autoPrinting, setAutoPrinting] = useState(false);
   const [currentPrinter, setCurrentPrinter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [printerStatus, setPrinterStatus] = useState({
@@ -283,14 +296,22 @@ const loadActivePrinter = useCallback(async () => {
     };
   }, [navigation, loadActivePrinter]);
 
+  const autoPrintRef = useRef(autoPrint);
+  autoPrintRef.current = autoPrint;
+
   // Preview callback setup
   useEffect(() => {
     console.log("📞 Setting up estimation preview callback");
 
-    estimationPreviewCallback = (data) => {
+    const callback = (data) => {
       try {
         console.log("🎬 Preview callback triggered with data");
         setSlipData(data);
+        if (autoPrintRef.current) {
+          console.log("🖨️ Auto-print: queued, preview skipped");
+          setAutoPrintPending(data);
+          return;
+        }
         console.log("👁️ Showing preview modal",slipData);
         setPreviewVisible(true);
       } catch (error) {
@@ -299,9 +320,12 @@ const loadActivePrinter = useCallback(async () => {
       }
     };
 
+    estimationPreviewCallbacks.push(callback);
+
     return () => {
       console.log("🧹 Cleaning up preview callback");
-      estimationPreviewCallback = null;
+      const idx = estimationPreviewCallbacks.indexOf(callback);
+      if (idx !== -1) estimationPreviewCallbacks.splice(idx, 1);
     };
   }, []);
 
@@ -312,11 +336,16 @@ const loadActivePrinter = useCallback(async () => {
 
   // Fetch OFFERPRINTGST soft control whenever slipData changes
   useEffect(() => {
-    if (!slipData || !API_BASE_URL || !selectedCostId) return;
+    if (!slipData) return;
+    if (!API_BASE_URL || !selectedCostId) {
+      setOfferReadyFor(slipData);
+      return;
+    }
     new SoftControlService(API_BASE_URL)
       .getControlValue(selectedCostId, 'OFFERPRINTGST')
       .then((val) => setOfferPrintGst(val || 'N'))
-      .catch(() => setOfferPrintGst('N'));
+      .catch(() => setOfferPrintGst('N'))
+      .finally(() => setOfferReadyFor(slipData));
   }, [slipData, API_BASE_URL, selectedCostId]);
 
   // Resolve empDisplay — prefer the employeeId passed from the screen (typed input),
@@ -494,6 +523,20 @@ const executePrint = useCallback(async (printCount = 1) => {
   offerPrintGst,
 ]);
 
+  // Auto-print: once the queued slip's receipt details are resolved and the
+  // active printer has loaded, print one copy without showing the preview.
+  const slipEmpId = employeeId || slipData?.sample?.empid;
+  useEffect(() => {
+    if (!autoPrintPending || autoPrintPending !== slipData) return;
+    if (loading) return; // active printer still loading
+    if (offerReadyFor !== slipData) return;
+    if (slipEmpId && !empDisplay) return;
+
+    setAutoPrintPending(null);
+    setAutoPrinting(true);
+    executePrint(1).finally(() => setAutoPrinting(false));
+  }, [autoPrintPending, slipData, loading, offerReadyFor, slipEmpId, empDisplay, executePrint]);
+
   // Manual connectivity check function
   const manualConnectivityCheck = useCallback(async () => {
     if (!currentPrinter) {
@@ -596,6 +639,8 @@ const executePrint = useCallback(async (printCount = 1) => {
     printerIp: currentPrinter?.ip_address,
     printerName: currentPrinter?.name,
     lastChecked: printerStatus.lastChecked,
+    // autoPrint mode: true from slip received until printing finishes
+    autoPrinting: autoPrinting || !!autoPrintPending,
   };
 };
 

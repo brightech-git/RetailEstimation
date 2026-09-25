@@ -245,6 +245,17 @@ const Sidebar = (props) => {
           }}
         />
 
+        <NavItem
+          icon="flash"
+          iconSet={Ionicons}
+          label="Quick Estimate (New)"
+          routeName="QuickEstimate"
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate("AppScreens", { screen: "QuickEstimate" });
+          }}
+        />
+
         {/* <NavItem
           icon="return-up-back"
           iconSet={Ionicons}

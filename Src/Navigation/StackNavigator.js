@@ -24,6 +24,7 @@ import ResultsScreen from "../Src-3/Screens/Result/ResultScreen";
 import ChangeStockPassword from "../Src-1/screens/StockPassword/ChangeStockPassword";
 import PurchaseScreen from "../Src-1/screens/Purchase/PurchaseScreen";
 import SalesReturnScreen from "../Src-1/screens/SalesReturn/SalesReturnScreen";
+import QuickEstimateScreen from "../Src-1/screens/QuickEstimate/QuickEstimateScreen";
 
 // Sidebar (drawer content)
 import Sidebar from "../Components/Sidebar/Sidebar";
@@ -70,6 +71,7 @@ function AppScreensStack() {
       <InnerStack.Screen name="ChangeStockPassword" component={ChangeStockPassword} />
       <InnerStack.Screen name="Purchase" component={PurchaseScreen} />
       <InnerStack.Screen name="SalesReturn" component={SalesReturnScreen} />
+      <InnerStack.Screen name="QuickEstimate" component={QuickEstimateScreen} />
     </InnerStack.Navigator>
   );
 }
