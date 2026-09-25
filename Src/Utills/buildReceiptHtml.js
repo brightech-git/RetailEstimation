@@ -138,6 +138,7 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
 
   <hr class="sep">
 
+  <div id="sales-section">
   <table class="items-table">
     <colgroup>
       <col style="width:auto">
@@ -179,6 +180,7 @@ b, .b { font-family: 'TimesNewRoman', serif; font-weight: 700; }
   </div>
   
 <br/>
+  </div>
   
 
   <div id="purchase-section"></div>
@@ -217,6 +219,12 @@ document.getElementById('date-line').textContent = 'Date : ' + (P.billDate || ''
 document.getElementById('gold-line').textContent = 'Gold  :' + fmt(P.goldRate) + '/Gm';
 document.getElementById('time-line').textContent = 'Time : ' + (P.billTime || '');
 document.getElementById('silver-line').textContent = 'Silver: ' + fmt(P.silverRate) + '/Gm';
+
+// Hide sales section if no sales items (purchase-only receipt)
+if (!P.items || P.items.length === 0) {
+  var salesSec = document.getElementById('sales-section');
+  if (salesSec) salesSec.style.display = 'none';
+}
 
 var rows = '';
 (P.items || []).forEach(function(item, idx){

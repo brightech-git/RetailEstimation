@@ -109,11 +109,13 @@ const HomeScreen = () => {
   };
 
   const handlePrint = async () => {
-    console.log("🖨️ Print button clicked, estBatchNo:", estimation.estBatchNo);
+    console.log("🖨️ Print button clicked, estBatchNo:", estimation.estBatchNo, "purchaseEstBatchNo:", purchaseEstBatchNo);
     console.log("👤 Username:", username);
     console.log("🌐 API Base URL:", API_BASE_URL);
 
-    if (!estimation.estBatchNo) {
+    const batchNo = estimation.estBatchNo || purchaseEstBatchNo;
+
+    if (!batchNo) {
       Alert.alert(
         "No slip available",
         "Please submit first to generate a slip"
@@ -128,7 +130,7 @@ const HomeScreen = () => {
 
     try {
       console.log("📞 Calling printEstimationSlip...");
-      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL, estimation.lastEmpId, purchaseEstBatchNo);
+      await printEstimationSlip(batchNo, username, API_BASE_URL, estimation.lastEmpId, purchaseEstBatchNo);
     } catch (err) {
       console.error("❌ Print error:", err);
       Alert.alert("Print Failed", err.message || "Unable to generate slip");
@@ -587,10 +589,10 @@ const HomeScreen = () => {
                 style={[
                   styles.submitButton,
                   styles.printButton,
-                  !estimation.estBatchNo && styles.disabledButton,
+                  (!estimation.estBatchNo && !purchaseEstBatchNo) && styles.disabledButton,
                 ]}
                 onPress={handlePrint}
-                disabled={!estimation.estBatchNo}
+                disabled={!estimation.estBatchNo && !purchaseEstBatchNo}
               >
                 <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Print Slip</Text>
               </TouchableOpacity>
