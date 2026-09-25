@@ -22,10 +22,8 @@ import { createHomeStyles } from "./HomeStyles";
 import { useEstimation } from "../../../Src-1/Hook/UseEstimation";
 import { LoginContext } from "../../../Context/LoginContext";
 import ItemDetailsCard from "../../Components/ItemDetailCard/ItemDetailCard";
-import createApiInstance from "../../../Api/axiosInstance";
-import ENDPOINTS from "../../../Api/endpoints";
+import useTagLookup from "../../Hooks/useTagLookup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { calcOfferDiscount, getOfferBoardRate } from "../../../shared/EstimationCalculations";
 
 const HomeScreen1 = () => {
   const { theme } = useTheme();
@@ -41,7 +39,7 @@ const HomeScreen1 = () => {
 
   // Local state to store only current display data
   const [displayData, setDisplayData] = useState([]);
-  const [loadingApiData, setLoadingApiData] = useState(false);
+  const { loading: loadingApiData, lookupTag } = useTagLookup(API_BASE_URL);
   const [employeeId, setEmployeeId] = useState("");
   const [combinedInput, setCombinedInput] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -123,63 +121,16 @@ const fetchApiData = async () => {
 
   const { itemId, tagNo } = parsed;
 
-  setLoadingApiData(true);
   setDisplayData([]);
   estimation.setEstBatchNo(null);
 
-  try {
-    const api = createApiInstance(API_BASE_URL);
+  const rows = await lookupTag(itemId, tagNo);
+  if (!rows) return;
 
-    // CHECK TAG ISSUED
-    try {
-      const issuedResponse = await api.get(ENDPOINTS.TAG_DETAILS, {
-        params: { ITEMID: itemId, TAGNO: tagNo },
-        validateStatus: (status) => [200, 404, 500].includes(status),
-      });
-      if (issuedResponse.status === 200 && issuedResponse.data?.status === "issued") {
-        Alert.alert(
-          "Tag Already Issued",
-          `This tag was already issued on ${issuedResponse.data.trandate}\nTransaction No: ${issuedResponse.data.tranno}`
-        );
-        setLoadingApiData(false);
-        return;
-      }
-    } catch (issuedErr) {
-      console.warn("tag-details check errored, continuing without it:", issuedErr);
-    }
-
-    // ESTIMATION API
-    const response = await api.get(ENDPOINTS.ESTIMATION_TOTAL, {
-      params: { ITEMID: itemId, TAGNO: tagNo },
-    });
-    console.log("🔵 Estimation API URL:", response.config?.url);
-
-    const rawData = response.data || [];
-
-    // Fetch offer for discount
-    let discount = 0;
-    let boardRate = 0;
-    try {
-      const offerRes = await api.post(ENDPOINTS.OFFER, null, { params: { tagno: tagNo } });
-      const offer = offerRes.data || {};
-      boardRate = getOfferBoardRate(offer);
-      discount = calcOfferDiscount(offer);
-    } catch (err) {
-      console.warn("Offer fetch failed:", err);
-    }
-
-    const enriched = rawData.map((d) => ({ ...d, DISCOUNT: discount, BOARD_RATE: boardRate }));
-    setDisplayData(enriched);
-    estimation.setITEMID(itemId);
-    estimation.setTAGNO(tagNo);
-    setValidationError("");
-
-  } catch (err) {
-    console.error(err);
-    Alert.alert("Error", "Unable to fetch data from API");
-  } finally {
-    setLoadingApiData(false);
-  }
+  setDisplayData(rows);
+  estimation.setITEMID(itemId);
+  estimation.setTAGNO(tagNo);
+  setValidationError("");
 };
 
   // Handle barcode scanning

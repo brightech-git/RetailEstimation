@@ -22,8 +22,7 @@ import {
   calcDisplayTotals,
   splitInclusiveGst,
 } from "../../../shared/EstimationCalculations";
-import createApiInstance from "../../../Api/axiosInstance";
-import ENDPOINTS from "../../../Api/endpoints";
+import useEmployeeDisplay from "../../Hook/useEmployeeDisplay";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -56,31 +55,10 @@ const EstimationPreviewModal = ({
   const [customPrintCount, setCustomPrintCount] = useState("");
   const { username, companyName, selectedCostId, userId } = useContext(LoginContext);
   const API_BASE_URL = useApiBaseUrl();
-  const [empDisplay, setEmpDisplay] = useState("");
-
-  useEffect(() => {
-    if (!slipData?.sample?.empid || !selectedCostId || !API_BASE_URL) {
-      // console.log("[EmpDisplay] Missing:", { empid: slipData?.sample?.empid, selectedCostId, API_BASE_URL: !!API_BASE_URL });
-      // console.log("[EmpDisplay] slipData.sample keys:", slipData?.sample ? Object.keys(slipData.sample) : "no sample");
-      // console.log("[EmpDisplay] slipData.sample:", JSON.stringify(slipData?.sample));
-      return;
-    }
-    const empId = slipData.sample.empid;
-    console.log("[EmpDisplay] Fetching for empId:", empId, "costId:", selectedCostId);
-    createApiInstance(API_BASE_URL)
-      .get(ENDPOINTS.EMPLOYEES(empId))
-      .then((res) => {
-        const empIdNum = Number(empId);
-        const found = Array.isArray(res.data)
-          ? res.data.find((e) => Number(e.empId) === empIdNum) || null
-          : null;
-        setEmpDisplay(found ? `E${found.empId}-${found.empName}` : `E${empId}`);
-      })
-      .catch((err) => {
-        console.log("[EmpDisplay] Error:", err.message);
-        setEmpDisplay(`E${empId}`);
-      });
-  }, [slipData, selectedCostId, API_BASE_URL]);
+  const empDisplay = useEmployeeDisplay(
+    API_BASE_URL,
+    selectedCostId ? slipData?.sample?.empid : null,
+  );
 
   const [previewWidth, setPreviewWidth] = useState(
     Math.round(Dimensions.get("window").width * 0.95) - 32

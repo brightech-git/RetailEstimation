@@ -13,6 +13,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { useTheme } from "../../../Context/ThemeContext";
 import getStyles from "./HeaderStyles";
+import useTodayRate from "../../Hook/useTodayRate";
 
 
 // MainHeader renders the top bar (theme toggle, company name, sidebar
@@ -20,11 +21,6 @@ import getStyles from "./HeaderStyles";
 // items, admin auth, logout, etc.) lives in Src/Components/Sidebar and is
 // opened via the drawer navigator's own openDrawer() action.
 const MainHeader = () => {
-  const [goldRate, setGoldRate] = useState(null);
-  const [silverRate, setSilverRate] = useState(null);
-  const [loadingRates, setLoadingRates] = useState(true);
-  const [error, setError] = useState(false);
-  const [rateUpdated, setRateUpdated] = useState(null);
 
   const API_BASE_URL = useApiBaseUrl();
   const navigation = useNavigation();
@@ -43,28 +39,13 @@ const MainHeader = () => {
     currentDateTime.getMonth() + 1,
   ).padStart(2, "0")}-${currentDateTime.getFullYear()}`;
 
-  const fetchRates = async () => {
-    setLoadingRates(true);
-    setError(false);
-    try {
-      const response = await fetch(`${API_BASE_URL}/todayrate`);
-      if (!response.ok) throw new Error("Failed to fetch");
-      const data = await response.json();
-      setGoldRate(data.GOLDRATE);
-      setSilverRate(data.SILVERRATE);
-      setRateUpdated(new Date().toLocaleTimeString("en-GB"));
-    } catch {
-      setError(true);
-    } finally {
-      setLoadingRates(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRates();
-    const interval = setInterval(fetchRates, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const {
+    goldRate,
+    silverRate,
+    loading: loadingRates,
+    error,
+    updatedAt: rateUpdated,
+  } = useTodayRate(API_BASE_URL);
 
   if (contextLoading) {
     return (

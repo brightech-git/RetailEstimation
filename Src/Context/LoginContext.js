@@ -1,7 +1,7 @@
 // LoginContext.js
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import { CompanyService } from "../services/CompanyService";
 import { initCostCache, setCostCache } from "../Api/axiosInstance";
 import { useToast } from "../Src-1/Context/ToastContext";
 
@@ -72,11 +72,7 @@ export const LoginProvider = ({ children, showToast: showToastProp }) => {
   const login = async (username, password) => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        "https://app.bmgjewellers.com/api/v1/company/getByCredentials",
-        { username, password },
-        { timeout: 10000 },
-      );
+      const response = await CompanyService.login(username, password);
 
       if (response.status === 200 && response.data) {
         const data = response.data;
@@ -139,7 +135,7 @@ export const LoginProvider = ({ children, showToast: showToastProp }) => {
       setCostLoading(true);
       console.log("📡 [GET] Cost centre request:", url);
 
-      const response = await axios.get(url, { timeout: 10000 });
+      const response = await CompanyService.getCostOptions(baseUrl);
 
       console.log("✅ Cost centre response status:", response.status);
       console.log("📦 Cost centre response data:", response.data);
@@ -212,7 +208,7 @@ export const LoginProvider = ({ children, showToast: showToastProp }) => {
       setCompanyIdLoading(true);
       console.log("📡 [GET] Company IDs request:", url);
 
-      const response = await axios.get(url, { timeout: 10000 });
+      const response = await CompanyService.getCompanyIds(baseUrl);
 
       console.log("✅ Company IDs response status:", response.status);
       console.log("📦 Company IDs response data:", response.data);

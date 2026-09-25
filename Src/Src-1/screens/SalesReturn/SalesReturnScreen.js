@@ -1,21 +1,20 @@
-import React, { useContext, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   ActivityIndicator,
-  FlatList,
   TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import CommonHeader from "../../../Components/Header/CommonHeader";
 import Footer from "../../../Components/Footer/Footer";
-import BarcodeScannerModal from "../../Components/BarCodeScanner/BarcodeScannerModal";
 import ReturnRefModal from "../../Components/SalesReturn/ReturnRefModal/ReturnRefModal";
+import SaleReturnBillsModal from "../../Components/SalesReturn/SaleReturnBillsModal/SaleReturnBillsModal";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { useTheme } from "../../../Context/ThemeContext";
 import { createHomeStyles } from "../Home/HomeStyles";
-import { useEstimation } from "../../Hook/UseEstimation";
+import { useSalesReturn } from "../../Hook/UseSalesReturn";
 
 const TABLE_COLUMNS = [
   { label: "Item Id", key: "ITEMID" },
@@ -37,17 +36,12 @@ const SalesReturnScreen = () => {
   const { theme } = useTheme();
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
+  const navigation = useNavigation();
 
-  const estimation = useEstimation(API_BASE_URL);
-
-  // Shown once when the screen opens, to pick how this return is referenced.
-  const [refModalVisible, setRefModalVisible] = useState(true);
-  const [returnRef, setReturnRef] = useState(null);
-
-  const handleRefDone = (selection) => {
-    setReturnRef(selection);
-    setRefModalVisible(false);
-  };
+  const salesReturn = useSalesReturn(API_BASE_URL, {
+    onExit: () => navigation.goBack(),
+  });
+  const { returnRef } = salesReturn;
 
   return (
     <>
@@ -55,117 +49,21 @@ const SalesReturnScreen = () => {
         title="Sales Return"
         subtitle={
           returnRef
-            ? returnRef.mode === "date"
-              ? `Bill Date: ${returnRef.billDate}`
-              : returnRef.billNo
-                ? `Bill No: ${returnRef.billNo}`
-                : "By Bill No"
+            ? returnRef.billNo
+              ? returnRef.billDate
+                ? `Bill No: ${returnRef.billNo} · ${returnRef.billDate}`
+                : `Bill No: ${returnRef.billNo}`
+              : `Bill Date: ${returnRef.billDate}`
             : undefined
         }
         rightIcon="calendar-outline"
-        onRightPress={() => setRefModalVisible(true)}
+        onRightPress={salesReturn.openRefModal}
       />
 
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
-          {/* Input Fields */}
-          <View style={styles.inputRow}>
-            <View style={[styles.inputWrapper, styles.itemIdWrapper]}>
-              <TextInput
-                ref={estimation.itemIdInputRef}
-                style={styles.input}
-                placeholder="Item ID"
-                placeholderTextColor={theme.COLORS.placeholder}
-                value={estimation.ITEMID}
-                onChangeText={(text) => {
-                  estimation.setITEMID(text);
-                  estimation.setShowList(false);
-                }}
-                onSubmitEditing={() => {
-                  if (estimation.ITEMID.trim() === "")
-                    estimation.fetchItemList();
-                  else estimation.tagInputRef.current?.focus();
-                }}
-                returnKeyType="next"
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  estimation.setScanningField("itemid");
-                  estimation.setScannerVisible(true);
-                }}
-                style={styles.scanButton}
-              >
-                <Text style={styles.scanIcon}>📷</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.inputWrapper, styles.tagNoWrapper]}>
-              <TextInput
-                ref={estimation.tagInputRef}
-                style={styles.input}
-                placeholder="Tag No"
-                placeholderTextColor={theme.COLORS.placeholder}
-                value={estimation.TAGNO}
-                onChangeText={estimation.setTAGNO}
-                onSubmitEditing={() => estimation.empInputRef.current?.focus()}
-                returnKeyType="next"
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  estimation.setScanningField("tagno");
-                  estimation.setScannerVisible(true);
-                }}
-                style={styles.scanButton}
-              >
-                <Text style={styles.scanIcon}>📷</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.inputWrapper, styles.empIdWrapper]}>
-              <TextInput
-                ref={estimation.empInputRef}
-                style={styles.input}
-                placeholder="Emp ID"
-                placeholderTextColor={theme.COLORS.placeholder}
-                value={estimation.emp}
-                onChangeText={(text) => estimation.setEmp(text)}
-                onSubmitEditing={() => {
-                  estimation.setShowEmpList(false);
-                  estimation.fetchData();
-                }}
-                returnKeyType="done"
-              />
-              {!!estimation.empName && (
-                <Text style={styles.empNameText} numberOfLines={1}>{estimation.empName}</Text>
-              )}
-            </View>
-          </View>
-
-          {/* Item Suggestions Dropdown */}
-          {estimation.showList && estimation.itemList.length > 0 && (
-            <View style={styles.dropdown}>
-              <FlatList
-                data={estimation.itemList}
-                keyExtractor={(item, index) => `item-${index}`}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() => {
-                      estimation.setITEMID(item);
-                      estimation.setShowList(false);
-                      estimation.tagInputRef.current?.focus();
-                    }}
-                    style={styles.dropdownItem}
-                  >
-                    <Text style={styles.dropdownText}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-                nestedScrollEnabled={true}
-              />
-            </View>
-          )}
-
           {/* Loading Indicator */}
-          {estimation.loading && (
+          {salesReturn.loading && (
             <ActivityIndicator
               size="large"
               color={theme.COLORS.primary}
@@ -191,7 +89,7 @@ const SalesReturnScreen = () => {
                 </View>
               </View>
 
-              {estimation.tableData.map((item, rowIdx) => (
+              {salesReturn.rows.map((item, rowIdx) => (
                 <View key={`data-${rowIdx}`} style={styles.dataRow}>
                   <View style={styles.column}>
                     <Text style={styles.cell}>{item.ITEMID}</Text>
@@ -222,17 +120,17 @@ const SalesReturnScreen = () => {
                   </View>
                   <View style={styles.column}>
                     <Text style={styles.cell}>
-                      {estimation.calculateDiscountedGross(item).toFixed(2)}
+                      {salesReturn.calcRowGross(item).toFixed(2)}
                     </Text>
                   </View>
                   <View style={styles.column}>
                     <Text style={styles.cell}>
-                      {estimation.calculateDiscountedGST(item).toFixed(2)}
+                      {salesReturn.calcRowGST(item).toFixed(2)}
                     </Text>
                   </View>
                   <View style={styles.column}>
                     <Text style={styles.cell}>
-                      {estimation.calculateDiscountedGrandTotal(item).toFixed(2)}
+                      {salesReturn.calcRowTotal(item).toFixed(2)}
                     </Text>
                   </View>
                   <View style={styles.column}>
@@ -240,7 +138,7 @@ const SalesReturnScreen = () => {
                   </View>
                   <View style={styles.deleteCol}>
                     <TouchableOpacity
-                      onPress={() => estimation.removeRow(rowIdx)}
+                      onPress={() => salesReturn.removeRow(rowIdx)}
                       style={styles.deleteButton}
                     >
                       <Text style={styles.deleteButtonText}>🗑️</Text>
@@ -251,33 +149,57 @@ const SalesReturnScreen = () => {
             </View>
           </ScrollView>
 
+          {/* Totals Display */}
+          {salesReturn.hasData && (
+            <View style={styles.totalsContainer}>
+              <Text style={styles.totalsSectionLabel}>Sales Return</Text>
+              <View style={styles.totalsRow}>
+                <View style={styles.totalItem}>
+                  <Text style={styles.totalLabel} numberOfLines={1}>Gross Amt</Text>
+                  <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{salesReturn.totalGross.toFixed(2)}</Text>
+                </View>
+                <View style={styles.totalItem}>
+                  <Text style={styles.totalLabel} numberOfLines={1}>GST Amt</Text>
+                  <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{salesReturn.totalGST.toFixed(2)}</Text>
+                </View>
+                <View style={styles.totalItem}>
+                  <Text style={styles.totalLabel} numberOfLines={1}>Total Amt</Text>
+                  <Text style={[styles.totalValue, styles.grandTotal]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{salesReturn.totalGrand.toFixed(2)}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Action Buttons */}
-          {estimation.tableData.length > 0 && (
+          {salesReturn.hasData && (
             <View style={styles.actionButtonsContainer}>
               <TouchableOpacity
                 style={[styles.submitButton, styles.clearButton]}
-                onPress={estimation.clearAll}
+                onPress={salesReturn.clearAll}
               >
                 <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Clear All</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Scanner Modal */}
-          <BarcodeScannerModal
-            visible={estimation.scannerVisible}
-            onClose={() => estimation.setScannerVisible(false)}
-            scanningField={estimation.scanningField}
-            onScanned={estimation.handleScanned}
-          />
         </View>
       </ScrollView>
       <Footer />
 
       <ReturnRefModal
-        visible={refModalVisible}
-        onClose={() => setRefModalVisible(false)}
-        onDone={handleRefDone}
+        visible={salesReturn.refModalVisible}
+        onClose={salesReturn.handleRefClose}
+        onDone={salesReturn.handleRefDone}
+      />
+
+      <SaleReturnBillsModal
+        visible={salesReturn.billsModalVisible}
+        billDate={returnRef?.billDate}
+        bills={salesReturn.bills}
+        required={!salesReturn.hasData}
+        loading={salesReturn.loading}
+        onClose={salesReturn.handleBillsClose}
+        onSelect={salesReturn.handleBillSelect}
       />
     </>
   );

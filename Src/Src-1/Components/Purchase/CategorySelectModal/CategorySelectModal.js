@@ -11,8 +11,7 @@ import {
 } from "react-native";
 import { useTheme } from "../../../../Context/ThemeContext";
 import { useApiBaseUrl } from "../../../../Config/Config";
-import createApiInstance from "../../../../Api/axiosInstance";
-import ENDPOINTS from "../../../../Api/endpoints";
+import useCategorySearch from "../../../Hook/useCategorySearch";
 import { createCategorySelectModalStyles } from "./CategorySelectModalStyles";
 
 const OWNERSHIP_OPTIONS = [
@@ -151,9 +150,12 @@ const CategorySelectModal = ({ visible, initialValue, onClose, onDone }) => {
   const apiBaseUrl = useApiBaseUrl();
 
   const [selection, setSelection] = useState(DEFAULT_SELECTION);
-  const [allData, setAllData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const {
+    data: allData,
+    loading,
+    error,
+    loadCategories: fetchData,
+  } = useCategorySearch(apiBaseUrl);
 
   // Unique category options derived from allData
   const categoryOptions = useMemo(() => {
@@ -174,22 +176,6 @@ const CategorySelectModal = ({ visible, initialValue, onClose, onDone }) => {
       .filter((d) => d.catCode === selection.categoryCode)
       .map((d, idx) => ({ value: `${d.itemId}-${idx}`, itemId: d.itemId, label: d.itemName, raw: d }));
   }, [allData, selection.categoryCode]);
-
-  const fetchData = useCallback(async () => {
-    if (!apiBaseUrl) return;
-    setLoading(true);
-    setError("");
-    try {
-      const api = createApiInstance(apiBaseUrl);
-      const res = await api.get(ENDPOINTS.CATEGORY_SEARCH);
-      setAllData(Array.isArray(res.data) ? res.data : []);
-    } catch (e) {
-      console.log("[CategorySelectModal] fetch failed:", e.message);
-      setError("Couldn't load categories");
-    } finally {
-      setLoading(false);
-    }
-  }, [apiBaseUrl]);
 
   useEffect(() => {
     if (!visible) return;

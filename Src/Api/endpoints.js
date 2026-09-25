@@ -27,6 +27,11 @@ const ENDPOINTS = {
   ITEMS_BY_CATEGORY:        (catCode) => `/category-search?catCode=${catCode}`,
   EST_RECEIPT:              "/estreceipt",
 
+  // Sales Return (costId is auto-injected by the axios interceptor).
+  // billDate is YYYY-MM-DD.
+  SALE_RETURN_BILLS:        "/salereturn-bills",
+  SALE_RETURN_DETAIL:       "/salereturn-detail/by-tranno",
+
   // POST
   EST_ISSUE:                "/estissue",
   EST_STN_ISSUE:            "/eststnissue",

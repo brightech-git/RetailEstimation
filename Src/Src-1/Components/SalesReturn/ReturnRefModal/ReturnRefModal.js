@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatePicker from "../../../../Components/DatePicker/DatePicker";
@@ -18,9 +19,17 @@ export const formatDisplayDate = (date = new Date()) => {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
 };
 
-// SALES RETURN entry modal — shown when the screen first opens. The
-// checkbox picks which reference the return is looked up by: checked
-// (default) = Sale Bill Date, unchecked = Sale Bill No (optional).
+// YYYY-MM-DD, the billDate format the salereturn APIs expect.
+export const formatApiDate = (date = new Date()) => {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+// SALES RETURN entry modal — shown when the screen first opens.
+// SALE BILLDATE ticked (default): bill no is optional. Date only → the
+//   screen lists that day's bills to pick from; date + bill no → that bill
+//   loads directly.
+// Unticked: bill no is required and is looked up without a date.
 const ReturnRefModal = ({ visible, onClose, onDone }) => {
   const { theme } = useTheme();
   const styles = createReturnRefModalStyles(theme);
@@ -44,10 +53,16 @@ const ReturnRefModal = ({ visible, onClose, onDone }) => {
   };
 
   const handleOk = () => {
+    const trimmedBillNo = billNo.trim();
+    if (!useDate && !trimmedBillNo) {
+      Alert.alert("Bill No Required", "Enter the Sale Bill No, or tick Sale Bill Date.");
+      return;
+    }
     onDone({
-      mode: useDate ? "date" : "billno",
+      useDate,
       billDate: useDate ? formatDisplayDate(billDateObj) : "",
-      billNo: !useDate ? billNo.trim() : "",
+      billDateApi: useDate ? formatApiDate(billDateObj) : "",
+      billNo: trimmedBillNo,
     });
   };
 
@@ -110,13 +125,14 @@ const ReturnRefModal = ({ visible, onClose, onDone }) => {
                 <Text style={styles.secondFieldLabel}>SALE BILLNO</Text>
 
                 <TextInput
-                  style={[styles.fieldInput, useDate && styles.fieldInputDisabled]}
+                  style={styles.fieldInput}
                   value={billNo}
-                  onChangeText={setBillNo}
-                  editable={!useDate}
-                  placeholder="Optional"
+                  onChangeText={(text) => setBillNo(text.replace(/[^0-9]/g, ""))}
+                  keyboardType="number-pad"
+                  placeholder={useDate ? "Optional — leave empty to pick from list" : "Required"}
                   placeholderTextColor={theme.COLORS.placeholder}
-                  autoCapitalize="characters"
+                  onSubmitEditing={handleOk}
+                  returnKeyType="done"
                 />
               </View>
 

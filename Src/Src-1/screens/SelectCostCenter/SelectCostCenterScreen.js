@@ -20,8 +20,7 @@ import { moderateScale } from "../../../Utills/Scalling";
 import { StyleSheet } from "react-native";
 import { fontFor } from "../../../Utills/Theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import createApiInstance from "../../../Api/axiosInstance";
-import ENDPOINTS from "../../../Api/endpoints";
+import useEmployeeList from "../../Hook/useEmployeeList";
 
 
 // Companies with this COMPANYID share one login but operate as several
@@ -59,8 +58,11 @@ const SelectCostCenterScreen = ({ navigation }) => {
 
   // Employee picker state
   const [empModalVisible, setEmpModalVisible] = useState(false);
-  const [empList, setEmpList] = useState([]);
-  const [empLoading, setEmpLoading] = useState(false);
+  const {
+    employees: empList,
+    loading: empLoading,
+    loadEmployees,
+  } = useEmployeeList(companyUrl);
   const [empSearch, setEmpSearch] = useState("");
   const [selectedEmpId, setSelectedEmpId] = useState("");
   const [pendingNav, setPendingNav] = useState(null);
@@ -86,16 +88,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
     setPendingNav(() => navCallback);
     setEmpSearch("");
     setEmpModalVisible(true);
-    setEmpLoading(true);
-    try {
-      const api = createApiInstance(companyUrl);
-      const res = await api.get(ENDPOINTS.EMPLOYEES(""));
-      setEmpList(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      setEmpList([]);
-    } finally {
-      setEmpLoading(false);
-    }
+    await loadEmployees();
   };
 
   const confirmEmployee = async (emp) => {

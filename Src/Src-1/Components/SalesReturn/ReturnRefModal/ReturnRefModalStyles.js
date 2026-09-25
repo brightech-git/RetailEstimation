@@ -143,6 +143,46 @@ export const createReturnRefModalStyles = (theme) => {
       borderRadius: SIZES.radius_sm,
       backgroundColor: COLORS.primary,
     },
+    // ── Bill list (SaleReturnBillsModal) ──
+    billList: {
+      maxHeight: moderateScale(360),
+    },
+    billRow: {
+      paddingVertical: moderateScale(10),
+      paddingHorizontal: moderateScale(14),
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.outline,
+    },
+    billRowTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    billNoText: {
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.primary,
+      ...FONTS.text,
+      fontFamily: fontFor("700"),
+    },
+    billAmountText: {
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.text,
+      ...FONTS.text,
+      fontFamily: fontFor("700"),
+    },
+    billSubText: {
+      fontSize: moderateScale(SIZES.fontSm),
+      color: COLORS.label,
+      marginTop: moderateScale(2),
+      ...FONTS.font,
+    },
+    billEmptyText: {
+      textAlign: "center",
+      paddingVertical: moderateScale(24),
+      fontSize: moderateScale(SIZES.font),
+      color: COLORS.placeholder,
+      ...FONTS.font,
+    },
     okBtnText: {
       color: COLORS.buttonText,
       fontSize: moderateScale(SIZES.font),

@@ -15,8 +15,7 @@ import EstimationPreviewModal from "../EstimationPreviewModal/EstimationPreviewM
 import ImageBitmapProcessor from "../../../Utills/ImageBitmapProcessor";
 import { LoginContext } from "../../../Context/LoginContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import createApiInstance from "../../../Api/axiosInstance";
-import ENDPOINTS from "../../../Api/endpoints";
+import useEmployeeDisplay from "../../Hook/useEmployeeDisplay";
 import { SoftControlService } from "../../Service/SoftControlService";
 
 // Preview management for estimation slips
@@ -59,7 +58,6 @@ export const printEstimationSlip = async (estBatchNo, username, apiBaseUrl, empI
 export const useEstimationPreview = (employeeId) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [slipData, setSlipData] = useState(null);
-  const [empDisplay, setEmpDisplay] = useState("");
   const [offerPrintGst, setOfferPrintGst] = useState('N');
   const [currentPrinter, setCurrentPrinter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -323,20 +321,10 @@ const loadActivePrinter = useCallback(async () => {
 
   // Resolve empDisplay — prefer the employeeId passed from the screen (typed input),
   // fall back to slipData.sample.empid from the API response.
-  useEffect(() => {
-    const empId = employeeId || slipData?.sample?.empid;
-    if (!empId || !API_BASE_URL) { setEmpDisplay(""); return; }
-    createApiInstance(API_BASE_URL)
-      .get(ENDPOINTS.EMPLOYEES(empId))
-      .then((res) => {
-        const empIdNum = Number(empId);
-        const found = Array.isArray(res.data)
-          ? res.data.find((e) => Number(e.empId) === empIdNum) || null
-          : null;
-        setEmpDisplay(found ? `E${found.empId}-${found.empName}` : `E${empId}`);
-      })
-      .catch(() => setEmpDisplay(`E${empId}`));
-  }, [employeeId, slipData, API_BASE_URL]);
+  const empDisplay = useEmployeeDisplay(
+    API_BASE_URL,
+    employeeId || slipData?.sample?.empid,
+  );
 
   // Pre-warm the receipt bitmap render as soon as the preview is shown, so
   // the ~40s html2canvas/CDN/font pipeline runs while the user is reviewing

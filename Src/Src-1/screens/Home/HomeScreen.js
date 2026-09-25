@@ -193,12 +193,13 @@ const HomeScreen = () => {
           >
             <Text style={styles.purchaseNavButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>🛒  Go to Purchase</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            style={styles.purchaseNavButton}
+          <TouchableOpacity
+             style={[styles.purchaseNavButton, isSubmitted && styles.disabledButton]}
             onPress={() => navigation.navigate("SalesReturn")}
+            disabled={isSubmitted}
           >
             <Text style={styles.purchaseNavButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>🛒  Go to SalesReturn</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
           </View>
          
           {/* Totals Display */}

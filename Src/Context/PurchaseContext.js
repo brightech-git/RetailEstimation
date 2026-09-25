@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { Alert } from "react-native";
-import createApiInstance from "../Api/axiosInstance";
-import ENDPOINTS from "../Api/endpoints";
+import { PurchaseService } from "../Src-1/Service/PurchaseService";
 import { calcWastage, calcNetWt, calcAmount } from "../Src-1/Hook/UsePurchase";
 
 const PurchaseContext = createContext(null);
@@ -82,12 +81,9 @@ export const PurchaseProvider = ({ children }) => {
     }
     setSubmitting(true);
     try {
-      const api = createApiInstance(apiBaseUrl);
       const payload = savedRows.map(buildPayload);
       console.log("📦 Purchase payload:", JSON.stringify(payload, null, 2));
-      const response = await api.post(`${ENDPOINTS.EST_RECEIPT}?costId=`, payload);
-      console.log("✅ Purchase response:", JSON.stringify(response?.data, null, 2));
-      const first = Array.isArray(response?.data) ? response.data[0] : response?.data;
+      const first = await new PurchaseService(apiBaseUrl).saveReceipt(payload);
       const tranno = first?.tranno || null;
       const estbatchno = first?.estbatchno || null;
       if (tranno) setPurchaseTranno(tranno);
