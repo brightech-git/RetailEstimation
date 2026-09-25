@@ -93,8 +93,6 @@ export const usePurchase = () => {
           );
         }
         const newRow = createEmptyRow(categoryInfo);
-        // Only a brand-new row needs its first input auto-focused —
-        // editing an existing row's category shouldn't steal focus.
         setFocusRowId(newRow.id);
         return [...prev, newRow];
       });

@@ -33,7 +33,7 @@ const HomeScreen = () => {
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
   const { username, selectedCompanyId, selectedCostId } = useContext(LoginContext);
-  const { savedRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo } = usePurchaseContext();
+  const { savedRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo, removePurchaseRow } = usePurchaseContext();
 
   React.useEffect(() => {
     if (API_BASE_URL) setApiBaseUrl(API_BASE_URL);
@@ -203,18 +203,24 @@ const HomeScreen = () => {
          
           {/* Totals Display */}
           {(estimation.tableData.length > 0 || savedRows.length > 0) && (() => {
+            const hasSales = estimation.tableData.length > 0;
+            const hasPurchase = savedRows.length > 0;
             const purchaseTotals = savedRows.reduce(
               (acc, row) => {
-                acc.grswt  += parseFloat(row.grswt)  || 0;
+                acc.grswt  += parseFloat(row.grswt) || 0;
                 acc.netwt  += calcNetWt(row);
                 acc.amount += calcAmount(row);
                 return acc;
               },
               { grswt: 0, netwt: 0, amount: 0 }
             );
+            const finalBase = estimation.totalGross - purchaseTotals.amount;
+            const finalTotal = finalBase + estimation.totalGST;
+
             return (
               <View style={styles.totalsContainer}>
-                {estimation.tableData.length > 0 && (
+                {/* Sales only */}
+                {hasSales && !hasPurchase && (
                   <>
                     <Text style={styles.totalsSectionLabel}>Sales</Text>
                     <View style={styles.totalsRow}>
@@ -245,9 +251,11 @@ const HomeScreen = () => {
                     </View>
                   </>
                 )}
-                {savedRows.length > 0 && (
+
+                {/* Purchase only */}
+                {hasPurchase && !hasSales && (
                   <>
-                    <Text style={[styles.totalsSectionLabel, { marginTop: estimation.tableData.length > 0 ? 10 : 0 }]}>Purchase</Text>
+                    <Text style={styles.totalsSectionLabel}>Purchase</Text>
                     <View style={styles.totalsRow}>
                       {purchaseTotals.grswt > 0 && (
                         <View style={styles.totalItem}>
@@ -270,28 +278,28 @@ const HomeScreen = () => {
                     </View>
                   </>
                 )}
-                {estimation.tableData.length > 0 && savedRows.length > 0 && (
-                  <>
-                    <View style={styles.finalAmountDivider} />
+
+                {/* Both sales + purchase — show only the 3 combined fields */}
+                {hasSales && hasPurchase && (
+                  <View style={styles.finalAmountItem}>
+                    <Text style={styles.totalsSectionLabel}>Final Amount</Text>
                     <View style={styles.totalsRow}>
-                      {(() => {
-                        const finalBase = estimation.totalGross - purchaseTotals.amount;
-                        const finalTotal = finalBase + estimation.totalGST;
-                        return (
-                          <View style={styles.finalAmountItem}>
-                            <Text style={styles.totalsSectionLabel}>Final Amount</Text>
-                            <Text style={[styles.totalLabel, styles.finalAmountBreakdown]}>
-                              ₹{estimation.totalGross.toFixed(2)} - ₹{purchaseTotals.amount.toFixed(2)} = ₹{finalBase.toFixed(2)}
-                            </Text>
-                            {estimation.totalGST > 0 && (
-                              <Text style={[styles.totalLabel, styles.finalAmountBreakdown]}>+ GST ₹{estimation.totalGST.toFixed(2)}</Text>
-                            )}
-                            <Text style={[styles.totalValue, styles.finalAmount]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{finalTotal.toFixed(2)}</Text>
-                          </View>
-                        );
-                      })()}
+                      <View style={styles.totalItem}>
+                        <Text style={styles.totalLabel} numberOfLines={1}>Gross Amt</Text>
+                        <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{finalBase.toFixed(2)}</Text>
+                      </View>
+                      {estimation.totalGST > 0 && (
+                        <View style={styles.totalItem}>
+                          <Text style={styles.totalLabel} numberOfLines={1}>GST Amt</Text>
+                          <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}> ₹{estimation.totalGST.toFixed(2)}</Text>
+                        </View>
+                      )}
+                      <View style={styles.totalItem}>
+                        <Text style={styles.totalLabel} numberOfLines={1}>Total Amt</Text>
+                        <Text style={[styles.totalValue, styles.grandTotal]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>₹{finalTotal.toFixed(2)}</Text>
+                      </View>
                     </View>
-                  </>
+                  </View>
                 )}
               </View>
             );
@@ -340,8 +348,8 @@ const HomeScreen = () => {
                 value={estimation.TAGNO}
                 editable={!isSubmitted}
                 onChangeText={estimation.setTAGNO}
-                onSubmitEditing={() => estimation.empInputRef.current?.focus()}
-                returnKeyType="next"
+                onSubmitEditing={() => estimation.fetchData()}
+                returnKeyType="done"
               />
               <TouchableOpacity
                 onPress={() => {
@@ -353,28 +361,6 @@ const HomeScreen = () => {
               >
                 <Text style={styles.scanIcon}>📷</Text>
               </TouchableOpacity>
-            </View>
-
-            <View style={[styles.inputWrapper, styles.empIdWrapper]}>
-              <TextInput
-                ref={estimation.empInputRef}
-                style={styles.input}
-                placeholder="Emp ID"
-                placeholderTextColor={theme.COLORS.placeholder}
-                value={estimation.emp}
-                editable={!isSubmitted}
-                onChangeText={(text) => {
-                  estimation.setEmp(text);
-                }}
-                onSubmitEditing={() => {
-                  estimation.setShowEmpList(false);
-                  estimation.fetchData();
-                }}
-                returnKeyType="done"
-              />
-              {!!estimation.empName && (
-                <Text style={styles.empNameText} numberOfLines={1}>{estimation.empName}</Text>
-              )}
             </View>
           </View>
 
@@ -452,7 +438,7 @@ const HomeScreen = () => {
 
                 {/* DATA ROWS */}
                 {estimation.tableData.map((item, rowIdx) => (
-                  <View key={`data-${rowIdx}`} style={styles.dataRow}>
+                  <View key={`data-${rowIdx}`} style={[styles.dataRow, rowIdx % 2 === 1 && { backgroundColor: "#EEF4FB" }]}>
                     {/* DATA CELLS */}
                     <View style={styles.column}>
                       <Text style={styles.cell}>{item.ITEMID}</Text>
@@ -563,9 +549,12 @@ const HomeScreen = () => {
                         <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
                       </View>
                     ))}
+                    <View style={styles.deleteCol}>
+                      <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Delete</Text>
+                    </View>
                   </View>
                   {savedRows.map((row, idx) => (
-                    <View key={`pr-${idx}`} style={styles.dataRow}>
+                    <View key={`pr-${idx}`} style={[styles.dataRow, idx % 2 === 1 && { backgroundColor: "#EEF4FB" }]}>
                       <View style={styles.column}><Text style={styles.cell}>{row.category || "-"}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{row.purity || "-"}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{row.pcs || "-"}</Text></View>
@@ -579,6 +568,14 @@ const HomeScreen = () => {
                       <View style={styles.column}><Text style={styles.cell}>{row.gst || "-"}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{calcAmount(row).toFixed(2)}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{row.emp || "-"}</Text></View>
+                      <View style={styles.deleteCol}>
+                        <TouchableOpacity
+                          onPress={() => removePurchaseRow(idx)}
+                          style={styles.deleteButton}
+                        >
+                          <Text style={styles.deleteButtonText}>🗑️</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   ))}
                 </View>

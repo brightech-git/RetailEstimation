@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
@@ -42,12 +43,19 @@ const FOCUS_FIELDS = [
   "wPercent",
  
   "rate",
-  "emp",
 ];
 
 export default function PurchaseScreen() {
   const { theme } = useTheme();
   const styles = createPurchaseStyles(theme);
+  const [storedEmpId, setStoredEmpId] = useState("");
+
+  useEffect(() => {
+    AsyncStorage.getItem("EMPLOYEE_ID").then((id) => {
+      if (id) setStoredEmpId(id);
+    });
+  }, []);
+
   const purchase = usePurchase();
   const navigation = useNavigation();
   const { savePurchaseRows, clearPurchaseRows } = usePurchaseContext();
@@ -81,7 +89,6 @@ export default function PurchaseScreen() {
     if (!row?.purity) missing.push('Purity');
     if (!row?.grswt) missing.push('Grswt');
     if (!row?.rate) missing.push('Rate');
-    if (!row?.emp) missing.push('Emp');
     return missing;
   };
 
@@ -195,13 +202,14 @@ export default function PurchaseScreen() {
                   </View>
                 </View>
 
-                {purchase.rows.map((row) => {
+                {purchase.rows.map((row, rowIndex) => {
                   const wastage = purchase.calcWastage(row);
                   const netWt = purchase.calcNetWt(row);
                   const amount = purchase.calcAmount(row);
+                  const isAlt = rowIndex % 2 === 1;
 
                   return (
-                    <View key={row.id} style={styles.dataRow}>
+                    <View key={row.id} style={[styles.dataRow, isAlt && styles.dataRowAlt]}>
                       {/* Category — reopens the modal to edit selection */}
                       <TouchableOpacity
                         style={styles.column}
@@ -356,18 +364,9 @@ export default function PurchaseScreen() {
                       </View>
 
                       <View style={styles.column}>
-                        <TextInput
-                          ref={setInputRef(row.id, "emp")}
-                          style={styles.cellInput}
-                          value={row.emp}
-                          onChangeText={(v) =>
-                            purchase.updateRowField(row.id, "emp", v)
-                          }
-                          returnKeyType="done"
-                          onSubmitEditing={() =>
-                            handleSubmitEditing(row.id, "emp")
-                          }
-                        />
+                        <Text style={styles.cellReadOnly} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                          {row.emp || storedEmpId}
+                        </Text>
                       </View>
 
                       <View style={styles.deleteCol}>
@@ -461,7 +460,11 @@ export default function PurchaseScreen() {
                   Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
                   return;
                 }
-                savePurchaseRows(purchase.rows);
+                const rowsWithEmp = purchase.rows.map((r) => ({
+                  ...r,
+                  emp: r.emp || storedEmpId,
+                }));
+                savePurchaseRows(rowsWithEmp);
                 navigation.goBack();
               }}
               disabled={purchase.rows.length === 0}

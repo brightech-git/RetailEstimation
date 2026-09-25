@@ -161,11 +161,13 @@ export const LoginProvider = ({ children, showToast: showToastProp }) => {
           setHasCostCentres(false);
           await AsyncStorage.setItem("HAS_COST_CENTRES", "false");
           setCostOptions([]);
+          await AsyncStorage.removeItem("COST_OPTIONS");
           console.log("📦 No cost centres configured, skipping selection");
         } else {
           setHasCostCentres(true);
           await AsyncStorage.setItem("HAS_COST_CENTRES", "true");
           setCostOptions(validOptions);
+          await AsyncStorage.setItem("COST_OPTIONS", JSON.stringify(validOptions));
           console.log(`📦 Cost options loaded: ${validOptions.length} record(s)`);
         }
         return true;
@@ -317,6 +319,7 @@ const selectCompanyId = async (companyIdValue) => {
       await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
       await AsyncStorage.removeItem("HAS_COST_CENTRES");
       await AsyncStorage.removeItem("EMPLOYEE_ID");
+      await AsyncStorage.removeItem("COST_OPTIONS");
 
       setUsername("");
       setUserId(null);
@@ -369,7 +372,7 @@ const selectCompanyId = async (companyIdValue) => {
 
       const storedCostId = await AsyncStorage.getItem("SELECTED_COST_ID");
       const storedCompanyId = await AsyncStorage.getItem("SELECTED_COMPANY_ID");
-      const storedHasCostCentres = await AsyncStorage.getItem("HAS_COST_CENTRES");
+      const storedCostOptions = await AsyncStorage.getItem("COST_OPTIONS");
       if (storedCostId) {
         setSelectedCostId(storedCostId);
         console.log("📦 Restored selected cost ID:", storedCostId);
@@ -378,8 +381,11 @@ const selectCompanyId = async (companyIdValue) => {
         setSelectedCompanyId(storedCompanyId);
         console.log("📦 Restored selected company ID:", storedCompanyId);
       }
-      if (storedHasCostCentres !== null) {
-        setHasCostCentres(storedHasCostCentres === "true");
+      // Do NOT restore HAS_COST_CENTRES — always show SelectCostCenter on app open
+      if (storedCostOptions) {
+        try {
+          setCostOptions(JSON.parse(storedCostOptions));
+        } catch {}
       }
       // Warm up the sync cache so interceptor works immediately
       await initCostCache();

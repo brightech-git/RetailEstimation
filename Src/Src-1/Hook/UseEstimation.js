@@ -27,8 +27,7 @@ import {
 export const useEstimation = (apiBaseUrl) => {
   const [ITEMID, setITEMID] = useState("");
   const [TAGNO, setTAGNO] = useState("");
-  const [emp, setEmp] = useState("");
-  const [empName, setEmpName] = useState("");
+  const storedEmpId = useRef("");
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [itemList, setItemList] = useState([]);
@@ -36,9 +35,6 @@ export const useEstimation = (apiBaseUrl) => {
   const [tranno, setTranno] = useState(null);
   const [estBatchNo, setEstBatchNo] = useState(null);
   const [lastEmpId, setLastEmpId] = useState("");
-  const [lastEmpName, setLastEmpName] = useState("");
-  const [empSuggestions, setEmpSuggestions] = useState([]);
-  const [showEmpList, setShowEmpList] = useState(false);
   const [scanningField, setScanningField] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [offerPrintGst, setOfferPrintGst] = useState("N");
@@ -57,31 +53,10 @@ export const useEstimation = (apiBaseUrl) => {
 
   // Fetch employee suggestions when emp input changes
   useEffect(() => {
-    if (!emp.trim() || !service) {
-      setEmpName("");
-      setEmpSuggestions([]);
-      setShowEmpList(false);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      try {
-        const api = createApiInstance(service.baseUrl || apiBaseUrl);
-        const url = ENDPOINTS.EMPLOYEES(emp.trim());
-        const res = await api.get(url);
-        const list = Array.isArray(res.data) ? res.data : [];
-        setEmpSuggestions(list);
-        setShowEmpList(list.length > 0);
-        const empIdNum = Number(emp.trim());
-        const exact = list.find((e) => Number(e.empId) === empIdNum) || null;
-        setEmpName(exact ? exact.empName : "");
-      } catch {
-        setEmpName("");
-        setEmpSuggestions([]);
-        setShowEmpList(false);
-      }
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [emp, service]);
+    if (!storedEmpId.current || !service) return;
+    const api = createApiInstance(service.baseUrl || apiBaseUrl);
+    api.get(ENDPOINTS.EMPLOYEES(storedEmpId.current)).catch(() => {});
+  }, [service]);
 
   // Expose the logged-in user's currently selected cost ID (from
   // AsyncStorage, kept in sync by LoginContext) so screens can build
@@ -102,7 +77,11 @@ export const useEstimation = (apiBaseUrl) => {
     setEstBatchNo(null);
   };
 
+  // Pre-fill emp from the employee selected at cost-centre screen
   useEffect(() => {
+    AsyncStorage.getItem("EMPLOYEE_ID").then((id) => {
+      if (id) storedEmpId.current = id;
+    });
     itemIdInputRef.current?.focus();
   }, []);
 
@@ -156,7 +135,7 @@ export const useEstimation = (apiBaseUrl) => {
   const fetchData = async () => {
     if (!service) return;
 
-    if (!ITEMID.trim() || !TAGNO.trim() || !emp.trim()) {
+    if (!ITEMID.trim() || !TAGNO.trim() || !storedEmpId.current) {
       Alert.alert(
         "Missing Input",
         "Please enter valid Item ID, Tag No, and Employee.",
@@ -197,7 +176,7 @@ export const useEstimation = (apiBaseUrl) => {
       // Check for duplicates in current table
       const alreadyExists = tableData.some(
         (row) =>
-          row.ITEMID === itemIdInt && row.TAGNO === TAGNO && row.EMPID === emp,
+          row.ITEMID === itemIdInt && row.TAGNO === TAGNO,
       );
 
       if (alreadyExists) {
@@ -231,9 +210,9 @@ export const useEstimation = (apiBaseUrl) => {
             ...d,
             ITEMID: itemIdInt,
             TAGNO,
-            EMPID: emp,
-            EMP: emp,
-            EMP_NAME: empName,
+            EMPID: storedEmpId.current,
+            EMP: storedEmpId.current,
+            EMP_NAME: "",
             METALID: d.METALID ?? 0,
             COSTID: costId,
             COMPANYID: companyId,
@@ -253,14 +232,11 @@ export const useEstimation = (apiBaseUrl) => {
       setTableData((prev) => [...prev, ...newData]);
 
       // Store last used emp before reset
-      setLastEmpId(emp.trim());
-      setLastEmpName(empName);
+      setLastEmpId(storedEmpId.current);
 
       // Reset form and focus
       setITEMID("");
       setTAGNO("");
-      setEmp("");
-      setShowEmpList(false);
       itemIdInputRef.current?.focus();
     } catch (error) {
       Alert.alert("Error", error.message || "Something went wrong.");
@@ -692,8 +668,7 @@ export const useEstimation = (apiBaseUrl) => {
     // State
     ITEMID,
     TAGNO,
-    emp,
-    empName,
+    emp: storedEmpId.current,
     tableData,
     loading,
     itemList,
@@ -702,9 +677,7 @@ export const useEstimation = (apiBaseUrl) => {
     estBatchNo,
     scanningField,
     scannerVisible,
-    empSuggestions,
-    showEmpList,
-    lastEmpName,
+    lastEmpName: "",
     offerPrintGst,
 
     // Refs
@@ -712,11 +685,10 @@ export const useEstimation = (apiBaseUrl) => {
     tagInputRef,
     empInputRef,
 
-    lastEmpId,
+    storedEmpId,
     // Setters
     setITEMID,
     setTAGNO,
-    setEmp,
     setTableData,
     setLoading,
     setItemList,
@@ -725,7 +697,6 @@ export const useEstimation = (apiBaseUrl) => {
     setEstBatchNo,
     setScanningField,
     setScannerVisible,
-    setShowEmpList,
 
     // Functions
     handleScanned,

@@ -85,6 +85,26 @@ export const getStyles = (theme) => {
       marginBottom: moderateScale(16),
       ...FONTS.text,
     },
+    passwordContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: COLORS.input,
+      borderRadius: SIZES.radius,
+      marginBottom: moderateScale(16),
+      height: moderateScale(54),
+    },
+    passwordInput: {
+      flex: 1,
+      height: "100%",
+      paddingHorizontal: moderateScale(16),
+      color: COLORS.text,
+      ...FONTS.text,
+    },
+    eyeIcon: {
+      paddingHorizontal: moderateScale(14),
+      height: "100%",
+      justifyContent: "center",
+    },
     // --- Dropdown Button (Cost ID) ---
     dropdownButton: {
       flexDirection: "row",

@@ -10,7 +10,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Dimensions,
+  Modal,
+  TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { LoginContext } from "../../../Context/LoginContext";
@@ -18,6 +19,9 @@ import { useTheme } from "../../../Context/ThemeContext";
 import { moderateScale } from "../../../Utills/Scalling";
 import { StyleSheet } from "react-native";
 import { fontFor } from "../../../Utills/Theme";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import createApiInstance from "../../../Api/axiosInstance";
+import ENDPOINTS from "../../../Api/endpoints";
 
 
 // Companies with this COMPANYID share one login but operate as several
@@ -43,38 +47,79 @@ const SelectCostCenterScreen = ({ navigation }) => {
     logout,
   } = useContext(LoginContext);
   const { theme, isDarkMode } = useTheme();
+  const { COLORS } = theme;
   const styles = getStyles(theme);
 
   const isCompanySelectMode = String(companyId) === MULTI_COMPANY_ID;
 
-  const [pickedCostId, setPickedCostId] = useState(selectedCostId || "");
+  const [pickedCostId, setPickedCostId] = useState("");
   const [pickedCompanyId, setPickedCompanyId] = useState("");
   const [continuing, setContinuing] = useState(false);
-  // Tracks whether we've completed at least one fetch, so the "no cost
-  // centres" empty state (with its Continue-without-one option) only
-  // shows once we actually know the list is empty - not while loading.
   const [hasFetched, setHasFetched] = useState(false);
+
+  // Employee picker state
+  const [empModalVisible, setEmpModalVisible] = useState(false);
+  const [empList, setEmpList] = useState([]);
+  const [empLoading, setEmpLoading] = useState(false);
+  const [empSearch, setEmpSearch] = useState("");
+  const [selectedEmpId, setSelectedEmpId] = useState("");
+  const [pendingNav, setPendingNav] = useState(null);
 
   useEffect(() => {
     if (!companyUrl) return;
 
     if (isCompanySelectMode) {
-      fetchCompanyIdOptions(companyUrl).then(() => {
-        setHasFetched(true);
-      });
+      fetchCompanyIdOptions(companyUrl).then(() => setHasFetched(true));
     } else {
-      fetchCostOptions(companyUrl).then(() => {
-        setHasFetched(true);
-      });
+      fetchCostOptions(companyUrl).then(() => setHasFetched(true));
     }
   }, [companyUrl, isCompanySelectMode]);
 
   // Auto-navigate when hasCostCentres becomes false (no cost centres configured)
   useEffect(() => {
     if (!isCompanySelectMode && hasCostCentres === false) {
-      navigation.navigate("Home", { fromCostCenter: true });
+      openEmpPicker(() => navigation.navigate("Home", { fromCostCenter: true }));
     }
   }, [hasCostCentres, isCompanySelectMode]);
+
+  const openEmpPicker = async (navCallback) => {
+    setPendingNav(() => navCallback);
+    setEmpSearch("");
+    setEmpModalVisible(true);
+    setEmpLoading(true);
+    try {
+      const api = createApiInstance(companyUrl);
+      const res = await api.get(ENDPOINTS.EMPLOYEES(""));
+      setEmpList(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setEmpList([]);
+    } finally {
+      setEmpLoading(false);
+    }
+  };
+
+  const confirmEmployee = async (emp) => {
+    setSelectedEmpId(String(emp.empId));
+    await AsyncStorage.setItem("EMPLOYEE_ID", String(emp.empId));
+    setEmpModalVisible(false);
+    pendingNav?.();
+  };
+
+  const ADMIN_EMP = { empId: 999, empName: "ADMINISTRATOR" };
+
+  const filteredEmpList = (() => {
+    const adminMatches = !empSearch.trim() ||
+      "999".includes(empSearch) ||
+      "administrator".includes(empSearch.toLowerCase());
+    const filtered = empSearch.trim()
+      ? empList.filter(
+          (e) =>
+            String(e.empId).includes(empSearch) ||
+            (e.empName || "").toLowerCase().includes(empSearch.toLowerCase())
+        )
+      : empList;
+    return adminMatches ? [ADMIN_EMP, ...filtered] : filtered;
+  })();
 
   // Just highlight the tapped item - selection is only committed when
   // the user presses Continue.
@@ -91,7 +136,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
     setContinuing(true);
     try {
       await selectCompanyId(companyIdToUse);
-      navigation.navigate("Home", { fromCostCenter: true });
+      openEmpPicker(() => navigation.navigate("Home", { fromCostCenter: true }));
     } finally {
       setContinuing(false);
     }
@@ -101,14 +146,8 @@ const SelectCostCenterScreen = ({ navigation }) => {
     if (continuing) return;
     setContinuing(true);
     try {
-      // costIdToUse may legitimately be "" - some companies don't use
-      // cost centres at all. Downstream API calls already handle a
-      // missing/empty cost id gracefully.
       await setSelectedCostId(costIdToUse || "");
-      // Drawer navigator doesn't support `replace` (that's a stack-only
-      // action) — `navigate` is equivalent here since there's nothing to
-      // go "back" to from the drawer's home screen anyway.
-      navigation.navigate("Home", { fromCostCenter: true });
+      openEmpPicker(() => navigation.navigate("Home", { fromCostCenter: true }));
     } finally {
       setContinuing(false);
     }
@@ -309,6 +348,41 @@ const SelectCostCenterScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </LinearGradient>
+
+      {/* Employee Picker Modal */}
+      <Modal visible={empModalVisible} transparent animationType="fade" onRequestClose={() => setEmpModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Employee</Text>
+            <TextInput
+              style={styles.modalSearch}
+              placeholder="Search by name or ID"
+              placeholderTextColor={COLORS.placeholder}
+              value={empSearch}
+              onChangeText={setEmpSearch}
+              autoFocus
+            />
+            {empLoading ? (
+              <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />
+            ) : (
+              <FlatList
+                data={filteredEmpList}
+                keyExtractor={(item) => String(item.empId)}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.item, selectedEmpId === String(item.empId) && styles.itemSelected]}
+                    onPress={() => confirmEmployee(item)}
+                  >
+                    <Text style={[styles.itemText, selectedEmpId === String(item.empId) && styles.itemTextSelected]}>
+                      {item.empId} - {item.empName}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -431,6 +505,45 @@ const getStyles = (theme) => {
       color: COLORS.textLight,
       ...FONTS.text,
       textDecorationLine: "underline",
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: moderateScale(20),
+    },
+    modalContent: {
+      width: "100%",
+      maxWidth: moderateScale(480),
+      maxHeight: "70%",
+      backgroundColor: COLORS.card,
+      borderRadius: SIZES.radius_lg,
+      padding: moderateScale(16),
+    },
+    modalTitle: {
+      color: COLORS.text,
+      fontSize: moderateScale(18),
+      ...FONTS.h5,
+      marginBottom: moderateScale(12),
+      textAlign: "center",
+    },
+    modalSearch: {
+      backgroundColor: COLORS.input,
+      borderWidth: 1,
+      borderColor: COLORS.borderColor,
+      borderRadius: SIZES.radius,
+      paddingHorizontal: moderateScale(12),
+      paddingVertical: moderateScale(8),
+      color: COLORS.text,
+      marginBottom: moderateScale(10),
+      ...FONTS.text,
+    },
+    modalEmpty: {
+      textAlign: "center",
+      color: COLORS.placeholder,
+      marginVertical: moderateScale(20),
+      ...FONTS.text,
     },
   });
 };

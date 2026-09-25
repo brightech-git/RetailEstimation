@@ -64,6 +64,7 @@ export const PurchaseProvider = ({ children }) => {
   const [purchaseEstBatchNo, setPurchaseEstBatchNo] = useState(null);
 
   const savePurchaseRows = (rows) => setSavedRows(rows);
+  const removePurchaseRow = (idx) => setSavedRows((prev) => prev.filter((_, i) => i !== idx));
   const clearPurchaseRows = () => {
     setSavedRows([]);
   };
@@ -106,7 +107,7 @@ export const PurchaseProvider = ({ children }) => {
 
   return (
     <PurchaseContext.Provider
-      value={{ savedRows, savePurchaseRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo }}
+      value={{ savedRows, savePurchaseRows, removePurchaseRow, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo }}
     >
       {children}
     </PurchaseContext.Provider>
