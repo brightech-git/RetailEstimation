@@ -6,22 +6,20 @@ export class SoftControlService {
     this.api = createApiInstance(apiBaseUrl);
   }
 
-  async getSoftControls(costId) {
-    const response = await this.api.get(ENDPOINTS.SOFT_CONTROL, {
-      params: { costId },
-    });
-    const data = Array.isArray(response.data) ? response.data : [];
-    console.log('📋 SoftControls count:', data.length, '| keys:', data[0] ? Object.keys(data[0]) : 'empty');
-    return data;
-  }
-
   async getControlValue(costId, ctlId) {
-    const controls = await this.getSoftControls(costId);
-    const found = controls.find(
-      (c) => (c.ctlId || c.ctl_id) === ctlId
-    );
-    const val = found?.ctlText ?? found?.ctl_text ?? "";
-    console.log('🔎 getControlValue(', ctlId, ') =>', val || 'NOT FOUND');
-    return val;
+    try {
+      const response = await this.api.get(ENDPOINTS.SOFT_CONTROL, {
+        params: { costId, ctlId },
+      });
+      console.log('📥 SoftControl raw response for', ctlId, ':', JSON.stringify(response.data));
+      const data = Array.isArray(response.data) ? response.data : [response.data];
+      const found = data[0];
+      const val = found?.ctlText ?? found?.ctl_text ?? found?.CTLTEXT ?? found?.CTL_TEXT ?? "";
+      console.log('🔎 getControlValue(', ctlId, ') =>', val || 'NOT FOUND');
+      return val;
+    } catch (err) {
+      console.log('❌ SoftControl error for', ctlId, ':', err?.response?.status, JSON.stringify(err?.response?.data), err.message);
+      return "";
+    }
   }
 }

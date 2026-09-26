@@ -167,15 +167,15 @@ items.forEach(function(item,idx){
   html+='<div class="item-name">'+(idx+1)+' '+esc(itemName)+'&nbsp;&nbsp;'+esc(item.itemid)+'-'+esc(item.tagno)+'</div>';
 
   // Weight row: label | weight-col=grswt | amt-col=empty
-  html+='<div class="row3"><span class="lbl">Weight</span><span class="wt">'+fmtWt(item.grswt)+'</span><span class="amt"></span></div>';
-
-  // Wastage row: label | weight-col=wastage | amt-col=empty
   if((item.wastage||0)>0){
+    // Both weight and wastage present — show both + underlined total
+    html+='<div class="row3"><span class="lbl">Weight</span><span class="wt">'+fmtWt(item.grswt)+'</span><span class="amt"></span></div>';
     html+='<div class="row3"><span class="lbl">Wastage</span><span class="wt">'+fmtWt(item.wastage)+'</span><span class="amt"></span></div>';
+    html+='<div class="row3"><span class="lbl"></span><span class="wt-ul">'+fmtWt(totalWt)+'</span><span class="amt-ul">'+fmt(goldAmt)+'</span></div>';
+  } else {
+    // No wastage — show only weight with underline directly
+    html+='<div class="row3"><span class="lbl">Weight</span><span class="wt-ul">'+fmtWt(item.grswt)+'</span><span class="amt-ul">'+fmt(goldAmt)+'</span></div>';
   }
-
-  // Total weight row (underlined weight + underlined amount = gold value)
-  html+='<div class="row3"><span class="lbl"></span><span class="wt-ul">'+fmtWt(totalWt)+'</span><span class="amt-ul">'+fmt(goldAmt)+'</span></div>';
 
   // MC row: label=MC | wt=empty | amt=mcAmt
   if(mcAmt>0){
@@ -221,7 +221,7 @@ if (purchItems.length > 0) {
     var wt = p.netwt || p.grswt || 0;
     var amt = p.amount || 0;
     purchHtml +=
-      '<div class="row3">'+
+      '<div style="margin-top:${Math.round(F*0.4)}px" class="row3">'+
         '<span class="lbl">'+esc(label)+'</span>'+
         '<span class="pcs"></span>'+
         '<span class="wt">'+fmtWt(wt)+'</span>'+
@@ -229,17 +229,19 @@ if (purchItems.length > 0) {
       '</div>';
   });
 
-  purchHtml += '<hr class="sep">';
+  purchHtml += '<div style="margin-bottom:${Math.round(F*0.4)}px"></div>';
 
   // Grand Total row
   var grandNet = salesGrand - totalPurchAmt;
   purchHtml +=
+    '<hr class="sep">'+
     '<div class="grand-row">'+
       '<span class="lbl"><b>Grand Total</b></span>'+
       '<span class="pcs"></span>'+
       '<span class="wt"></span>'+
       '<span class="amt">'+fmt(grandNet)+'</span>'+
-    '</div>';
+    '</div>'+
+    '<hr class="sep">';
 }
 document.getElementById('purchase-section').innerHTML = purchHtml;
 

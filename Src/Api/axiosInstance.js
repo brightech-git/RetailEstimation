@@ -4,7 +4,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // In-memory cache
 let _costId = null;
 let _companyId = null;
-let _isMultiCompany = false;
 
 // Load saved values on app start
 export const initCostCache = async () => {
@@ -17,15 +16,7 @@ export const initCostCache = async () => {
     _costId = costId || null;
     _companyId = companyId || null;
 
-    // Multi-company selection means a selected company ID exists
-    // without a selected cost centre.
-    _isMultiCompany = !_costId && !!_companyId;
-
-    console.log("📦 Cache initialized:", {
-      costId: _costId,
-      companyId: _companyId,
-      isMultiCompany: _isMultiCompany,
-    });
+    console.log("📦 Cache initialized:", { costId: _costId, companyId: _companyId });
   } catch (e) {
     console.warn("initCostCache: failed to read cost/company ID", e);
   }
@@ -35,13 +26,7 @@ export const setCostCache = (costId, companyId) => {
   _costId = costId || null;
   _companyId = companyId || null;
 
-  _isMultiCompany = !_costId && !!_companyId;
-
-  console.log("🔄 Cache updated:", {
-    costId: _costId,
-    companyId: _companyId,
-    isMultiCompany: _isMultiCompany,
-  });
+  console.log("🔄 Cache updated:", { costId: _costId, companyId: _companyId });
 };
 
 // Endpoints that should NEVER receive costId / companyId
@@ -64,41 +49,12 @@ const createApiInstance = (baseURL) => {
   instance.interceptors.request.use((config) => {
     const skip = SKIP_COST_ID.some((path) => config.url?.includes(path));
 
-    if (!skip) {
-      if (_isMultiCompany) {
-        // -----------------------------------------
-        // COMPANYID = 15 flow
-        // User selected DJG / DEM / DBJ etc.
-        // -----------------------------------------
-
-        if (_companyId) {
-          config.params = {
-            ...config.params,
-            compId: _companyId,
-          };
-
-          console.log("🏷️ Multi-company header: compId=", _companyId);
-        }
-      } else {
-        // -----------------------------------------
-        // Normal company flow
-        // Cost Centre + Company ID
-        // -----------------------------------------
-
-        if (_costId) {
-          config.params = {
-            ...config.params,
-            costId: _costId,
-          };
-        }
-
-        if (_companyId) {
-          config.params = {
-            ...config.params,
-            companyId: _companyId,
-          };
-        }
-      }
+    if (!skip && _companyId) {
+      config.params = {
+        ...config.params,
+        costId: _costId ?? "",
+        companyId: _companyId,
+      };
     }
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

@@ -335,17 +335,18 @@ const loadActivePrinter = useCallback(async () => {
     setPreviewVisible(false);
   }, []);
 
-  // Fetch OFFERPRINTGST soft control whenever slipData changes
+  // Fetch OFFERPRINTGST + ESTTABPRINT soft controls whenever slipData changes
   useEffect(() => {
     if (!slipData) return;
-    if (!API_BASE_URL || !selectedCostId) {
+    if (!API_BASE_URL) {
       setOfferReadyFor(slipData);
       return;
     }
+    console.log('🔍 Fetching soft controls, selectedCostId:', selectedCostId);
     const svc = new SoftControlService(API_BASE_URL);
     Promise.all([
-      svc.getControlValue(selectedCostId, 'OFFERPRINTGST').catch(() => 'N'),
-      svc.getControlValue(selectedCostId, 'ESTTABPRINT').catch(() => 'N'),
+      svc.getControlValue(selectedCostId || '', 'OFFERPRINTGST').catch(() => 'N'),
+      svc.getControlValue(selectedCostId || '', 'ESTTABPRINT').catch(() => 'N'),
     ]).then(([offerVal, tabVal]) => {
       setOfferPrintGst(offerVal || 'N');
       setEstTabPrint(tabVal || 'N');

@@ -62,6 +62,10 @@ const EstimationPreviewModal = ({
     selectedCostId ? slipData?.sample?.empid : null,
   );
 
+  useEffect(() => {
+    console.log('🖨️ EstimationPreviewModal - estTabPrint:', estTabPrint);
+  }, [estTabPrint]);
+
   const [previewWidth, setPreviewWidth] = useState(
     Math.round(Dimensions.get("window").width * 0.95) - 32
   );
