@@ -31,6 +31,7 @@ const MainHeader = () => {
     username,
     companyName,
     selectedCostId,
+    selectedCompanyId,
     loading: contextLoading,
   } = useContext(LoginContext);
 
@@ -125,6 +126,11 @@ const MainHeader = () => {
                 <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
                   <Text style={styles.label} numberOfLines={1}>💰 Cost ID :</Text>
                   <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedCostId}</Text>
+                </View>
+              ) : selectedCompanyId ? (
+                <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.label} numberOfLines={1}>🏢 Company :</Text>
+                  <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedCompanyId}</Text>
                 </View>
               ) : null}
             </View>

@@ -366,7 +366,7 @@ const loadActivePrinter = useCallback(async () => {
   // the slip instead of after they tap Print. executePrint just awaits this
   // cached promise instead of starting the render from scratch.
   useEffect(() => {
-    if (!previewVisible || !slipData || !empDisplay) return;
+    if (!previewVisible || !slipData) return;
 
     // Keyed to the slip currently on screen so a stale render from a
     // previous slip is never sent for a different one.

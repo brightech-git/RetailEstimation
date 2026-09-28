@@ -25,6 +25,7 @@ import {
 } from "../../../shared/EstimationCalculations";
 import useEmployeeDisplay from "../../Hook/useEmployeeDisplay";
 import { useApiBaseUrl } from "../../../Config/Config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const formatDateSafe = (dateString) => {
@@ -57,9 +58,13 @@ const EstimationPreviewModal = ({
   const [customPrintCount, setCustomPrintCount] = useState("");
   const { username, companyName, selectedCostId, userId } = useContext(LoginContext);
   const API_BASE_URL = useApiBaseUrl();
+  const [storedEmpId, setStoredEmpId] = useState(null);
+  useEffect(() => {
+    AsyncStorage.getItem("EMPLOYEE_ID").then((id) => { if (id) setStoredEmpId(id); });
+  }, []);
   const empDisplay = useEmployeeDisplay(
     API_BASE_URL,
-    selectedCostId ? slipData?.sample?.empid : null,
+    storedEmpId || slipData?.sample?.empid,
   );
 
   useEffect(() => {
@@ -94,6 +99,7 @@ const EstimationPreviewModal = ({
       companyName,
       costId: selectedCostId || "",
       empDisplay,
+      sample,
       estNo: sample?.tranno || "NA",
       billDate: formatDateSafe(sample?.trandate),
       billTime: getCurrentTime(),
