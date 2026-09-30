@@ -37,6 +37,7 @@ export const useEstimation = (apiBaseUrl) => {
   const [lastEmpId, setLastEmpId] = useState("");
   const [scanningField, setScanningField] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [pendingScan, setPendingScan] = useState(null);
   const [offerPrintGst, setOfferPrintGst] = useState("N");
 
   const { username, userId, costOptions, selectedCostId, selectedCompanyId } =
@@ -104,18 +105,21 @@ export const useEstimation = (apiBaseUrl) => {
   }, [apiBaseUrl, selectedCostId]);
 
   const handleScanned = (field, data) => {
-    if (data.includes("-")) {
-      const [item, tag] = data.split("-");
+    const scannedValue = String(data || "").trim();
+
+    if (scannedValue.includes("-")) {
+      const [item, ...tagParts] = scannedValue.split("-");
+      const tag = tagParts.join("-").trim();
       setITEMID(item);
       setTAGNO(tag);
-      fetchData(item, tag);
+      setPendingScan({ itemId: item, tagNo: tag });
     } else {
       if (field === "itemid") {
-        setITEMID(data);
+        setITEMID(scannedValue);
         tagInputRef.current?.focus();
       } else if (field === "tagno") {
-        setTAGNO(data);
-        fetchData(ITEMID, data);
+        setTAGNO(scannedValue);
+        setPendingScan({ itemId: ITEMID, tagNo: scannedValue });
       }
     }
   };
@@ -247,6 +251,14 @@ export const useEstimation = (apiBaseUrl) => {
       setLoading(false);
     }
   };
+
+  // A scan fills React state asynchronously. Queue its fetch until after the
+  // scanned Item ID and Tag No have been committed to the form.
+  useEffect(() => {
+    if (!pendingScan) return;
+    setPendingScan(null);
+    fetchData(pendingScan.itemId, pendingScan.tagNo);
+  }, [pendingScan]);
 
   const handleRefresh = () => {
     fetchData(); // your API calling logic

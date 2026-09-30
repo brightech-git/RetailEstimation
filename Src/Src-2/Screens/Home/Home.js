@@ -78,7 +78,12 @@ const HomeScreen1 = () => {
       return;
     }
     try {
-      await printEstimationSlip(estimation.estBatchNo, username, API_BASE_URL);
+      await printEstimationSlip(
+        estimation.estBatchNo,
+        username,
+        API_BASE_URL,
+        employeeId || estimation.lastEmpId,
+      );
     } catch (err) {
       Alert.alert("Print Failed", err.message || "Unable to generate slip");
     }
@@ -110,10 +115,10 @@ const HomeScreen1 = () => {
   };
 
   // Fetch API data based on combined input
-const fetchApiData = async () => {
-  if (!combinedInput) return;
+const fetchApiData = async (inputToFetch = combinedInput) => {
+  if (!inputToFetch) return;
 
-  const parsed = parseCombinedInput(combinedInput);
+  const parsed = parseCombinedInput(inputToFetch);
   if (!parsed) return;
 
   const { itemId, tagNo } = parsed;
@@ -138,14 +143,13 @@ const fetchApiData = async () => {
 
   // Handle scanned barcode data
 const handleScannedData = (data) => {
+  const scannedValue = String(data || "").trim();
   estimation.setEstBatchNo(null);   // ← CLEAR SLIP HERE
   setValidationError("");           // prevent ghost error
-  setCombinedInput(data);
+  setCombinedInput(scannedValue);
   estimation.setScannerVisible(false);
 
-  setTimeout(() => {
-    fetchApiData();
-  }, 500);
+  fetchApiData(scannedValue);
 };
 
 
@@ -223,7 +227,7 @@ const handleScannedData = (data) => {
               {/* Fetch Button */}
               <TouchableOpacity
                 style={styles.fetchButton}
-                onPress={fetchApiData}
+                onPress={() => fetchApiData()}
                 disabled={loadingApiData}
               >
                 <Text style={styles.fetchButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
