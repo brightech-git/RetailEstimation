@@ -2,7 +2,7 @@
   "expo": {
     "name": "RetailEstimation",
     "slug": "bmg-estimation",
-    "version": "1.0.0",
+    "version": "1.0.9",
     "orientation": "default",
     "icon": "./assets/brightechlogo.png",
     "userInterfaceStyle": "light",

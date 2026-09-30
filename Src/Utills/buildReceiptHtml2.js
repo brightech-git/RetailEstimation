@@ -53,7 +53,10 @@ body{
   line-height:1.35;
   -webkit-text-stroke:0.6px #000;
 }
-.customer-line{display:flex;align-items:flex-end;gap:${Math.round(F*0.25)}px;min-height:${Math.round(F*1.35)}px;}
+.customer-line{display:flex;align-items:flex-end;gap:${Math.round(F*0.22)}px;min-height:${Math.round(F*1.35)}px;}
+.customer-line + .customer-line{margin-top:${Math.round(F*0.35)}px;}
+.customer-label{width:${Math.round(F*4.6)}px;}
+.customer-colon{width:${Math.round(F*0.35)}px;text-align:center;}
 .customer-input-line{flex:1;border-bottom:2px solid #000;min-height:${Math.round(F*0.9)}px;}
 
 /* 3-col row: label | weight-col | amount-col */
@@ -123,9 +126,9 @@ body{
 <body>
 <div id="receipt">
   <div class="customer-details">
-    <div class="customer-line"><span>Name :</span><span class="customer-input-line"></span></div>
-    <div class="customer-line"><span>Mobile :</span><span class="customer-input-line"></span></div>
-    <div class="customer-line"><span>Aadhaar No :</span><span class="customer-input-line"></span></div>
+    <div class="customer-line"><span class="customer-label">Name</span><span class="customer-colon">:</span><span class="customer-input-line"></span></div>
+    <div class="customer-line"><span class="customer-label">Mobile</span><span class="customer-colon">:</span><span class="customer-input-line"></span></div>
+    <div class="customer-line"><span class="customer-label">Aadhaar</span><span class="customer-colon">:</span><span class="customer-input-line"></span></div>
   </div>
   <div class="slip-heading">ESTIMATION SLIP</div>
   <div class="hdr-row">

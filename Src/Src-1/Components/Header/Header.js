@@ -61,7 +61,7 @@ const MainHeader = () => {
         ]);
         if (storedEmployeeName) {
           if (!cancelled) {
-            setSelectedEmployeeDisplay(`${employeeId} - ${storedEmployeeName}`);
+            setSelectedEmployeeDisplay(`${storedEmployeeName} (${employeeId})`);
           }
           return;
         }
@@ -166,7 +166,7 @@ const MainHeader = () => {
                   !selectedCostId && { borderBottomWidth: 0 },
                 ]}
               >
-                <Text style={styles.label} numberOfLines={1}>👤 User :</Text>
+                <Text style={styles.label} numberOfLines={1}>👤 Emp :</Text>
                 <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedEmployeeDisplay || "N/A"}</Text>
               </View>
               {selectedCostId ? (
