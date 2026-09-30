@@ -33,6 +33,8 @@ const CommonHeader = ({
   rightIcon,
   onRightPress,
   rightComponent,
+  containerStyle,
+  subtitleStyle,
 }) => {
   const { theme } = useTheme();
   const styles = createCommonHeaderStyles(theme);
@@ -53,7 +55,7 @@ const CommonHeader = ({
       colors={theme.COLORS.gradientPrimary}
       style={styles.gradientBackground}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, containerStyle]}>
         {/* Left */}
         <View style={styles.sideSlot}>
           {!hideLeftIcon && (
@@ -78,7 +80,7 @@ const CommonHeader = ({
             {title}
           </Text>
           {!!subtitle && (
-            <Text style={styles.subtitle} numberOfLines={1}>
+            <Text style={[styles.subtitle, subtitleStyle]} numberOfLines={1}>
               {subtitle}
             </Text>
           )}

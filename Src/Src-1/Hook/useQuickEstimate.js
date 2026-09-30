@@ -74,7 +74,7 @@ export const useQuickEstimate = (apiBaseUrl) => {
   const printSlip = async (batchNo) => {
     setPreparingPrint(true);
     try {
-      await printEstimationSlip(batchNo, username, apiBaseUrl);
+      await printEstimationSlip(batchNo, username, apiBaseUrl, employeeId);
     } catch (err) {
       Alert.alert("Print Failed", err.message || "Unable to generate slip");
     } finally {
@@ -150,7 +150,7 @@ export const useQuickEstimate = (apiBaseUrl) => {
   const status = loadingApiData
     ? "Fetching..."
     : submitting
-      ? "Saving..."
+      ? "Submitting..."
       : printing
         ? "Printing..."
         : "";

@@ -423,6 +423,73 @@ export const createQuickEstimateStyles = (theme) => {
     fontSize: moderateScale(14),
     textAlign: "center",
   },
+  progressOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.58)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: moderateScale(24),
+  },
+  progressCard: {
+    width: "100%",
+    maxWidth: moderateScale(360),
+    backgroundColor: COLORS.card,
+    borderRadius: SIZES.radius_lg,
+    padding: moderateScale(24),
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+  },
+  rocketBadge: {
+    width: moderateScale(62),
+    height: moderateScale(62),
+    borderRadius: moderateScale(31),
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: moderateScale(12),
+  },
+  progressTitle: {
+    color: COLORS.text,
+    fontSize: moderateScale(21),
+    fontFamily: fontFor("bold"),
+  },
+  progressStatus: {
+    color: COLORS.primary,
+    fontSize: moderateScale(15),
+    fontFamily: fontFor("600"),
+    marginTop: moderateScale(5),
+    marginBottom: moderateScale(20),
+  },
+  progressSteps: {
+    width: "100%",
+    gap: moderateScale(13),
+  },
+  progressStep: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  progressStepIcon: {
+    width: moderateScale(27),
+    height: moderateScale(27),
+    borderRadius: moderateScale(14),
+    backgroundColor: COLORS.input,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: moderateScale(10),
+  },
+  progressStepIconActive: {
+    backgroundColor: COLORS.primary,
+  },
+  progressStepText: {
+    color: COLORS.placeholder,
+    fontSize: moderateScale(15),
+    fontFamily: fontFor("500"),
+  },
+  progressStepTextActive: {
+    color: COLORS.text,
+    fontFamily: fontFor("600"),
+  },
 
   });
 };
