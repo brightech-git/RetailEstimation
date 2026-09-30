@@ -7,49 +7,49 @@ const PurchaseContext = createContext(null);
 
 // Map a purchase row to the API payload shape.
 // Fields present in the row are filled; everything else defaults to empty/0.
-const buildPayload = (row) => ({
+export const buildPurchasePayload = (row) => ({
   tagno:        row.tagno        || null,
-  itemid:       row.itemId       || null,
-  subitemid:    row.subItemId    || null,
-  pcs:          row.pcs          || null,
-  grswt:        row.grswt        || null,
-  netwt:        calcNetWt(row)   || null,
-  lesswt:       ""     || null,
+  itemid:       Number(row.itemId) || 0,
+  subitemid:    Number(row.subItemId) || 0,
+  pcs:          Number(row.pcs) || 0,
+  grswt:        Number(row.grswt) || 0,
+  netwt:        calcNetWt(row) || 0,
+  lesswt:       Number(row.dustwt) || 0,
   remark1:      row.description   || null,
   userid:      999       || null,
   dustwt:      row.dustwt      || null,
-  rate:         row.rate         || null,
-  boardrate:    row.boardrate    || null,
-  amount:       calcAmount(row)  || null,
-  mcharge:      row.mcharge      || null,
-  mcgrm:        row.mcgrm        || null,
-  wastage:      calcWastage(row) || null,
-  wastper:      row.wPercent     || null,
+  rate:         Number(row.rate) || 0,
+  boardrate:    Number(row.boardrate || row.rate) || 0,
+  amount:       calcAmount(row) || 0,
+  mcharge:      Number(row.mcharge) || 0,
+  mcgrm:        Number(row.mcgrm) || 0,
+  wastage:      calcWastage(row) || 0,
+  wastper:      Number(row.wPercent) || 0,
   flag:         Array.isArray(row.ownership)
                   ? row.ownership.includes("OWN") ? "W" : "O"
                   : null,
   make:         Array.isArray(row.ownership)
                   ? row.ownership.includes("OWN") ? "W" : "O"
                   : null,
-  empid:        row.emp          || null,
-  catcode:      row.categoryCode || null,
+  empid:        Number(row.emp) || 0,
+  catcode:      row.categoryCode || "",
   ocatcode:     null,
-  accode:       row.accode       || null,
+  accode:       row.accode       || "",
   systemid:     "8",
-  transtatus:   null,
-  status:       row.status       || null,
+  transtatus:   row.transtatus   || "P",
+  status:       row.status       || "A",
   appver:       "APP",
-  taggrswt:     null,
-  tagnetwt:     null,
-  weightunit:   row.weightunit   || null,
-  stoneunit:    row.stoneunit    || null,
-  protype:      row.protype      || null,
-  metalid:      row.metalId      || null,
-  itemtypeid:   row.itemTypeId   || null,
-  purity:       row.purity       || null,
-  tablecode:    row.tablecode    || null,
-  vatexm:       row.vatexm       || null,
-  stktype:      row.stktype      || null,
+  taggrswt:     Number(row.grswt) || 0,
+  tagnetwt:     calcNetWt(row) || 0,
+  weightunit:   row.weightunit   || "G",
+  stoneunit:    row.stoneunit    || "C",
+  protype:      Number(row.protype) || 1,
+  metalid:      row.metalId      || "G",
+  itemtypeid:   Number(row.itemTypeId) || 0,
+  purity:       Number(row.purity) || 0,
+  tablecode:    row.tablecode    || "",
+  vatexm:       row.vatexm       || "N",
+  stktype:      row.stktype      || "N",
   purexch:      Array.isArray(row.ownership)
                   ? row.ownership.includes("EXCHANGE") ? "E" : "P"
                   : null,
@@ -81,7 +81,7 @@ export const PurchaseProvider = ({ children }) => {
     }
     setSubmitting(true);
     try {
-      const payload = savedRows.map(buildPayload);
+      const payload = savedRows.map(buildPurchasePayload);
       console.log("📦 Purchase payload:", JSON.stringify(payload, null, 2));
       const first = await new PurchaseService(apiBaseUrl).saveReceipt(payload);
       const tranno = first?.tranno || null;
@@ -101,9 +101,17 @@ export const PurchaseProvider = ({ children }) => {
     }
   };
 
+  // The Home screen submits sales and purchase together through
+  // /estissue-receipt. This only records the returned purchase slip details.
+  const completeCombinedPurchase = ({ receiptTranno, tranno, batchNo }) => {
+    setPurchaseTranno(receiptTranno || tranno || null);
+    setPurchaseEstBatchNo(batchNo || null);
+    clearPurchaseRows();
+  };
+
   return (
     <PurchaseContext.Provider
-      value={{ savedRows, savePurchaseRows, removePurchaseRow, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo }}
+      value={{ savedRows, savePurchaseRows, removePurchaseRow, clearPurchaseRows, clearPurchaseAll, submitPurchase, completeCombinedPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo }}
     >
       {children}
     </PurchaseContext.Provider>

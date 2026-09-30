@@ -171,7 +171,7 @@ export class EstimationService {
   }
 
   async submitEstimationData(data) {
-    const response = await this.api.post(ENDPOINTS.EST_ISSUE, data);
+    const response = await this.api.post(ENDPOINTS.EST_ISSUE_RECEIPT, data);
     console.log("Save response:", response.data);
     return response.data;
   }

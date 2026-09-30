@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LoginContext } from "../../Context/LoginContext";
+import { buildPurchasePayload } from "../../Context/PurchaseContext";
 
 import {
   EstimationService,
@@ -267,12 +268,14 @@ export const useEstimation = (apiBaseUrl) => {
 
   const calculateDiscountedGross = calcDiscountedGross;
 
-  const submitData = async (overrideData) => {
+  const submitData = async (overrideData, purchaseRows = []) => {
     const data = overrideData || tableData;
-    console.log("Submitting data:", data);
+    const hasSales = data.length > 0;
+    const hasPurchases = purchaseRows.length > 0;
+    console.log("Submitting data:", { issues: data, receipts: purchaseRows });
 
-    if (data.length === 0) {
-      Alert.alert("No data", "Please add items before submitting.");
+    if (!hasSales && !hasPurchases) {
+      Alert.alert("No data", "Please add sales or purchase items before submitting.");
       return null;
     }
 
@@ -288,7 +291,7 @@ export const useEstimation = (apiBaseUrl) => {
       // logged-in user's selected cost centre / company - some callers
       // (e.g. Homescreen1's raw API data) never had COSTID/COMPANYID on
       // the row to begin with, since /estimationTotal doesn't return them.
-      const firstItem = data[0];
+      const firstItem = data[0] || {};
       const costId = firstItem.COSTID || (await service.getCostId()) || "";
 
       // Resolve companyId from selected cost centre (single source of truth)
@@ -435,20 +438,27 @@ export const useEstimation = (apiBaseUrl) => {
       );
 
       const rawItems = enrichedData.map(([item]) => item);
+      const receiptItems = purchaseRows.map(buildPurchasePayload);
+      const combinedPayload = { issues: rawItems, receipts: receiptItems };
 
       console.log(
-        "📤 Payload to /estissue:",
-        JSON.stringify(rawItems, null, 2),
+        "📤 Payload to /estissue-receipt:",
+        JSON.stringify(combinedPayload, null, 2),
       );
 
       // Submit main estimation data
-      const savedIssues = await service.submitEstimationData(rawItems);
-      console.log("[EstIssue] Response:", savedIssues);
+      const saveResponse = await service.submitEstimationData(combinedPayload);
+      const savedIssues = Array.isArray(saveResponse)
+        ? saveResponse
+        : Array.isArray(saveResponse?.issues)
+          ? saveResponse.issues
+          : [];
+      console.log("[EstIssueReceipt] Response:", saveResponse);
 
-      if (!Array.isArray(savedIssues)) {
+      if (hasSales && !Array.isArray(saveResponse) && !Array.isArray(saveResponse?.issues)) {
         throw new Error(
-          "❌ Invalid EstIssue response: expected an array but got " +
-            JSON.stringify(savedIssues),
+          "Invalid estissue-receipt response: expected an issues array but got " +
+            JSON.stringify(saveResponse),
         );
       }
 
@@ -616,44 +626,69 @@ export const useEstimation = (apiBaseUrl) => {
         );
       }
 
-      // Get final details for printing
-      console.log("[EstDetails] Payload:", { TRANNO, costId });
-      const [ipAddress, estDetails] = await Promise.all([
-        service.getIPAddress(),
-        service.getEstimationDetails(TRANNO),
-      ]);
-      console.log("[IPAddress] Response:", ipAddress);
-      console.log("[EstDetails] Response:", estDetails);
+      if (hasSales) {
+        // Sales require the estimation print metadata. Purchase-only slips
+        // are printed from their receipt details instead.
+        console.log("[EstDetails] Payload:", { TRANNO, costId });
+        const [ipAddress, estDetails] = await Promise.all([
+          service.getIPAddress(),
+          service.getEstimationDetails(TRANNO),
+        ]);
+        console.log("[IPAddress] Response:", ipAddress);
+        console.log("[EstDetails] Response:", estDetails);
 
-      let rawBillDate = estDetails?.billDate;
-      let billDate =
-        !rawBillDate || isNaN(Date.parse(rawBillDate))
-          ? new Date().toISOString().replace("T", " ").slice(0, 19)
-          : new Date(rawBillDate).toISOString().replace("T", " ").slice(0, 19);
+        let rawBillDate = estDetails?.billDate;
+        let billDate =
+          !rawBillDate || isNaN(Date.parse(rawBillDate))
+            ? new Date().toISOString().replace("T", " ").slice(0, 19)
+            : new Date(rawBillDate).toISOString().replace("T", " ").slice(0, 19);
 
-      // Submit print data
-      const estPrintPayload = {
-        brefno: TRANNO,
-        billdate: billDate,
-        goldrate: todayRates?.GOLDRATE || 0,
-        silverrate: todayRates?.SILVERRATE || 0,
-        billtype: estDetails?.bill_type || "",
-        instrument: "X",
-        sysipaddress: ipAddress,
-        estbatchno: batchNo,
-      };
+        const estPrintPayload = {
+          brefno: TRANNO,
+          billdate: billDate,
+          goldrate: todayRates?.GOLDRATE || 0,
+          silverrate: todayRates?.SILVERRATE || 0,
+          billtype: estDetails?.bill_type || "",
+          instrument: "X",
+          sysipaddress: ipAddress,
+          estbatchno: batchNo,
+        };
 
-      console.log("[PrintData] Payload:", estPrintPayload);
-      const printResponse = await service.submitPrintData(estPrintPayload);
-      console.log("[PrintData] Response:", printResponse);
+        console.log("[PrintData] Payload:", estPrintPayload);
+        const printResponse = await service.submitPrintData(estPrintPayload);
+        console.log("[PrintData] Response:", printResponse);
+      }
 
       // Alert.alert("Success", `Salescc Estimation No: ${TRANNO} Generated`);
-      setTranno(TRANNO);
-      setEstBatchNo(batchNo);
-      setTableData([]);
-      setLastEmpId(rawItems[0]?.empid ? String(rawItems[0].empid) : lastEmpId);
+      const savedReceipt = Array.isArray(saveResponse?.receipts)
+        ? saveResponse.receipts[0]
+        : saveResponse?.receipt;
+      const savedIssue = Array.isArray(saveResponse?.issues)
+        ? saveResponse.issues[0]
+        : null;
+      const issueTranno = saveResponse?.issueTranNo || savedIssue?.tranno || TRANNO;
+      const receiptTranno = saveResponse?.receiptTranNo || savedReceipt?.tranno || null;
+      const responseBatchNo =
+        saveResponse?.estBatchNo ||
+        savedIssue?.estbatchno ||
+        savedReceipt?.estbatchno ||
+        batchNo;
 
-      return { batchNo, tranno: TRANNO };
+      if (hasSales) {
+        setTranno(issueTranno);
+        setEstBatchNo(responseBatchNo);
+        setTableData([]);
+        setLastEmpId(rawItems[0]?.empid ? String(rawItems[0].empid) : lastEmpId);
+      }
+
+      return {
+        batchNo: responseBatchNo,
+        tranno: hasSales ? issueTranno : receiptTranno,
+        issueTranno,
+        receiptTranno,
+        hasSales,
+        hasPurchases,
+      };
     } catch (error) {
       const errMsg =
         error.response?.data?.message ||

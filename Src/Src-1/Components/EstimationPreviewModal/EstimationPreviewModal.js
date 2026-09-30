@@ -134,6 +134,9 @@ const EstimationPreviewModal = ({
         discountTaxAmount,
       },
       purchaseItems: (purchaseItems || []).map((p) => ({
+        // Purchase receipts return the display category in catname. Preserve
+        // it for the receipt builder so it does not fall back to itemname.
+        categoryName: p.catname || p.CATNAME || p.categoryName || p.categoryname || "",
         itemname: p.itemname || "",
         pcs:      p.pcs      || 0,
         grswt:    p.grswt    || 0,

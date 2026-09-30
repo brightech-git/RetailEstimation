@@ -33,7 +33,7 @@ const HomeScreen = () => {
   const styles = createHomeStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
   const { username, selectedCompanyId, selectedCostId } = useContext(LoginContext);
-  const { savedRows, clearPurchaseRows, clearPurchaseAll, submitPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo, removePurchaseRow } = usePurchaseContext();
+  const { savedRows, clearPurchaseRows, clearPurchaseAll, completeCombinedPurchase, submitting, setApiBaseUrl, purchaseTranno, purchaseEstBatchNo, removePurchaseRow } = usePurchaseContext();
 
   React.useEffect(() => {
     if (API_BASE_URL) setApiBaseUrl(API_BASE_URL);
@@ -566,22 +566,14 @@ const HomeScreen = () => {
                 ]}
                 disabled={estimation.loading || submitting || isSubmitted}
                 onPress={async () => {
-                  let salesTranno = null;
-                  let purchTranno = null;
-                  if (estimation.tableData.length > 0) {
-                    const result = await estimation.submitData();
-                    if (result) {
-                      salesTranno = result.tranno;
-                      estimation.setEstBatchNo(result.batchNo);
+                  const result = await estimation.submitData(undefined, savedRows);
+                  if (result) {
+                    if (result.hasPurchases) {
+                      completeCombinedPurchase(result);
                     }
-                  }
-                  if (savedRows.length > 0) {
-                    purchTranno = await submitPurchase();
-                  }
-                  if (salesTranno || purchTranno) {
                     const lines = [];
-                    if (salesTranno) lines.push(`Sales Estimation No :  ${salesTranno}`);
-                    if (purchTranno) lines.push(`Purchase Estimation No :  ${purchTranno}`);
+                    if (result.hasSales) lines.push(`Sales Estimation No :  ${result.issueTranno}`);
+                    if (result.hasPurchases) lines.push(`Purchase Estimation No :  ${result.receiptTranno}`);
                     lines.push("Generated..");
                     Alert.alert("Success", lines.join("\n"));
                   }

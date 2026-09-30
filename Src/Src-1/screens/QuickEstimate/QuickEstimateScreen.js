@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -20,6 +21,7 @@ import { useQuickEstimate } from "../../Hook/useQuickEstimate";
 import useTodayRate from "../../Hook/useTodayRate";
 
 const QuickEstimateScreen = () => {
+  const navigation = useNavigation();
   const { theme } = useTheme();
   const styles = createQuickEstimateStyles(theme);
   const API_BASE_URL = useApiBaseUrl();
@@ -53,6 +55,8 @@ const QuickEstimateScreen = () => {
         subtitle={ratesSubtitle}
         containerStyle={{ minHeight: 66, paddingVertical: 8 }}
         subtitleStyle={{ fontSize: 14, marginTop: 3, opacity: 1 }}
+        rightIcon="menu"
+        onRightPress={() => navigation.getParent()?.openDrawer()}
       />
 
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">

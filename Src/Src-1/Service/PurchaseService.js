@@ -17,13 +17,16 @@ export class PurchaseService {
   }
 
   /**
-   * Save purchase rows (/estreceipt).
-   * @param {object[]} payload
-   * @returns {Promise<{tranno, estbatchno}|undefined>} first saved record
+   * Backward-compatible purchase save. Purchase rows are now always sent in
+   * the combined estissue-receipt envelope.
    */
   async saveReceipt(payload) {
-    const response = await this.api.post(`${ENDPOINTS.EST_RECEIPT}`, payload);
+    const response = await this.api.post(ENDPOINTS.EST_ISSUE_RECEIPT, {
+      issues: [],
+      receipts: payload,
+    });
     console.log("✅ Purchase response:", JSON.stringify(response?.data, null, 2));
-    return Array.isArray(response?.data) ? response.data[0] : response?.data;
+    const receipts = response?.data?.receipts;
+    return Array.isArray(receipts) ? receipts[0] : response?.data?.receipt || response?.data;
   }
 }
