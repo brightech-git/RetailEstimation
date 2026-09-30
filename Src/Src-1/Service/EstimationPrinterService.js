@@ -178,7 +178,13 @@ export const createPrinterService = (baseUrl) => {
   };
 };
 
-export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId, purchaseEstBatchNo) => {
+export const fetchEstimationData = async (
+  estBatchNo,
+  apiBaseUrl,
+  empId,
+  purchaseEstBatchNo,
+  purchaseOnly = false,
+) => {
   console.log("🔍 fetchEstimationData called with:", { estBatchNo, apiBaseUrl });
 
   if (!estBatchNo) {
@@ -194,6 +200,66 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId, purchas
   try {
     const api = createApiInstance(apiBaseUrl);
     api.defaults.timeout = 30000;
+
+    // A purchase-only slip has no estimation lines. Its printable rows come
+    // from the receipt endpoint, not /printDetails.
+    if (purchaseOnly) {
+      console.log(
+        "📡 Making purchase receipt API call to:",
+        `${apiBaseUrl}${ENDPOINTS.RECEIPT_PRINT_DETAILS(estBatchNo)}`,
+      );
+      const purchaseResponse = await api.get(
+        ENDPOINTS.RECEIPT_PRINT_DETAILS(estBatchNo),
+      );
+      const purchaseItems = Array.isArray(purchaseResponse.data)
+        ? purchaseResponse.data
+        : [];
+
+      if (!purchaseItems.length) {
+        Alert.alert("Error", "No purchase data found for this receipt.");
+        return null;
+      }
+
+      let goldRate = 0;
+      let silverRate = 0;
+      try {
+        const rateRes = await api.get(ENDPOINTS.TODAY_RATE);
+        goldRate = rateRes.data?.GOLDRATE || 0;
+        silverRate = rateRes.data?.SILVERRATE || 0;
+      } catch (rateError) {
+        console.warn("Failed to fetch rates for purchase receipt:", rateError);
+      }
+
+      const sample = {
+        ...purchaseItems[0],
+        empid: empId || purchaseItems[0]?.empid,
+      };
+
+      return {
+        items: [],
+        itemsWithStones: [],
+        sample,
+        goldRate,
+        silverRate,
+        totalpcs: 0,
+        totalGrossWeight: 0,
+        grossAmount: 0,
+        baseAmount: 0,
+        offerDiscount: 0,
+        totalWastage: 0,
+        totalMcharge: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        totalTaxAmount: 0,
+        grandTotal: 0,
+        discountCgstAmount: 0,
+        discountSgstAmount: 0,
+        discountTaxAmount: 0,
+        offer: { discount: 0, netwt: 0, board_rate: 0 },
+        offerName: "",
+        purchaseItems,
+      };
+    }
 
     console.log("📡 Making API call to:", `${apiBaseUrl}${ENDPOINTS.PRINT_DETAILS(estBatchNo)}`);
     const response = await api.get(ENDPOINTS.PRINT_DETAILS(estBatchNo));
@@ -344,7 +410,7 @@ export const fetchEstimationData = async (estBatchNo, apiBaseUrl, empId, purchas
       const purchBatchNo = purchaseEstBatchNo || estBatchNo;
       const purchaseRes = await api.get(ENDPOINTS.RECEIPT_PRINT_DETAILS(purchBatchNo));
       result.purchaseItems = Array.isArray(purchaseRes.data) ? purchaseRes.data : [];
-      console.log("✅ Purchase items for receipt:", result.purchaseItems.length);
+      console.log("✅ Purchase items for receipt:", result.purchaseItems);
     } catch (err) {
       console.warn("No purchase data for this batch:", err.message);
     }
@@ -632,10 +698,11 @@ export const printEstimationToPrinter = async (
         // offerDiscount is already computed correctly in fetchEstimationData
         // (via calcSavedTotals) and destructured from slipData above — do
         // not recompute it here, that previously shadowed the correct value.
+        const transactionDate = sample?.trandate ?? sample?.TRANDATE;
         const trandate =
-          sample?.trandate && sample.trandate.includes("-")
-            ? sample.trandate
-            : formatDate(sample?.trandate);
+          typeof transactionDate === "string" && transactionDate.includes("-")
+            ? transactionDate
+            : formatDate(transactionDate);
 
         let printContent = FONTS.ALIGN_CENTER;
         printContent += PRINTER_COMMANDS.INIT;
@@ -898,10 +965,11 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
     purchaseItems,
   } = slipData;
 
+  const transactionDate = sample?.trandate ?? sample?.TRANDATE;
   const trandate =
-    sample?.trandate && sample.trandate.includes("-")
-      ? sample.trandate
-      : formatDate(sample?.trandate);
+    typeof transactionDate === "string" && transactionDate.includes("-")
+      ? transactionDate
+      : formatDate(transactionDate);
 
   // Pre-compute the GST-inclusive split of the offer discount here (in
   // JS-land, using the shared fixed-rate helper) rather than inline inside
@@ -970,6 +1038,7 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       discountTaxAmount,
     },
     purchaseItems: (purchaseItems || []).map((p) => ({
+      categoryName: p.catname || p.CATNAME || p.categoryName || p.categoryname || "",
       itemname:  p.itemname  || "",
       pcs:       p.pcs       || 0,
       grswt:     p.grswt     || 0,

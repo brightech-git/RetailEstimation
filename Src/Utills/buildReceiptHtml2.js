@@ -36,15 +36,25 @@ body{
 }
 #receipt{width:${W}px;padding:6px 12px 12px 12px;background:#fff;}
 .sep{border:none;border-top:1px solid #000;margin:${Math.round(F*0.2)}px 0;}
+.header-sep{border-top-width:2px;}
 .sep-dash{border:none;border-top:1px dashed #000;margin:${Math.round(F*0.2)}px 0;}
-.est-title{
-  text-align:center;font-weight:900;
-  font-size:${Math.round(F*1.3)}px;
-  padding:${Math.round(F*0.3)}px 0 ${Math.round(F*0.2)}px 0;
-  letter-spacing:1px;
-  -webkit-text-stroke:1px #000;
+.slip-heading{
+  text-align:center;
+  font-weight:900;
+  font-size:${Math.round(F*1.1)}px;
+  padding:${Math.round(F*0.8)}px 0;
+  -webkit-text-stroke:0.8px #000;
 }
 .hdr-row{display:flex;justify-content:space-between;padding:${Math.round(F*0.1)}px 0;font-weight:700;-webkit-text-stroke:0.8px #000;}
+.hdr-row > div > div + div{margin-top:${Math.round(F*0.12)}px;}
+.customer-details{
+  padding:${Math.round(F*0.15)}px 0;
+  font-weight:700;
+  line-height:1.35;
+  -webkit-text-stroke:0.6px #000;
+}
+.customer-line{display:flex;align-items:flex-end;gap:${Math.round(F*0.25)}px;min-height:${Math.round(F*1.35)}px;}
+.customer-input-line{flex:1;border-bottom:2px solid #000;min-height:${Math.round(F*0.9)}px;}
 
 /* 3-col row: label | weight-col | amount-col */
 .row3{
@@ -112,30 +122,34 @@ body{
 </head>
 <body>
 <div id="receipt">
-  <div class="est-title" id="est-title"></div>
-  <hr class="sep">
+  <div class="customer-details">
+    <div class="customer-line"><span>Name :</span><span class="customer-input-line"></span></div>
+    <div class="customer-line"><span>Mobile :</span><span class="customer-input-line"></span></div>
+    <div class="customer-line"><span>Aadhaar No :</span><span class="customer-input-line"></span></div>
+  </div>
+  <div class="slip-heading">ESTIMATION SLIP</div>
   <div class="hdr-row">
     <div>
-      <div id="gold-line"></div>
-      <div id="silver-line"></div>
-    </div>
-    <div style="text-align:right">
       <div id="date-line"></div>
       <div id="time-line"></div>
     </div>
+    <div style="text-align:right">
+      <div id="gold-line"></div>
+      <div id="silver-line"></div>
+    </div>
   </div>
-  <hr class="sep">
+  <hr class="sep header-sep">
   <div class="col-hdr">
     <span class="lbl"></span>
     <span class="pcs">PCS</span>
     <span class="wt">WEIGHT</span>
     <span class="amt">AMOUNT</span>
   </div>
-  <hr class="sep">
+  <hr class="sep header-sep">
   <div id="items-body"></div>
-  <hr class="sep">
+  <hr class="sep" id="sales-total-separator">
   <div class="grand-row" id="grand-row"></div>
-  <hr class="sep">
+  <hr class="sep header-sep" id="after-sales-total-separator">
   <div id="purchase-section"></div>
   <div id="emp-line" class="emp-line"></div>
   <div id="estno-big" class="big-estno"></div>
@@ -149,7 +163,6 @@ function fmt(n){return Number(n||0).toFixed(0);}
 function fmtWt(n){return Number(n||0).toFixed(3);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-document.getElementById('est-title').textContent='ESTIMATE-'+(P.estNo||'');
 document.getElementById('gold-line').textContent='Gold  : '+fmt(P.goldRate)+'/Gm';
 document.getElementById('date-line').textContent='Date  : '+(P.billDate||'');
 document.getElementById('time-line').textContent='Time  : '+(P.billTime||'');
@@ -157,6 +170,8 @@ document.getElementById('silver-line').textContent='Silver: '+fmt(P.silverRate)+
 
 var t=P.totals||{};
 var items=P.items||[];
+var purchItems = P.purchaseItems || [];
+var isPurchaseOnly = items.length === 0 && purchItems.length > 0;
 var html='';
 
 items.forEach(function(item,idx){
@@ -206,23 +221,28 @@ document.getElementById('items-body').innerHTML=html;
 
 // Grand total: Total | pcs | totalWeight | grandTotal
 var salesGrand = t.grandTotal || 0;
-document.getElementById('grand-row').innerHTML=
-  '<span class="lbl">Total</span>'+
-  '<span class="pcs">'+(t.totalpcs||0)+'</span>'+
-  '<span class="wt">'+fmtWt(t.totalGrossWeight||0)+'</span>'+
-  '<span class="amt">'+fmt(salesGrand)+'</span>';
+if (isPurchaseOnly) {
+  document.getElementById('sales-total-separator').style.display='none';
+  document.getElementById('grand-row').style.display='none';
+  document.getElementById('after-sales-total-separator').style.display='none';
+} else {
+  document.getElementById('grand-row').innerHTML=
+    '<span class="lbl">Total</span>'+
+    '<span class="pcs">'+(t.totalpcs||0)+'</span>'+
+    '<span class="wt">'+fmtWt(t.totalGrossWeight||0)+'</span>'+
+    '<span class="amt">'+fmt(salesGrand)+'</span>';
+}
 
 // Purchase section
-var purchItems = P.purchaseItems || [];
 var purchHtml = '';
 if (purchItems.length > 0) {
 
   var totalPurchAmt = 0;
-  purchItems.forEach(function(p) { totalPurchAmt += (p.amount || 0); });
+  purchItems.forEach(function(p) { totalPurchAmt += Number(p.amount || 0); });
 
   // Each purchase item row
   purchItems.forEach(function(p) {
-    var label = (p.itemname || 'Old items').toUpperCase();
+    var label = (p.categoryName || p.catname || p.itemname || 'Old items').toUpperCase();
     var wt = p.grswt || p.netwt || 0;
     var amt = p.amount || 0;
     purchHtml +=
@@ -246,13 +266,13 @@ if (purchItems.length > 0) {
       '<span class="wt"></span>'+
       '<span class="amt">'+fmt(grandNet)+'</span>'+
     '</div>'+
-    '<hr class="sep">';
+    '<hr class="sep header-sep">';
 }
 document.getElementById('purchase-section').innerHTML = purchHtml;
 
 var bracket=P.empDisplay||(P.sample&&P.sample.empid?'E'+P.sample.empid:'');
 document.getElementById('emp-line').textContent=bracket?'[ '+bracket+' ]':'';
-document.getElementById('estno-big').textContent='Est.No :'+(P.estNo||'');
+document.getElementById('estno-big').textContent=P.estNo ? 'Est.No :'+P.estNo : '';
 
 function doCapture(){
   var receipt=document.getElementById('receipt');

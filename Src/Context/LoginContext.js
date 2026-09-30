@@ -7,6 +7,8 @@ import { useToast } from "../Src-1/Context/ToastContext";
 
 export const LoginContext = createContext();
 
+const IMAGE_BASE_URL = process.env.EXPO_PUBLIC_IMAGE_BASE_URL;
+
 // Classifies an axios error so callers can tell a connectivity problem
 // (no response reached the device) apart from the backend actually
 // responding with a failure (4xx/5xx).
@@ -84,7 +86,7 @@ export const LoginProvider = ({ children, showToast: showToastProp }) => {
         setCompanyId(data.COMPANYID || null);
         setCompanyLogo(data.LOGO || null);
         setCompanyUrl(data.BASEURL || null);
-        setCompanyLogoUrl(data.LOGOBASEURL || null);
+        setCompanyLogoUrl(IMAGE_BASE_URL || data.LOGOBASEURL || null);
         setCompanyData(data);
         setContactNumber(data.CONTACTNUMBER || "");
         setStockUsername(data.STOCKUSERNAME || "");
@@ -315,6 +317,7 @@ const selectCompanyId = async (companyIdValue) => {
       await AsyncStorage.removeItem("SELECTED_COMPANY_ID");
       await AsyncStorage.removeItem("HAS_COST_CENTRES");
       await AsyncStorage.removeItem("EMPLOYEE_ID");
+      await AsyncStorage.removeItem("EMPLOYEE_NAME");
       await AsyncStorage.removeItem("COST_OPTIONS");
 
       setUsername("");
@@ -359,7 +362,7 @@ const selectCompanyId = async (companyIdValue) => {
         setCompanyLogo(data.LOGO || null);
         setCompanyUrl(data.BASEURL || null);
         setCompanyData(data);
-        setCompanyLogoUrl(data.LOGOBASEURL || null);
+        setCompanyLogoUrl(IMAGE_BASE_URL || data.LOGOBASEURL || null);
         setContactNumber(data.CONTACTNUMBER || "");
         setStockUsername(data.STOCKUSERNAME || "");
         setStockPassword(data.STOCKPASSWORD || "");

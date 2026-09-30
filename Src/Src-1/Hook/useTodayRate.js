@@ -23,7 +23,13 @@ const useTodayRate = (apiBaseUrl, refreshMs = 60000) => {
       const data = await new RateService(apiBaseUrl).getTodayRate();
       setGoldRate(data.GOLDRATE);
       setSilverRate(data.SILVERRATE);
-      setUpdatedAt(new Date().toLocaleTimeString("en-GB"));
+      setUpdatedAt(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+      );
     } catch {
       setError(true);
     } finally {

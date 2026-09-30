@@ -1,7 +1,4 @@
-// 📁 src/Screens/SelectCostCenter/SelectCostCenterScreen.js
-// Shown once, right after a successful login. Uses the company's base
-// URL (already resolved by login) to load that company's cost centres,
-// and stores the chosen one (SELECTED_COST_ID) before entering Home.
+
 import React, { useContext, useEffect, useState } from "react";
 import {
   View,
@@ -23,10 +20,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import useEmployeeList from "../../Hook/useEmployeeList";
 
 
-// Companies with this COMPANYID share one login but operate as several
-// separate companies underneath - instead of picking a cost centre, the
-// user picks which company (COMPANYID) to work as.
+
 const MULTI_COMPANY_ID = "15";
+const COMPANY_ID_LABELS = {
+  DJG: "Gold",
+  DBJ: "Silver",
+};
 
 const SelectCostCenterScreen = ({ navigation }) => {
   const {
@@ -50,6 +49,9 @@ const SelectCostCenterScreen = ({ navigation }) => {
   const styles = getStyles(theme);
 
   const isCompanySelectMode = String(companyId) === MULTI_COMPANY_ID;
+  const visibleCompanyIdOptions = companyIdOptions.filter(
+    (id) => String(id).toUpperCase() !== "DEM"
+  );
 
   const [pickedCostId, setPickedCostId] = useState("");
   const [pickedCompanyId, setPickedCompanyId] = useState("");
@@ -94,6 +96,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
   const confirmEmployee = async (emp) => {
     setSelectedEmpId(String(emp.empId));
     await AsyncStorage.setItem("EMPLOYEE_ID", String(emp.empId));
+    await AsyncStorage.setItem("EMPLOYEE_NAME", emp.empName || "");
     setEmpModalVisible(false);
     pendingNav?.();
   };
@@ -186,7 +189,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
                   color={theme.COLORS.primary}
                   style={{ margin: moderateScale(24) }}
                 />
-              ) : companyIdOptions.length === 0 ? (
+              ) : visibleCompanyIdOptions.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
                     No company IDs were found for this account.
@@ -205,7 +208,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
                 </View>
               ) : (
                 <FlatList
-                  data={companyIdOptions}
+                  data={visibleCompanyIdOptions}
                   keyExtractor={(item) => item}
                   renderItem={({ item }) => (
                     <TouchableOpacity
@@ -221,7 +224,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
                           pickedCompanyId === item && styles.itemTextSelected,
                         ]}
                       >
-                        {item}
+                        {COMPANY_ID_LABELS[String(item).toUpperCase()] || item}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -295,7 +298,7 @@ const SelectCostCenterScreen = ({ navigation }) => {
           </View>
 
           {isCompanySelectMode
-            ? companyIdOptions.length > 0 && (
+            ? visibleCompanyIdOptions.length > 0 && (
                 <TouchableOpacity
                   style={[
                     styles.continueButton,

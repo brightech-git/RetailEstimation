@@ -130,7 +130,14 @@ const HomeScreen = () => {
 
     try {
       console.log("📞 Calling printEstimationSlip...");
-      await printEstimationSlip(batchNo, username, API_BASE_URL, estimation.lastEmpId, purchaseEstBatchNo);
+      await printEstimationSlip(
+        batchNo,
+        username,
+        API_BASE_URL,
+        estimation.lastEmpId,
+        purchaseEstBatchNo,
+        !estimation.estBatchNo && !!purchaseEstBatchNo,
+      );
     } catch (err) {
       console.error("❌ Print error:", err);
       Alert.alert("Print Failed", err.message || "Unable to generate slip");

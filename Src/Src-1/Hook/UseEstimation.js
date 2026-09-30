@@ -108,14 +108,14 @@ export const useEstimation = (apiBaseUrl) => {
       const [item, tag] = data.split("-");
       setITEMID(item);
       setTAGNO(tag);
-      empInputRef.current?.focus();
+      fetchData(item, tag);
     } else {
       if (field === "itemid") {
         setITEMID(data);
         tagInputRef.current?.focus();
       } else if (field === "tagno") {
         setTAGNO(data);
-        empInputRef.current?.focus();
+        fetchData(ITEMID, data);
       }
     }
   };
@@ -132,10 +132,13 @@ export const useEstimation = (apiBaseUrl) => {
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = async (itemIdToFetch = ITEMID, tagNoToFetch = TAGNO) => {
     if (!service) return;
 
-    if (!ITEMID.trim() || !TAGNO.trim() || !storedEmpId.current) {
+    const itemId = String(itemIdToFetch || "").trim();
+    const tagNo = String(tagNoToFetch || "").trim();
+
+    if (!itemId || !tagNo || !storedEmpId.current) {
       Alert.alert(
         "Missing Input",
         "Please enter valid Item ID, Tag No, and Employee.",
@@ -143,7 +146,7 @@ export const useEstimation = (apiBaseUrl) => {
       return;
     }
 
-    const itemIdInt = parseInt(ITEMID, 10);
+    const itemIdInt = parseInt(itemId, 10);
     if (isNaN(itemIdInt)) {
       Alert.alert("Invalid Item ID", "Item ID must be a number.");
       return;
@@ -153,7 +156,7 @@ export const useEstimation = (apiBaseUrl) => {
 
     try {
       // Check if tag already exists
-      const tagDetails = await service.checkTagExists(ITEMID, TAGNO);
+      const tagDetails = await service.checkTagExists(itemId, tagNo);
       if (
         tagDetails &&
         tagDetails.status !== "not issued" &&
@@ -176,7 +179,7 @@ export const useEstimation = (apiBaseUrl) => {
       // Check for duplicates in current table
       const alreadyExists = tableData.some(
         (row) =>
-          row.ITEMID === itemIdInt && row.TAGNO === TAGNO,
+          row.ITEMID === itemIdInt && row.TAGNO === tagNo,
       );
 
       if (alreadyExists) {
@@ -187,7 +190,7 @@ export const useEstimation = (apiBaseUrl) => {
         return;
       }
 
-      const data = await service.fetchEstimationData(ITEMID, TAGNO);
+      const data = await service.fetchEstimationData(itemId, tagNo);
       console.log("Estimation Total Data:", data);
 
       if (!Array.isArray(data) || data.length === 0) {
@@ -204,12 +207,12 @@ export const useEstimation = (apiBaseUrl) => {
 
       const newData = await Promise.all(
         data.map(async (d) => {
-          const offer = await service.getOffer(TAGNO);
+          const offer = await service.getOffer(tagNo);
           const discount = calcOfferDiscount(offer);
           return {
             ...d,
             ITEMID: itemIdInt,
-            TAGNO,
+            TAGNO: tagNo,
             EMPID: storedEmpId.current,
             EMP: storedEmpId.current,
             EMP_NAME: "",
@@ -377,15 +380,18 @@ export const useEstimation = (apiBaseUrl) => {
             empid: Number(item.EMP) || 0,
             stnamt: parseFloat(item.StoneAmount) || 0,
             miscamt: parseFloat(item.MiscAmount) || 0,
-            lesswt: tagDetails?.lesswt,
-            subitemid: tagDetails?.subitemid,
-            salemode: tagDetails?.salemode,
-            grsnet: tagDetails?.grsnet,
-            tagdesigner: tagDetails?.designerid,
-            itemtypeid: tagDetails?.itemtypeid,
-            itemctrid: tagDetails?.itemctrid,
-            purity: tagDetails?.purity,
-            tagsvalue: tagDetails?.salvalue,
+            lesswt: tagDetails?.lesswt ?? item.LESSWT ?? item.lesswt,
+            subitemid: tagDetails?.subitemid ?? item.SUBITEMID ?? item.subitemid,
+            salemode: tagDetails?.salemode ?? item.SALEMODE ?? item.salemode,
+            grsnet: tagDetails?.grsnet ?? item.GRSNET ?? item.grsnet,
+            tagdesigner:
+              tagDetails?.designerid ?? item.DESIGNERID ?? item.tagdesigner,
+            itemtypeid:
+              tagDetails?.itemtypeid ?? item.ITEMTYPEID ?? item.itemtypeid,
+            itemctrid:
+              tagDetails?.itemctrid ?? item.ITEMCTRID ?? item.itemctrid,
+            purity: tagDetails?.purity ?? item.PURITY ?? item.purity,
+            tagsvalue: tagDetails?.salvalue ?? item.SALVALUE ?? item.tagsvalue,
 
             taggrswt: parseFloat(item.GRSWT) || 0,
             tagnetwt: parseFloat(item.NETWT) || 0,

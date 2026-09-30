@@ -9,11 +9,13 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LoginContext } from "../../../Context/LoginContext";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { useTheme } from "../../../Context/ThemeContext";
 import getStyles from "./HeaderStyles";
 import useTodayRate from "../../Hook/useTodayRate";
+import { EmployeeService } from "../../Service/EmployeeService";
 
 
 // MainHeader renders the top bar (theme toggle, company name, sidebar
@@ -28,7 +30,6 @@ const MainHeader = () => {
   const styles = getStyles(theme);
 
   const {
-    username,
     companyName,
     selectedCostId,
     selectedCompanyId,
@@ -36,6 +37,7 @@ const MainHeader = () => {
   } = useContext(LoginContext);
 
   const [currentDateTime] = useState(new Date());
+  const [selectedEmployeeDisplay, setSelectedEmployeeDisplay] = useState("");
   const date = `${String(currentDateTime.getDate()).padStart(2, "0")}-${String(
     currentDateTime.getMonth() + 1,
   ).padStart(2, "0")}-${currentDateTime.getFullYear()}`;
@@ -47,6 +49,51 @@ const MainHeader = () => {
     error,
     updatedAt: rateUpdated,
   } = useTodayRate(API_BASE_URL);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSelectedEmployeeName = async () => {
+      try {
+        const [employeeId, storedEmployeeName] = await Promise.all([
+          AsyncStorage.getItem("EMPLOYEE_ID"),
+          AsyncStorage.getItem("EMPLOYEE_NAME"),
+        ]);
+        if (storedEmployeeName) {
+          if (!cancelled) {
+            setSelectedEmployeeDisplay(`${employeeId} - ${storedEmployeeName}`);
+          }
+          return;
+        }
+        if (!employeeId || !API_BASE_URL) {
+          if (!cancelled) setSelectedEmployeeDisplay("");
+          return;
+        }
+
+        const employee = await new EmployeeService(API_BASE_URL).getEmployeeById(
+          employeeId
+        );
+        if (!cancelled) {
+          setSelectedEmployeeDisplay(
+            employee?.empName ? `${employeeId} - ${employee.empName}` : ""
+          );
+        }
+      } catch (error) {
+        console.log("Unable to load selected employee:", error.message);
+        if (!cancelled) setSelectedEmployeeDisplay("");
+      }
+    };
+
+    loadSelectedEmployeeName();
+    return () => {
+      cancelled = true;
+    };
+  }, [API_BASE_URL]);
+
+  const selectedCompanyLabel =
+    { DJG: "Gold", DBJ: "Silver" }[
+      String(selectedCompanyId).toUpperCase()
+    ] || selectedCompanyId;
 
   if (contextLoading) {
     return (
@@ -120,7 +167,7 @@ const MainHeader = () => {
                 ]}
               >
                 <Text style={styles.label} numberOfLines={1}>👤 User :</Text>
-                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{username || "N/A"}</Text>
+                <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedEmployeeDisplay || "N/A"}</Text>
               </View>
               {selectedCostId ? (
                 <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
@@ -130,7 +177,7 @@ const MainHeader = () => {
               ) : selectedCompanyId ? (
                 <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
                   <Text style={styles.label} numberOfLines={1}>🏢 Company :</Text>
-                  <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedCompanyId}</Text>
+                  <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{selectedCompanyLabel}</Text>
                 </View>
               ) : null}
             </View>
