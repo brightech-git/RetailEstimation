@@ -321,8 +321,8 @@ const HomeScreen = () => {
                 value={estimation.TAGNO}
                 editable={!isSubmitted}
                 onChangeText={estimation.setTAGNO}
-                onSubmitEditing={() => estimation.fetchData()}
-                returnKeyType="done"
+                onSubmitEditing={() => estimation.empInputRef.current?.focus()}
+                returnKeyType="next"
               />
               <TouchableOpacity
                 onPress={() => {
@@ -334,6 +334,34 @@ const HomeScreen = () => {
               >
                 <Text style={styles.scanIcon}>📷</Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={[styles.inputWrapper, styles.empIdWrapper]}>
+              <TextInput
+                ref={estimation.empInputRef}
+                style={styles.input}
+                placeholder="Emp ID"
+                placeholderTextColor={theme.COLORS.placeholder}
+                value={estimation.empIdText}
+                editable={!isSubmitted}
+                keyboardType="numeric"
+                onChangeText={estimation.changeEmpId}
+                onSubmitEditing={async () => {
+                  const loaded = await estimation.loadEmployee();
+                  if (!loaded) return;
+                  if (estimation.ITEMID.trim() && estimation.TAGNO.trim())
+                    estimation.fetchData();
+                  else if (!estimation.ITEMID.trim())
+                    estimation.itemIdInputRef.current?.focus();
+                  else estimation.tagInputRef.current?.focus();
+                }}
+                returnKeyType="done"
+              />
+              {!!estimation.empName && (
+                <Text style={styles.empNameText} numberOfLines={1}>
+                  {estimation.empName}
+                </Text>
+              )}
             </View>
           </View>
 

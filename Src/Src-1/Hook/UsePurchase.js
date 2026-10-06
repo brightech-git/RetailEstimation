@@ -28,6 +28,10 @@ const createEmptyRow = (categoryInfo) => ({
   boardrate: categoryInfo?.prate || "",
   gst: "",
   emp: "",
+  // Set once the typed Emp ID has been looked up (Enter on the Emp cell);
+  // cleared again whenever the Emp ID is edited.
+  empVerified: false,
+  empName: "",
 });
 
 const toNum = (val) => {

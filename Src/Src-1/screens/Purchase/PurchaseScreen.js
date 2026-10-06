@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -16,6 +15,8 @@ import { createPurchaseStyles } from "./PurchaseStyles";
 import { usePurchase } from "../../Hook/UsePurchase";
 import CategorySelectModal from "../../Components/Purchase/CategorySelectModal/CategorySelectModal";
 import { usePurchaseContext } from "../../../Context/PurchaseContext";
+import { useApiBaseUrl } from "../../../Config/Config";
+import { EmployeeService } from "../../Service/EmployeeService";
 
 const COLUMN_LABELS = [
   "Category",
@@ -35,6 +36,7 @@ const COLUMN_LABELS = [
 
 // Order the Tab/Next key should move focus through for each row. Wastage,
 // Net WT and Amount are read-only (auto-calculated) so they're skipped.
+// Emp is last: Enter there looks the employee up and finishes the row.
 const FOCUS_FIELDS = [
   "purity",
   "pcs",
@@ -43,18 +45,13 @@ const FOCUS_FIELDS = [
   "wPercent",
  
   "rate",
+  "emp",
 ];
 
 export default function PurchaseScreen() {
   const { theme } = useTheme();
   const styles = createPurchaseStyles(theme);
-  const [storedEmpId, setStoredEmpId] = useState("");
-
-  useEffect(() => {
-    AsyncStorage.getItem("EMPLOYEE_ID").then((id) => {
-      if (id) setStoredEmpId(id);
-    });
-  }, []);
+  const API_BASE_URL = useApiBaseUrl();
 
   const purchase = usePurchase();
   const navigation = useNavigation();
@@ -89,23 +86,67 @@ export default function PurchaseScreen() {
     if (!row?.purity) missing.push('Purity');
     if (!row?.grswt) missing.push('Grswt');
     if (!row?.rate) missing.push('Rate');
+    // Emp ID is compulsory per row and must be loaded (Enter on Emp)
+    if (!row?.emp || !row?.empVerified) missing.push('Emp ID (press Enter to load)');
     return missing;
   };
 
-  const handleSubmitEditing = (rowId, field) => {
+  const handleEmpChange = (rowId, value) => {
+    purchase.updateRowField(rowId, "emp", value);
+    purchase.updateRowField(rowId, "empVerified", false);
+    purchase.updateRowField(rowId, "empName", "");
+  };
+
+  // Look up the row's typed Emp ID; on success mark it loaded and return
+  // the updated row, otherwise alert and return null.
+  const loadRowEmployee = async (row) => {
+    const empId = String(row?.emp || "").trim();
+    if (!empId) {
+      Alert.alert("Missing Employee", "Please enter Emp ID.");
+      return null;
+    }
+    if (isNaN(Number(empId))) {
+      Alert.alert("Invalid Employee ID", "Employee ID must be a number.");
+      return null;
+    }
+    try {
+      const found = await new EmployeeService(API_BASE_URL).getEmployeeById(empId);
+      if (!found) {
+        Alert.alert("Not Found", `No employee found with ID ${empId}.`);
+        return null;
+      }
+      const emp = String(found.empId);
+      purchase.updateRowField(row.id, "emp", emp);
+      purchase.updateRowField(row.id, "empVerified", true);
+      purchase.updateRowField(row.id, "empName", found.empName || "");
+      return { ...row, emp, empVerified: true, empName: found.empName || "" };
+    } catch (error) {
+      Alert.alert("Failed to load employee", error.message || "Unknown error");
+      return null;
+    }
+  };
+
+  const handleSubmitEditing = async (rowId, field) => {
     const idx = FOCUS_FIELDS.indexOf(field);
     const nextField = FOCUS_FIELDS[idx + 1];
     if (nextField) {
       focusField(rowId, nextField);
-    } else {
-      const row = purchase.rows.find((r) => r.id === rowId);
-      const missing = validateRow(row);
-      if (missing.length > 0) {
-        Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
+      return;
+    }
+    let row = purchase.rows.find((r) => r.id === rowId);
+    if (field === "emp") {
+      row = await loadRowEmployee(row);
+      if (!row) {
+        focusField(rowId, "emp");
         return;
       }
-      purchase.openNewRowModal();
     }
+    const missing = validateRow(row);
+    if (missing.length > 0) {
+      Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
+      return;
+    }
+    purchase.openNewRowModal();
   };
 
   // After the category modal closes for a brand-new row, auto-focus that
@@ -364,9 +405,23 @@ export default function PurchaseScreen() {
                       </View>
 
                       <View style={styles.column}>
-                        <Text style={styles.cellReadOnly} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                          {row.emp || storedEmpId}
-                        </Text>
+                        <TextInput
+                          ref={setInputRef(row.id, "emp")}
+                          style={styles.cellInput}
+                          keyboardType="number-pad"
+                          value={row.emp}
+                          onChangeText={(v) => handleEmpChange(row.id, v)}
+                          returnKeyType="done"
+                          onSubmitEditing={() =>
+                            handleSubmitEditing(row.id, "emp")
+                          }
+                          blurOnSubmit={false}
+                        />
+                        {!!row.empName && (
+                          <Text style={styles.cellReadOnly} numberOfLines={1}>
+                            {row.empName}
+                          </Text>
+                        )}
                       </View>
 
                       <View style={styles.deleteCol}>
@@ -460,11 +515,7 @@ export default function PurchaseScreen() {
                   Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
                   return;
                 }
-                const rowsWithEmp = purchase.rows.map((r) => ({
-                  ...r,
-                  emp: r.emp || storedEmpId,
-                }));
-                savePurchaseRows(rowsWithEmp);
+                savePurchaseRows(purchase.rows);
                 navigation.goBack();
               }}
               disabled={purchase.rows.length === 0}

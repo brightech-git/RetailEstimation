@@ -11,6 +11,7 @@ import {
   formatDateTimeSql,
 } from "../Service/EstimationService";
 import { SoftControlService } from "../Service/SoftControlService";
+import { EmployeeService } from "../Service/EmployeeService";
 import createApiInstance from "../../Api/axiosInstance";
 import ENDPOINTS from "../../Api/endpoints";
 import {
@@ -29,6 +30,12 @@ export const useEstimation = (apiBaseUrl) => {
   const [ITEMID, setITEMID] = useState("");
   const [TAGNO, setTAGNO] = useState("");
   const storedEmpId = useRef("");
+  // Employee typed in the Home screen "Emp ID" box (compulsory). Used ONLY
+  // as the EMPID/EMP of the rows fetched after it is loaded (each row keeps
+  // its own employee) — the login employee (storedEmpId) is left untouched.
+  const rowEmpId = useRef("");
+  const [empIdText, setEmpIdText] = useState("");
+  const [empName, setEmpName] = useState("");
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [itemList, setItemList] = useState([]);
@@ -87,6 +94,47 @@ export const useEstimation = (apiBaseUrl) => {
     itemIdInputRef.current?.focus();
   }, []);
 
+  // Typing a new Employee ID un-selects the previous one until it is loaded
+  const changeEmpId = (text) => {
+    setEmpIdText(text);
+    setEmpName("");
+    rowEmpId.current = "";
+  };
+
+  // Look up the typed Employee ID and use it for every row fetched after this
+  const loadEmployee = async (text = empIdText) => {
+    const empId = String(text || "").trim();
+    if (!empId) {
+      Alert.alert("Missing Input", "Please enter an Employee ID.");
+      return false;
+    }
+    if (isNaN(Number(empId))) {
+      Alert.alert("Invalid Employee ID", "Employee ID must be a number.");
+      return false;
+    }
+    if (!apiBaseUrl) return false;
+
+    setLoading(true);
+    try {
+      const found = await new EmployeeService(apiBaseUrl).getEmployeeById(empId);
+      if (!found) {
+        rowEmpId.current = "";
+        setEmpName("");
+        Alert.alert("Not Found", `No employee found with ID ${empId}.`);
+        return false;
+      }
+      rowEmpId.current = String(found.empId);
+      setEmpIdText(String(found.empId));
+      setEmpName(found.empName || "");
+      return true;
+    } catch (error) {
+      Alert.alert("Failed to load employee", error.message || "Unknown error");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (apiBaseUrl) {
       setService(new EstimationService(apiBaseUrl));
@@ -143,11 +191,21 @@ export const useEstimation = (apiBaseUrl) => {
     const itemId = String(itemIdToFetch || "").trim();
     const tagNo = String(tagNoToFetch || "").trim();
 
-    if (!itemId || !tagNo || !storedEmpId.current) {
+    if (!itemId || !tagNo) {
+      Alert.alert("Missing Input", "Please enter valid Item ID and Tag No.");
+      return;
+    }
+
+    // Emp ID is compulsory — the row is saved under the loaded employee
+    const rowEmp = rowEmpId.current;
+    if (!rowEmp) {
       Alert.alert(
-        "Missing Input",
-        "Please enter valid Item ID, Tag No, and Employee.",
+        "Missing Employee",
+        empIdText.trim()
+          ? "Press Enter on Emp ID to load the employee first."
+          : "Please enter Emp ID.",
       );
+      empInputRef.current?.focus();
       return;
     }
 
@@ -218,8 +276,8 @@ export const useEstimation = (apiBaseUrl) => {
             ...d,
             ITEMID: itemIdInt,
             TAGNO: tagNo,
-            EMPID: storedEmpId.current,
-            EMP: storedEmpId.current,
+            EMPID: rowEmp,
+            EMP: rowEmp,
             EMP_NAME: "",
             METALID: d.METALID ?? 0,
             COSTID: costId,
@@ -242,9 +300,12 @@ export const useEstimation = (apiBaseUrl) => {
       // Store last used emp before reset
       setLastEmpId(storedEmpId.current);
 
-      // Reset form and focus
+      // Reset form and focus — Emp ID too, so every row needs its own
       setITEMID("");
       setTAGNO("");
+      setEmpIdText("");
+      setEmpName("");
+      rowEmpId.current = "";
       itemIdInputRef.current?.focus();
     } catch (error) {
       Alert.alert("Error", error.message || "Something went wrong.");
@@ -722,6 +783,8 @@ export const useEstimation = (apiBaseUrl) => {
     ITEMID,
     TAGNO,
     emp: storedEmpId.current,
+    empIdText,
+    empName,
     tableData,
     loading,
     itemList,
@@ -755,6 +818,8 @@ export const useEstimation = (apiBaseUrl) => {
     handleScanned,
     fetchItemList,
     fetchData,
+    changeEmpId,
+    loadEmployee,
     handleRefresh,
     submitData,
     removeRow,
