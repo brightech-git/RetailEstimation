@@ -21,8 +21,17 @@ export class EmployeeService {
    * @param {string|number} empId
    */
   async getEmployeeById(empId) {
-    const list = await this.getEmployees(empId);
-    const empIdNum = Number(empId);
-    return list.find((e) => Number(e.empId) === empIdNum) || null;
+    const normalizeId = (id) => String(id ?? '').trim().replace(/^E/i, '').replace(/^0+(?=\d)/, '').toUpperCase();
+    const findEmployee = (list) => {
+      const found = list.find((e) => normalizeId(e.empId ?? e.empid ?? e.EMPID ?? e.emp_id) === normalizeId(empId));
+      return found ? {
+        ...found,
+        empId: found.empId ?? found.empid ?? found.EMPID ?? found.emp_id,
+        empName: found.empName ?? found.empname ?? found.EMPNAME ?? found.emp_name ?? '',
+      } : null;
+    };
+    const found = findEmployee(await this.getEmployees(empId));
+    // Some employee searches match names only, so an ID search returns no rows.
+    return found?.empName ? found : findEmployee(await this.getEmployees());
   }
 }

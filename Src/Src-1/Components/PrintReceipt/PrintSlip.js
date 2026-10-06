@@ -88,6 +88,7 @@ export const useEstimationPreview = (employeeId, { autoPrint = false } = {}) => 
   // slipData waiting to be auto-printed
   const [autoPrintPending, setAutoPrintPending] = useState(null);
   const [autoPrinting, setAutoPrinting] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const [printStage, setPrintStage] = useState(null);
   const printInProgressRef = useRef(false);
   const [currentPrinter, setCurrentPrinter] = useState(null);
@@ -389,11 +390,22 @@ const loadActivePrinter = useCallback(async () => {
     return () => { cancelled = true; };
   }, [slipData, API_BASE_URL, selectedCostId]);
 
-  // Resolve empDisplay — prefer the employeeId passed from the screen (typed input),
-  // fall back to slipData.sample.empid from the API response.
+  // Home has no employee prop: use the employee saved at initial selection.
+  useEffect(() => {
+    let cancelled = false;
+    const refreshEmployee = async () => {
+      const id = await AsyncStorage.getItem('EMPLOYEE_ID');
+      if (!cancelled) setSelectedEmployeeId(id);
+    };
+    refreshEmployee().catch((error) => console.log('[ReceiptEmployee]', error.message));
+    const unsubscribe = navigation.addListener('focus', () => {
+      refreshEmployee().catch((error) => console.log('[ReceiptEmployee]', error.message));
+    });
+    return () => { cancelled = true; unsubscribe(); };
+  }, [navigation, slipData]);
   const empDisplay = useEmployeeDisplay(
     API_BASE_URL,
-    employeeId || slipData?.sample?.empid,
+    selectedEmployeeId || employeeId || slipData?.sample?.empid,
   );
 
   // Pre-warm the receipt bitmap render as soon as the preview is shown, so
@@ -500,12 +512,18 @@ const executePrint = useCallback(async (printCount = 1) => {
       const currentEmployeeId = await loadEmployeeId();
       setPrintStage("Preparing your receipt...");
       const receiptControls = await receiptControlsRef.current;
+      const [savedEmployeeId, savedEmployeeName] = await Promise.all([
+        AsyncStorage.getItem('EMPLOYEE_ID'), AsyncStorage.getItem('EMPLOYEE_NAME'),
+      ]);
+      const selectedEmployeeDisplay = savedEmployeeId && savedEmployeeName
+        ? `E${String(savedEmployeeId).trim().replace(/^E/i, '')}-${savedEmployeeName.trim().toUpperCase()}`
+        : empDisplay;
       const companyInfo = {
         companyName,
         companyLogoUri: companyLogoFullPath,
         username: loggedInUsername,
         costId: selectedCostId,
-        empDisplay,
+        empDisplay: selectedEmployeeDisplay,
       };
 
       let bitmap = null;
@@ -514,7 +532,7 @@ const executePrint = useCallback(async (printCount = 1) => {
         // if it's still for the slip currently being printed, so the
         // ~40s render/CDN/font work has already happened by the time the
         // user taps Print. Otherwise render fresh as a fallback.
-        if (bitmapForSlipRef.current === slipData && bitmapPromiseRef.current) {
+        if (bitmapForSlipRef.current === slipData && bitmapPromiseRef.current && selectedEmployeeDisplay === empDisplay) {
           console.log("⚡ Using pre-warmed receipt bitmap...");
           bitmap = await bitmapPromiseRef.current;
         }
@@ -589,7 +607,7 @@ const executePrint = useCallback(async (printCount = 1) => {
 
   // Auto-print: once the queued slip's receipt details are resolved and the
   // active printer has loaded, print one copy without showing the preview.
-  const slipEmpId = employeeId || slipData?.sample?.empid;
+  const slipEmpId = selectedEmployeeId || employeeId || slipData?.sample?.empid;
   useEffect(() => {
     if (!autoPrintPending || autoPrintPending !== slipData) return;
     if (loading) return; // active printer still loading

@@ -23,16 +23,14 @@ export function buildHtml2(params, W) {
   src:url(data:font/truetype;base64,${TIMES_NEW_ROMAN_BASE64}) format('truetype');
   font-weight:400; font-style:normal;
 }
-@font-face {
-  font-family:'TNR';
-  src:url(data:font/truetype;base64,${TIMES_NEW_ROMAN_BASE64}) format('truetype');
-  font-weight:700; font-style:normal;
-}
+/* Only register the regular face; let the browser synthesize true visual
+   emphasis instead of treating the same regular font file as a bold face. */
 *{margin:0;padding:0;box-sizing:border-box;}
 body{
   width:${W}px;background:#fff;
   font-family:'TNR',serif;font-size:${F}px;color:#000;
-  -webkit-print-color-adjust:exact;-webkit-text-stroke:0.5px #000;
+  font-weight:400;font-synthesis:weight;
+  -webkit-print-color-adjust:exact;-webkit-text-stroke:0;
 }
 #receipt{width:${W}px;padding:6px 12px 12px 12px;background:#fff;}
 .sep{border:none;border-top:1px solid #000;margin:${Math.round(F*0.2)}px 0;}
@@ -40,18 +38,18 @@ body{
 .sep-dash{border:none;border-top:1px dashed #000;margin:${Math.round(F*0.2)}px 0;}
 .slip-heading{
   text-align:center;
-  font-weight:900;
+  font-weight:700;
   font-size:${Math.round(F*1.1)}px;
   padding:${Math.round(F*0.8)}px 0;
-  -webkit-text-stroke:0.8px #000;
+  -webkit-text-stroke:0;
 }
-.hdr-row{display:flex;justify-content:space-between;padding:${Math.round(F*0.1)}px 0;font-weight:700;-webkit-text-stroke:0.8px #000;}
+.hdr-row{display:flex;justify-content:space-between;padding:${Math.round(F*0.1)}px 0;font-weight:700;-webkit-text-stroke:0;}
 .hdr-row > div > div + div{margin-top:${Math.round(F*0.12)}px;}
 .customer-details{
   padding:${Math.round(F*0.15)}px 0;
-  font-weight:700;
+  font-weight:400;
   line-height:1.35;
-  -webkit-text-stroke:0.6px #000;
+  -webkit-text-stroke:0;
 }
 .customer-line{display:flex;align-items:flex-end;gap:${Math.round(F*0.22)}px;min-height:${Math.round(F*1.35)}px;}
 .customer-line + .customer-line{margin-top:${Math.round(F*0.35)}px;}
@@ -64,31 +62,40 @@ body{
   display:flex;align-items:baseline;
   padding:${Math.round(F*0.08)}px 0;
 }
-.row3 .lbl{flex:1;font-weight:700;}
+.row3 .lbl{flex:1;font-weight:400;}
 .row3 .pcs{
-  width:${Math.round(F*2.2)}px;text-align:right;font-weight:700;
+  width:${Math.round(F*2.2)}px;text-align:right;font-weight:400;
 }
 .row3 .wt{
-  width:${WC}px;text-align:right;font-weight:700;
+  width:${WC}px;text-align:right;font-weight:400;
 }
 .row3 .amt{
-  width:${AC}px;text-align:right;font-weight:700;
+  width:${AC}px;text-align:right;font-weight:400;
 }
 .row3 .wt-ul{
-  width:${WC}px;text-align:right;font-weight:700;
+  width:${WC}px;text-align:right;font-weight:400;
   border-bottom:1px solid #000;
 }
 .row3 .amt-ul{
-  width:${AC}px;text-align:right;font-weight:700;
+  width:${AC}px;text-align:right;font-weight:400;
   border-bottom:1px solid #000;
+}
+.row3 .wt, .row3 .amt, .row3 .wt-ul, .row3 .amt-ul,
+.subtotal-row .amt{
+  font-size:${F + 3}px;
+  font-weight:400;
+}
+.grand-row .wt, .grand-row .amt{
+  font-size:${Math.round(F*1.05) + 3}px;
+  font-weight:700;
 }
 
 /* column header row */
 .col-hdr{
-  display:flex;font-weight:900;
+  display:flex;font-weight:700;
   font-size:${Math.round(F*0.95)}px;
   padding:${Math.round(F*0.15)}px 0;
-  -webkit-text-stroke:0.8px #000;
+  -webkit-text-stroke:0;
 }
 .col-hdr .lbl{flex:1;}
 .col-hdr .pcs{width:${Math.round(F*2.2)}px;text-align:right;}
@@ -96,23 +103,23 @@ body{
 .col-hdr .amt{width:${AC}px;text-align:right;}
 
 .item-name{
-  font-weight:900;font-size:${Math.round(F*1.0)}px;
+  font-weight:700;font-size:${Math.round(F*1.0)}px;
   padding:${Math.round(F*0.25)}px 0 ${Math.round(F*0.1)}px 0;
-  -webkit-text-stroke:0.8px #000;
+  -webkit-text-stroke:0;
 }
 .subtotal-row{
-  display:flex;font-weight:900;
+  display:flex;font-weight:400;
   padding:${Math.round(F*0.1)}px 0;
-  -webkit-text-stroke:0.8px #000;
+  -webkit-text-stroke:0;
 }
 .subtotal-row .lbl{flex:1;}
 .subtotal-row .amt{width:${AC}px;text-align:right;}
 
 .grand-row{
-  display:flex;font-weight:900;
+  display:flex;font-weight:700;
   font-size:${Math.round(F*1.05)}px;
   padding:${Math.round(F*0.2)}px 0;
-  -webkit-text-stroke:0.8px #000;
+  -webkit-text-stroke:0;
 }
 .grand-row .lbl{flex:1;}
 .grand-row .pcs{width:${Math.round(F*2.2)}px;text-align:right;}
@@ -277,7 +284,7 @@ if (purchItems.length > 0) {
 document.getElementById('purchase-section').innerHTML = purchHtml;
 
 var bracket=P.empDisplay||(P.sample&&P.sample.empid?'E'+P.sample.empid:'');
-document.getElementById('emp-line').textContent=bracket?'[ '+bracket+' ]':'';
+document.getElementById('emp-line').textContent=bracket?'['+bracket+']':'';
 document.getElementById('estno-big').textContent=P.estNo ? 'Est.No :'+P.estNo : '';
 
 function doCapture(){
