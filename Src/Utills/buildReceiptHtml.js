@@ -228,7 +228,10 @@ if (!P.items || P.items.length === 0) {
 
 var rows = '';
 (P.items || []).forEach(function(item, idx){
-  var itemName = (item.itemname || '').toUpperCase();
+  var useSubitem = String(P.estItemOrSubItem || 'I').trim().toUpperCase() === 'S';
+  var itemName = String(useSubitem
+    ? (item.subitemname || item.productname || item.itemname || '')
+    : (item.itemname || item.productname || item.subitemname || '')).toUpperCase();
   var amount = (item.displayAmount != null ? item.displayAmount : item.amount) || 0;
   var vaDisplay = item.wastage != null && item.wastage > 0 ? fmtWt(item.wastage) : '';
 

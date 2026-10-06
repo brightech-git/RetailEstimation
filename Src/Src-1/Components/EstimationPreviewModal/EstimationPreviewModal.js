@@ -49,6 +49,7 @@ const EstimationPreviewModal = ({
   navigation,
   offerPrintGst = "N",
   estTabPrint = "N",
+  estItemOrSubItem = "I",
 }) => {
   const { theme } = useTheme();
   const styles = createEstimationPreviewModalStyles(theme);
@@ -96,6 +97,7 @@ const EstimationPreviewModal = ({
     const displayTotals = calcDisplayTotals({ baseAmount, grossAmount }, offerPrintGst);
 
     const params = {
+      estItemOrSubItem,
       companyName,
       costId: selectedCostId || "",
       empDisplay,
@@ -108,6 +110,8 @@ const EstimationPreviewModal = ({
       userId,
       items: (itemsWithStones || items || []).map((item) => ({
         itemid: item.itemid, tagno: item.tagno, itemname: item.itemname,
+        subitemname: item.subitemname || item.SUBITEMNAME || item.subItemName,
+        productname: item.productname || item.PRODUCTNAME || item.productName,
         pcs: item.pcs, grswt: item.grswt, netwt: item.netwt,
         wastper: item.wastper, wastage: item.wastage, mcharge: item.mcharge,
         amount: item.amount, displayAmount: item.displayAmount,
@@ -151,8 +155,21 @@ const EstimationPreviewModal = ({
         purity:   p.purity   || 0,
       })),
     };
+    const useSubitem = String(estItemOrSubItem).trim().toUpperCase() === 'S';
+    console.log('[ESTITEMORSUBITEM] preview names', JSON.stringify({
+      ctlText: estItemOrSubItem,
+      items: params.items.map((item) => ({
+        itemid: item.itemid, tagno: item.tagno,
+        itemname: item.itemname ?? null,
+        subitemname: item.subitemname ?? null,
+        productname: item.productname ?? null,
+        selectedName: useSubitem
+          ? (item.subitemname || item.productname || item.itemname || '')
+          : (item.itemname || item.productname || item.subitemname || ''),
+      })),
+    }));
     return estTabPrint === 'Y' ? buildHtml2(params, previewWidth) : buildHtml(params, previewWidth);
-  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, offerPrintGst, estTabPrint]);
+  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, offerPrintGst, estTabPrint, estItemOrSubItem]);
 
   if (!slipData) {
     return (

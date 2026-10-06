@@ -600,7 +600,8 @@ export const printEstimationToPrinter = async (
   currentPrinter = null,
   employeeId = null,
   apiBaseUrl = null,
-  offerPrintGst = 'N'
+  offerPrintGst = 'N',
+  estItemOrSubItem = 'I'
 ) => {
   try {
     console.log("🖨️ Starting print process...");
@@ -753,7 +754,10 @@ export const printEstimationToPrinter = async (
 
         // Items List
         itemsWithStones.forEach((item, idx) => {
-          const itemName = (item.itemname || "").toUpperCase();
+          const useSubitem = String(estItemOrSubItem).trim().toUpperCase() === 'S';
+          const itemName = String(useSubitem
+            ? (item.subitemname || item.SUBITEMNAME || item.subItemName || item.productname || item.PRODUCTNAME || item.productName || item.itemname || '')
+            : (item.itemname || '')).toUpperCase();
           const itemNumber = idx + 1;
           const stones = item.stones || [];
 
@@ -1004,6 +1008,8 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       itemid: item.itemid,
       tagno: item.tagno,
       itemname: item.itemname,
+      subitemname: item.subitemname ?? item.SUBITEMNAME ?? item.subItemName,
+      productname: item.productname ?? item.PRODUCTNAME ?? item.productName,
       pcs: item.pcs,
       grswt: item.grswt,
       netwt: item.netwt,
@@ -1066,7 +1072,8 @@ export const renderReceiptBitmap = async (
   companyInfo = {},
   printerWidthPx = 576,
   offerPrintGst = 'N',
-  estTabPrint = 'N'
+  estTabPrint = 'N',
+  estItemOrSubItem = 'I'
 ) => {
   if (!processorRef || !processorRef.current) {
     throw new Error(
@@ -1075,13 +1082,27 @@ export const renderReceiptBitmap = async (
   }
   const params = buildReceiptImageParams(slipData, companyInfo, offerPrintGst);
   params.estTabPrint = estTabPrint;
+  params.estItemOrSubItem = estItemOrSubItem;
+  const useSubitem = String(estItemOrSubItem).trim().toUpperCase() === 'S';
+  console.log('[ESTITEMORSUBITEM] printer names', JSON.stringify({
+    ctlText: estItemOrSubItem,
+    items: params.items.map((item) => ({
+      itemid: item.itemid, tagno: item.tagno,
+      itemname: item.itemname ?? null,
+      subitemname: item.subitemname ?? null,
+      productname: item.productname ?? null,
+      selectedName: useSubitem
+        ? (item.subitemname || item.productname || item.itemname || '')
+        : (item.itemname || item.productname || item.subitemname || ''),
+    })),
+  }));
   return processorRef.current.process(params, printerWidthPx);
 };
 
 // Send an already-rendered bitmap to the printer, optionally repeated
 // `copies` times over a single TCP connection (much faster than
 // reconnecting per copy — the connection handshake is the expensive part).
-export const sendReceiptBitmapToPrinter = async (
+const sendBitmapJob = async (
   bitmap,
   currentPrinter,
   copies = 1
@@ -1096,62 +1117,93 @@ export const sendReceiptBitmapToPrinter = async (
     port: currentPrinter.port || 9100,
     host: currentPrinter.ip_address,
     reuseAddress: true,
-    timeout: 10000,
+    connectTimeout: 10000,
   };
 
-  const imageString = buildRasterImageString(bitmap);
-  const count = Math.max(1, copies);
+  const { data, widthBytes, heightLines } = bitmap || {};
+  if (!Number.isInteger(widthBytes) || widthBytes <= 0 || widthBytes > 65535 ||
+      !Number.isInteger(heightLines) || heightLines <= 0 ||
+      !(data instanceof Uint8Array) || data.length !== widthBytes * heightLines) {
+    throw new Error("Invalid receipt bitmap dimensions or incomplete image data.");
+  }
+  const count = Number(copies);
+  if (!Number.isInteger(count) || count < 1) {
+    throw new Error("Print copies must be a positive whole number.");
+  }
+  // Leave receive-buffer headroom: network write completion does not mean
+  // the printer has consumed the previous band. Faster pacing caused this
+  // CT-D150 to stop partway through multi-item receipts.
+  const rowsPerBand = Math.max(1, Math.min(24, Math.floor((2048 - 8) / widthBytes)));
+  const bandDelayMs = 100;
 
   return new Promise((resolve, reject) => {
-    const client = TcpSocket.createConnection(options, () => {
+    let settled = false;
+    let deadline;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      if (error) client.destroy();
+      else client.end();
+      if (error) reject(error);
+      else resolve();
+    };
+    const write = (content) => new Promise((done, fail) => {
+      if (settled) return fail(new Error("Printer connection closed during receipt transfer."));
+      client.write(content, "binary", (error) => error ? fail(error) : done());
+    });
+    const pause = (ms) => new Promise((done) => setTimeout(done, ms));
+    const client = TcpSocket.createConnection(options, async () => {
       console.log(
         `✅ Connected to printer: ${currentPrinter.ip_address} — sending ${count} cop${count === 1 ? "y" : "ies"}`
       );
 
-      let printContent = "";
-      for (let i = 0; i < count; i++) {
-        printContent += PRINTER_COMMANDS.INIT;
-        printContent += FONTS.ALIGN_CENTER;
-        printContent += imageString;
-        printContent += PRINTER_COMMANDS.FEED_LINES(3);
-        printContent += PRINTER_COMMANDS.CUT;
-      }
-
       try {
-        client.write(printContent, "binary", (error) => {
-          if (error) {
-            reject(error);
-            return;
+        for (let copy = 0; copy < count; copy++) {
+          await write(PRINTER_COMMANDS.INIT + FONTS.ALIGN_CENTER);
+          for (let row = 0; row < heightLines; row += rowsPerBand) {
+            const rows = Math.min(rowsPerBand, heightLines - row);
+            await write(buildRasterImageString({
+              data: data.subarray(row * widthBytes, (row + rows) * widthBytes),
+              widthBytes,
+              heightLines: rows,
+            }));
+            // A write callback acknowledges the network, not the paper feed.
+            await pause(bandDelayMs);
           }
-          setTimeout(() => {
-            client.destroy();
-            console.log("✅ Image print completed successfully");
-            resolve();
-          }, 300);
-        });
+          await write(PRINTER_COMMANDS.FEED_LINES(3) + PRINTER_COMMANDS.CUT);
+          await pause(1000);
+        }
+        finish();
       } catch (error) {
-        client.destroy();
-        reject(error);
+        finish(error);
       }
     });
 
     client.on("error", (error) => {
-      client.destroy();
-      reject(error);
+      finish(error);
     });
 
     client.on("timeout", () => {
-      client.destroy();
-      reject(new Error("Connection timeout"));
+      finish(new Error("Printer connection timeout"));
     });
 
-    setTimeout(() => {
-      if (client && client.writable) {
-        client.destroy();
-        reject(new Error("Print operation timeout"));
-      }
-    }, 20000);
+    client.on("close", () => {
+      if (!settled) finish(new Error("Printer disconnected before the receipt was fully sent."));
+    });
+    client.setTimeout(10000);
+    const bands = Math.ceil(heightLines / rowsPerBand);
+    deadline = setTimeout(() => finish(new Error("Print operation timeout")),
+      30000 + count * (bands * 200 + 2000));
   });
+};
+
+// Serialize jobs so two receipts cannot interleave on the same printer.
+let bitmapPrintQueue = Promise.resolve();
+export const sendReceiptBitmapToPrinter = (bitmap, currentPrinter, copies = 1) => {
+  const job = bitmapPrintQueue.then(() => sendBitmapJob(bitmap, currentPrinter, copies));
+  bitmapPrintQueue = job.catch(() => {});
+  return job;
 };
 
 // Convenience one-shot version (render + send) for callers that don't

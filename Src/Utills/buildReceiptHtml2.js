@@ -178,7 +178,10 @@ var isPurchaseOnly = items.length === 0 && purchItems.length > 0;
 var html='';
 
 items.forEach(function(item,idx){
-  var itemName=(item.itemname||'').toUpperCase();
+  var useSubitem=String(P.estItemOrSubItem||'I').trim().toUpperCase()==='S';
+  var itemName=String(useSubitem
+    ? (item.subitemname||item.productname||item.itemname||'')
+    : (item.itemname||item.productname||item.subitemname||'')).toUpperCase();
   var stoneTotal=(item.stones||[]).reduce(function(s,st){return s+(st.stnamt||0);},0);
   var displayAmt=((item.displayAmount!=null?item.displayAmount:item.amount)||0)-stoneTotal;
   var mcAmt=item.mcharge||0;

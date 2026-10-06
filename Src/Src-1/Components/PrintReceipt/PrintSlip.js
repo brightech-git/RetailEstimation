@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
-import { Alert } from "react-native";
+import { Alert, ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { usePrinterService } from "../../Service/IpServices";
 import { useApiBaseUrl } from "../../../Config/Config";
@@ -81,11 +81,15 @@ export const useEstimationPreview = (employeeId, { autoPrint = false } = {}) => 
   const [slipData, setSlipData] = useState(null);
   const [offerPrintGst, setOfferPrintGst] = useState('N');
   const [estTabPrint, setEstTabPrint] = useState('N');
+  const [estItemOrSubItem, setEstItemOrSubItem] = useState('I');
+  const receiptControlsRef = useRef(Promise.resolve({ offerVal: 'N', tabVal: 'N', nameVal: 'I' }));
   // slipData the soft-control lookups have finished for
   const [offerReadyFor, setOfferReadyFor] = useState(null);
   // slipData waiting to be auto-printed
   const [autoPrintPending, setAutoPrintPending] = useState(null);
   const [autoPrinting, setAutoPrinting] = useState(false);
+  const [printStage, setPrintStage] = useState(null);
+  const printInProgressRef = useRef(false);
   const [currentPrinter, setCurrentPrinter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [printerStatus, setPrinterStatus] = useState({
@@ -348,23 +352,41 @@ const loadActivePrinter = useCallback(async () => {
     setPreviewVisible(false);
   }, []);
 
-  // Fetch OFFERPRINTGST + ESTTABPRINT soft controls whenever slipData changes
+  // Load receipt controls on mount and refresh them when receipt/context changes.
   useEffect(() => {
-    if (!slipData) return;
+    console.log('[ESTITEMORSUBITEM] lookup effect', JSON.stringify({
+      hasSlipData: Boolean(slipData),
+      hasApiBaseUrl: Boolean(API_BASE_URL),
+      costId: selectedCostId || '',
+    }));
     if (!API_BASE_URL) {
+      console.log('[ESTITEMORSUBITEM] lookup skipped: API base URL is not ready');
       setOfferReadyFor(slipData);
       return;
     }
     console.log('🔍 Fetching soft controls, selectedCostId:', selectedCostId);
     const svc = new SoftControlService(API_BASE_URL);
-    Promise.all([
-      svc.getControlValue(selectedCostId || '', 'OFFERPRINTGST').catch(() => 'N'),
-      svc.getControlValue(selectedCostId || '', 'ESTTABPRINT').catch(() => 'N'),
-    ]).then(([offerVal, tabVal]) => {
+    let cancelled = false;
+    setOfferReadyFor(null);
+    const controlIds = ['OFFERPRINTGST', 'ESTTABPRINT', 'ESTITEMORSUBITEM'];
+    receiptControlsRef.current = Promise.all(controlIds.map(async (id) =>
+      [id, await svc.getControlValue(selectedCostId || '', id)]))
+      .then((entries) => Object.fromEntries(entries))
+      .then((values) => {
+      const offerVal = values.OFFERPRINTGST || 'N';
+      const tabVal = values.ESTTABPRINT || 'N';
+      let nameVal = values.ESTITEMORSUBITEM || 'I';
+      nameVal = String(nameVal || 'I').trim().toUpperCase();
+      if (cancelled) return { offerVal, tabVal, nameVal };
       setOfferPrintGst(offerVal || 'N');
       setEstTabPrint(tabVal || 'N');
+      setEstItemOrSubItem(nameVal);
+      console.log('ESTITEMORSUBITEM applied:', nameVal);
       console.log('🖨️ ESTTABPRINT soft control value:', tabVal, '| applied:', tabVal || 'N');
-    }).finally(() => setOfferReadyFor(slipData));
+      setOfferReadyFor(slipData);
+      return { offerVal: offerVal || 'N', tabVal: tabVal || 'N', nameVal };
+    });
+    return () => { cancelled = true; };
   }, [slipData, API_BASE_URL, selectedCostId]);
 
   // Resolve empDisplay — prefer the employeeId passed from the screen (typed input),
@@ -379,7 +401,7 @@ const loadActivePrinter = useCallback(async () => {
   // the slip instead of after they tap Print. executePrint just awaits this
   // cached promise instead of starting the render from scratch.
   useEffect(() => {
-    if (!previewVisible || !slipData) return;
+    if (!previewVisible || !slipData || offerReadyFor !== slipData) return;
 
     // Keyed to the slip currently on screen so a stale render from a
     // previous slip is never sent for a different one.
@@ -400,14 +422,19 @@ const loadActivePrinter = useCallback(async () => {
       companyInfo,
       576,
       offerPrintGst,
-      estTabPrint
+      estTabPrint,
+      estItemOrSubItem
     ).catch((err) => {
       console.warn("⚠️ Pre-warm bitmap render failed:", err);
       return null;
     });
-  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst, estTabPrint]);
+  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst, estTabPrint, estItemOrSubItem, offerReadyFor]);
 
 const executePrint = useCallback(async (printCount = 1) => {
+  if (printInProgressRef.current) return;
+  printInProgressRef.current = true;
+  setPreviewVisible(false);
+  setPrintStage("Checking printer connection...");
   try {
     console.log(`🖨️ Execute print called for ${printCount} copies, current printer:`, currentPrinter?.name);
 
@@ -471,6 +498,8 @@ const executePrint = useCallback(async (printCount = 1) => {
       console.log(`📄 Printing ${printCount} copies with printer:`, currentPrinter.name);
 
       const currentEmployeeId = await loadEmployeeId();
+      setPrintStage("Preparing your receipt...");
+      const receiptControls = await receiptControlsRef.current;
       const companyInfo = {
         companyName,
         companyLogoUri: companyLogoFullPath,
@@ -479,25 +508,23 @@ const executePrint = useCallback(async (printCount = 1) => {
         empDisplay,
       };
 
+      let bitmap = null;
       try {
         // Use the pre-warmed bitmap (kicked off when the preview opened)
         // if it's still for the slip currently being printed, so the
         // ~40s render/CDN/font work has already happened by the time the
         // user taps Print. Otherwise render fresh as a fallback.
-        let bitmap = null;
         if (bitmapForSlipRef.current === slipData && bitmapPromiseRef.current) {
           console.log("⚡ Using pre-warmed receipt bitmap...");
           bitmap = await bitmapPromiseRef.current;
         }
         if (!bitmap) {
           console.log("🖼️ No pre-warmed bitmap available, rendering now...");
-          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, offerPrintGst, estTabPrint);
+          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, receiptControls.offerVal, receiptControls.tabVal, receiptControls.nameVal);
         }
 
         // Send every copy over a single TCP connection instead of
         // reconnecting/re-rendering per copy.
-        await sendReceiptBitmapToPrinter(bitmap, currentPrinter, printCount);
-        console.log(`✅ All ${printCount} copies printed successfully (image)`);
       } catch (imageError) {
         // Fall back to the plain ESC/POS text receipt if the WebView
         // render/capture/send fails (e.g. no network for the CDN scripts).
@@ -505,13 +532,26 @@ const executePrint = useCallback(async (printCount = 1) => {
           "⚠️ Image receipt print failed, falling back to text receipt:",
           imageError
         );
-        await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, offerPrintGst);
+        for (let copy = 0; copy < printCount; copy++) {
+          setPrintStage(`Printing receipt ${copy + 1} of ${printCount}...`);
+          await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, receiptControls.offerVal, receiptControls.nameVal);
+        }
         console.log(`✅ All ${printCount} copies printed successfully (text fallback)`);
       } finally {
         bitmapPromiseRef.current = null;
         bitmapForSlipRef.current = null;
       }
 
+      // Transfer errors may occur after paper has already printed. Propagate
+      // them instead of sending a text fallback into an unfinished raster job.
+      if (bitmap) {
+        setPrintStage(printCount > 1
+          ? `Printing ${printCount} receipt copies...`
+          : "Printing your receipt...");
+        await sendReceiptBitmapToPrinter(bitmap, currentPrinter, printCount);
+      }
+
+      setPrintStage(null);
       if (printCount > 1) {
         Alert.alert("Success", `${printCount} copies printed successfully!`);
       } else {
@@ -522,9 +562,12 @@ const executePrint = useCallback(async (printCount = 1) => {
       Alert.alert("Error", "No data available for printing");
     }
   } catch (error) {
+    setPrintStage(null);
     console.error("❌ Print error:", error);
     Alert.alert("Print Error", error.message || "Failed to print slip");
   } finally {
+    printInProgressRef.current = false;
+    setPrintStage(null);
     setPrinterStatus((prev) => ({ ...prev, checking: false }));
   }
 }, [
@@ -621,10 +664,28 @@ const executePrint = useCallback(async (printCount = 1) => {
           navigation={navigation}
           offerPrintGst={offerPrintGst}
           estTabPrint={estTabPrint}
+          estItemOrSubItem={estItemOrSubItem}
         />
         {/* Hidden WebView that renders the Trajan-Pro receipt HTML and
             captures it to a 1-bit bitmap for printing. */}
         <ImageBitmapProcessor ref={imageProcessorRef} />
+        <Modal
+          visible={printStage !== null}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => {}}
+        >
+          <View style={printProgressStyles.overlay}>
+            <View style={printProgressStyles.card} accessibilityViewIsModal>
+              <Text style={printProgressStyles.rocket} accessibilityElementsHidden>{"\uD83D\uDE80"}</Text>
+              <Text style={printProgressStyles.title}>Printing in progress</Text>
+              <ActivityIndicator size="large" color="#2563eb" style={printProgressStyles.spinner} />
+              <Text style={printProgressStyles.stage} accessibilityLiveRegion="polite">{printStage}</Text>
+              <Text style={printProgressStyles.hint}>Please wait while your receipt prints.</Text>
+            </View>
+          </View>
+        </Modal>
       </>
     ),
     [
@@ -639,6 +700,8 @@ const executePrint = useCallback(async (printCount = 1) => {
       navigation,
       offerPrintGst,
       estTabPrint,
+      printStage,
+      estItemOrSubItem,
     ]
   );
 
@@ -668,3 +731,13 @@ const executePrint = useCallback(async (printCount = 1) => {
 };
 
 export default useEstimationPreview;
+
+const printProgressStyles = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: 24 },
+  card: { width: "100%", maxWidth: 360, borderRadius: 20, backgroundColor: "#fff", padding: 28, alignItems: "center" },
+  rocket: { fontSize: 42, marginBottom: 12 },
+  title: { fontSize: 20, fontWeight: "700", color: "#111827", textAlign: "center" },
+  spinner: { marginVertical: 22 },
+  stage: { fontSize: 16, fontWeight: "600", color: "#2563eb", textAlign: "center" },
+  hint: { fontSize: 14, color: "#6b7280", textAlign: "center", marginTop: 12 },
+});
