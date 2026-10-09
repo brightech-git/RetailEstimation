@@ -24,7 +24,7 @@ import { createHomeStyles } from "./HomeStyles";
 import { useEstimation } from "../../Hook/UseEstimation";
 import { LoginContext } from "../../../Context/LoginContext";
 import { usePurchaseContext } from "../../../Context/PurchaseContext";
-import { calcWastage, calcNetWt, calcAmount } from "../../Hook/UsePurchase";
+import { calcWastage, calcNetWt, calcAmount, effectiveAmount } from "../../Hook/UsePurchase";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -182,7 +182,7 @@ const HomeScreen = () => {
               (acc, row) => {
                 acc.grswt  += parseFloat(row.grswt) || 0;
                 acc.netwt  += calcNetWt(row);
-                acc.amount += calcAmount(row);
+                acc.amount += effectiveAmount(row);
                 return acc;
               },
               { grswt: 0, netwt: 0, amount: 0 }
@@ -567,7 +567,7 @@ const HomeScreen = () => {
                       <View style={styles.column}><Text style={styles.cell}>{calcNetWt(row).toFixed(3)}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{row.rate || "-"}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{row.gst || "-"}</Text></View>
-                      <View style={styles.column}><Text style={styles.cell}>{calcAmount(row).toFixed(2)}</Text></View>
+                      <View style={styles.column}><Text style={styles.cell}>{effectiveAmount(row).toFixed(2)}</Text></View>
                       <View style={styles.column}><Text style={styles.cell}>{row.emp || "-"}</Text></View>
                       <View style={styles.deleteCol}>
                         <TouchableOpacity

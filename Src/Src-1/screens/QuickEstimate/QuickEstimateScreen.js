@@ -50,7 +50,7 @@ const QuickEstimateScreen = () => {
 
   return (
     <>
-      <CommonHeader
+       <CommonHeader
         title="Quick Estimate"
         subtitle={ratesSubtitle}
         containerStyle={{ minHeight: 66, paddingVertical: 8 }}

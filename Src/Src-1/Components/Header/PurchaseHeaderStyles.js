@@ -1,0 +1,108 @@
+// 📁 Src/Src-2/Components/Header/QuickEstimateHeaderStyles.js
+import { StyleSheet, Platform, StatusBar } from "react-native";
+import { scale, verticalScale, moderateScale } from "../../../Utills/Scalling";
+
+export const createPurchaseHeaderStyles = (theme) => {
+  const { COLORS, SIZES, FONTS } = theme;
+
+  return StyleSheet.create({
+    gradientBackground: {
+      borderBottomLeftRadius: moderateScale(SIZES.radius_lg),
+      borderBottomRightRadius: moderateScale(SIZES.radius_lg),
+      overflow: "hidden",
+    },
+    headerContainer: {
+      backgroundColor: "transparent",
+      // The app root is already wrapped in a SafeAreaView (edge-to-edge is on),
+      // so adding StatusBar.currentHeight here would double the top gap.
+      shadowColor: COLORS.shadow,
+      shadowOffset: { width: 0, height: verticalScale(4) },
+      shadowOpacity: 0.6,
+      shadowRadius: moderateScale(8),
+      elevation: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: COLORS.borderColor,
+      overflow: "hidden",
+      position: "relative",
+      minHeight: verticalScale(90),
+    },
+    menuButton: {
+      position: "absolute",
+      top: scale(10),
+      right: scale(10),
+      zIndex: 10,
+      padding: scale(6),
+    },
+    // Horizontal padding keeps the name clear of the absolutely positioned
+    // menu button on the right (mirrored on the left to stay centred).
+    companySection: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: scale(48),
+      marginTop: scale(12),
+    },
+    companyLogo: {
+      width: scale(40),
+      height: scale(40),
+      borderRadius: moderateScale(20), 
+      marginRight: scale(10),
+      marginTop: verticalScale(5),
+    },
+    companyNameWrapper: {
+      flexShrink: 1,
+    },
+    companyName: {
+      color: COLORS.buttonText,
+      fontSize: moderateScale(SIZES.h6),
+      letterSpacing: scale(1),
+      textShadowColor: COLORS.shadow,
+      textShadowOffset: { width: 0, height: verticalScale(1) },
+      textShadowRadius: moderateScale(8),
+      ...FONTS.heading,
+    },
+    pageTitle: {
+      color: COLORS.buttonText,
+      fontSize: moderateScale(SIZES.fontSm),
+      opacity: 0.9,
+      marginTop: verticalScale(2),
+      ...FONTS.subheading,
+    },
+    bottomSection: {
+      paddingHorizontal: scale(SIZES.padding),
+      paddingVertical: verticalScale(12),
+      minHeight: verticalScale(60),
+    },
+    dateTimeContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      alignItems: "center",
+      columnGap: scale(18),
+      rowGap: verticalScale(4),
+    },
+    timeContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    timeLabel: {
+      color: COLORS.buttonText,
+      marginRight: scale(8),
+      ...FONTS.subheading,
+      fontSize: moderateScale(SIZES.fontSm),
+      textShadowColor: COLORS.shadow,
+      textShadowOffset: { width: 0, height: verticalScale(1) },
+      textShadowRadius: moderateScale(4),
+    },
+    dateText: {
+      color: COLORS.buttonText,
+      ...FONTS.text,
+      fontSize: moderateScale(SIZES.font),
+      textShadowColor: COLORS.shadow,
+      textShadowOffset: { width: 0, height: verticalScale(1) },
+      textShadowRadius: moderateScale(4),
+    },
+  });
+};
+
+export default createPurchaseHeaderStyles;

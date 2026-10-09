@@ -28,6 +28,7 @@ const createEmptyRow = (categoryInfo) => ({
   boardrate: categoryInfo?.prate || "",
   gst: "",
   emp: "",
+  manualAmount: null,
   // Set once the typed Emp ID has been looked up (Enter on the Emp cell);
   // cleared again whenever the Emp ID is edited.
   empVerified: false,
@@ -59,6 +60,15 @@ export const calcAmount = (row) => {
   const base = netWt * toNum(row.rate);
   const gstAmount = toNum(row.gst) ? base * (toNum(row.gst) / 100) : 0;
   return base + gstAmount;
+};
+
+// Effective amount: manual override if set, else auto-calculated
+export const effectiveAmount = (row) => {
+  if (row.manualAmount != null && row.manualAmount !== "") {
+    const n = parseFloat(row.manualAmount);
+    return Number.isFinite(n) ? n : calcAmount(row);
+  }
+  return calcAmount(row);
 };
 
 export const usePurchase = () => {
@@ -141,7 +151,7 @@ export const usePurchase = () => {
         acc.wastage += calcWastage(row);
         acc.stnwt += toNum(row.stnwt);
         acc.netwt += calcNetWt(row);
-        acc.amount += calcAmount(row);
+        acc.amount += effectiveAmount(row);
         return acc;
       },
       {

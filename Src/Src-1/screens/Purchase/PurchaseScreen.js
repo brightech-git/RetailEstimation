@@ -17,6 +17,7 @@ import CategorySelectModal from "../../Components/Purchase/CategorySelectModal/C
 import { usePurchaseContext } from "../../../Context/PurchaseContext";
 import { useApiBaseUrl } from "../../../Config/Config";
 import { EmployeeService } from "../../Service/EmployeeService";
+import QuickEstimateHeader from "../../Components/Header/PurchaseHeader";
 
 const COLUMN_LABELS = [
   "Category",
@@ -35,16 +36,16 @@ const COLUMN_LABELS = [
 ];
 
 // Order the Tab/Next key should move focus through for each row. Wastage,
-// Net WT and Amount are read-only (auto-calculated) so they're skipped.
-// Emp is last: Enter there looks the employee up and finishes the row.
+// Net WT are read-only (auto-calculated) so they're skipped.
+// Amount is now editable. Emp is last.
 const FOCUS_FIELDS = [
   "purity",
   "pcs",
   "grswt",
   "dustwt",
   "wPercent",
- 
   "rate",
+  "amount",
   "emp",
 ];
 
@@ -83,11 +84,12 @@ export default function PurchaseScreen() {
 
   const validateRow = (row) => {
     const missing = [];
-    if (!row?.purity) missing.push('Purity');
-    if (!row?.grswt) missing.push('Grswt');
-    if (!row?.rate) missing.push('Rate');
+    if (!row?.purity) missing.push("Purity");
+    if (!row?.grswt) missing.push("Grswt");
+    if (!row?.rate) missing.push("Rate");
     // Emp ID is compulsory per row and must be loaded (Enter on Emp)
-    if (!row?.emp || !row?.empVerified) missing.push('Emp ID (press Enter to load)');
+    if (!row?.emp || !row?.empVerified)
+      missing.push("Emp ID (press Enter to load)");
     return missing;
   };
 
@@ -110,7 +112,9 @@ export default function PurchaseScreen() {
       return null;
     }
     try {
-      const found = await new EmployeeService(API_BASE_URL).getEmployeeById(empId);
+      const found = await new EmployeeService(API_BASE_URL).getEmployeeById(
+        empId,
+      );
       if (!found) {
         Alert.alert("Not Found", `No employee found with ID ${empId}.`);
         return null;
@@ -143,7 +147,7 @@ export default function PurchaseScreen() {
     }
     const missing = validateRow(row);
     if (missing.length > 0) {
-      Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
+      Alert.alert("Required Fields", `Please fill: ${missing.join(", ")}`);
       return;
     }
     purchase.openNewRowModal();
@@ -164,22 +168,8 @@ export default function PurchaseScreen() {
 
   return (
     <>
-      <CommonHeader
-        title="Purchase"
-        subtitle={
-          purchase.rows.length > 0
-            ? `${purchase.rows.length} item${purchase.rows.length > 1 ? "s" : ""} added`
-            : "Old gold purchase entry"
-        }
-        rightIcon={purchase.rows.length > 0 ? "trash-outline" : undefined}
-        onRightPress={purchase.clearAll}
-      />
-
-      <ScrollView
-        style={styles.scrollView}
-        keyboardShouldPersistTaps="handled"
-      >
-
+      <QuickEstimateHeader />
+      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           {/* Category trigger row — tapping opens the selection modal for a new row */}
           <View style={styles.inputRow}>
@@ -203,20 +193,41 @@ export default function PurchaseScreen() {
             <View style={styles.totalsContainer}>
               <View style={styles.totalsRow}>
                 <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel} numberOfLines={1}>Grswt</Text>
-                  <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  <Text style={styles.totalLabel} numberOfLines={1}>
+                    Grswt
+                  </Text>
+                  <Text
+                    style={styles.totalValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
                     {purchase.totals.grswt.toFixed(3)}
                   </Text>
                 </View>
                 <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel} numberOfLines={1}>Net Wt</Text>
-                  <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  <Text style={styles.totalLabel} numberOfLines={1}>
+                    Net Wt
+                  </Text>
+                  <Text
+                    style={styles.totalValue}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
                     {purchase.totals.netwt.toFixed(3)}
                   </Text>
                 </View>
                 <View style={styles.totalItem}>
-                  <Text style={styles.totalLabel} numberOfLines={1}>Amount</Text>
-                  <Text style={[styles.totalValue, styles.grandTotal]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  <Text style={styles.totalLabel} numberOfLines={1}>
+                    Amount
+                  </Text>
+                  <Text
+                    style={[styles.totalValue, styles.grandTotal]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                  >
                     ₹{purchase.totals.amount.toFixed(2)}
                   </Text>
                 </View>
@@ -235,22 +246,43 @@ export default function PurchaseScreen() {
                 <View style={styles.headerRow}>
                   {COLUMN_LABELS.map((label, idx) => (
                     <View key={`header-${idx}`} style={styles.column}>
-                      <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{label}</Text>
+                      <Text
+                        style={styles.headerCell}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
+                      >
+                        {label}
+                      </Text>
                     </View>
                   ))}
                   <View style={styles.deleteCol}>
-                    <Text style={styles.headerCell} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Delete</Text>
+                    <Text
+                      style={styles.headerCell}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
+                      Delete
+                    </Text>
                   </View>
                 </View>
 
                 {purchase.rows.map((row, rowIndex) => {
                   const wastage = purchase.calcWastage(row);
                   const netWt = purchase.calcNetWt(row);
-                  const amount = purchase.calcAmount(row);
+                  const autoAmount = purchase.calcAmount(row);
+                  // Use manual override if set, else auto-calculated
+                  const displayAmount = row.manualAmount != null
+                    ? row.manualAmount
+                    : autoAmount.toFixed(2);
                   const isAlt = rowIndex % 2 === 1;
 
                   return (
-                    <View key={row.id} style={[styles.dataRow, isAlt && styles.dataRowAlt]}>
+                    <View
+                      key={row.id}
+                      style={[styles.dataRow, isAlt && styles.dataRowAlt]}
+                    >
                       {/* Category — reopens the modal to edit selection */}
                       <TouchableOpacity
                         style={styles.column}
@@ -347,7 +379,12 @@ export default function PurchaseScreen() {
                       </View>
 
                       <View style={styles.column}>
-                        <Text style={styles.cellReadOnly} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                        <Text
+                          style={styles.cellReadOnly}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.7}
+                        >
                           {wastage ? wastage.toFixed(3) : "0.000"}
                         </Text>
                       </View>
@@ -370,7 +407,12 @@ export default function PurchaseScreen() {
                       </View>
 
                       <View style={styles.column}>
-                        <Text style={styles.cellReadOnly} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                        <Text
+                          style={styles.cellReadOnly}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.7}
+                        >
                           {netWt ? netWt.toFixed(3) : "0.000"}
                         </Text>
                       </View>
@@ -393,15 +435,41 @@ export default function PurchaseScreen() {
                       </View>
 
                       <View style={styles.column}>
-                        <Text style={styles.cellReadOnly} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                        <Text
+                          style={styles.cellReadOnly}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.7}
+                        >
                           {row.gst || ""}
                         </Text>
                       </View>
 
                       <View style={styles.column}>
-                        <Text style={styles.cellReadOnly} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-                          {amount ? amount.toFixed(2) : "0.00"}
-                        </Text>
+                        <TextInput
+                          ref={setInputRef(row.id, "amount")}
+                          style={styles.cellInput}
+                          keyboardType="decimal-pad"
+                          value={String(displayAmount)}
+                          onChangeText={(v) =>
+                            purchase.updateRowField(row.id, "manualAmount", v)
+                          }
+                          onFocus={() => {
+                            // Pre-fill with auto-calc if no manual value yet
+                            if (row.manualAmount == null)
+                              purchase.updateRowField(row.id, "manualAmount", autoAmount.toFixed(2));
+                          }}
+                          onBlur={() => {
+                            // If cleared, revert to auto-calc
+                            if (!row.manualAmount || row.manualAmount === "")
+                              purchase.updateRowField(row.id, "manualAmount", null);
+                          }}
+                          returnKeyType="next"
+                          onSubmitEditing={() =>
+                            handleSubmitEditing(row.id, "amount")
+                          }
+                          blurOnSubmit={false}
+                        />
                       </View>
 
                       <View style={styles.column}>
@@ -439,57 +507,124 @@ export default function PurchaseScreen() {
                 {/* Purchase total row */}
                 <View style={styles.totalRowLine}>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>PURCHASE TOT</Text>
+                    <Text
+                      style={styles.totalRowLabel}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
+                      PURCHASE TOT
+                    </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}></Text>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    ></Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.pcs || ""}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.grswt.toFixed(3)}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.dustwt.toFixed(3)}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}></Text>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    ></Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.wastage.toFixed(3)}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.stnwt.toFixed(3)}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.netwt.toFixed(3)}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}></Text>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    ></Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}></Text>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    ></Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
                       {purchase.totals.amount.toFixed(2)}
                     </Text>
                   </View>
                   <View style={styles.column}>
-                    <Text style={styles.totalRowValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}></Text>
+                    <Text
+                      style={styles.totalRowValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    ></Text>
                   </View>
                   <View style={styles.deleteCol} />
                 </View>
@@ -503,16 +638,32 @@ export default function PurchaseScreen() {
               style={styles.submitButton}
               onPress={purchase.openNewRowModal}
             >
-              <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>+ Add Item</Text>
+              <Text
+                style={styles.submitButtonText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                + Add Item
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.submitButton, styles.saveButton, purchase.rows.length === 0 && styles.disabledButton]}
+              style={[
+                styles.submitButton,
+                styles.saveButton,
+                purchase.rows.length === 0 && styles.disabledButton,
+              ]}
               onPress={() => {
-                const invalid = purchase.rows.find((r) => validateRow(r).length > 0);
+                const invalid = purchase.rows.find(
+                  (r) => validateRow(r).length > 0,
+                );
                 if (invalid) {
                   const missing = validateRow(invalid);
-                  Alert.alert('Required Fields', `Please fill: ${missing.join(', ')}`);
+                  Alert.alert(
+                    "Required Fields",
+                    `Please fill: ${missing.join(", ")}`,
+                  );
                   return;
                 }
                 savePurchaseRows(purchase.rows);
@@ -520,14 +671,28 @@ export default function PurchaseScreen() {
               }}
               disabled={purchase.rows.length === 0}
             >
-              <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Save</Text>
+              <Text
+                style={styles.submitButtonText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                Save
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.submitButton, styles.clearButton]}
               onPress={purchase.clearAll}
             >
-              <Text style={styles.submitButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>Clear All</Text>
+              <Text
+                style={styles.submitButtonText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                Clear All
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

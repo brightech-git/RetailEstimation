@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import { Alert } from "react-native";
 import { PurchaseService } from "../Src-1/Service/PurchaseService";
-import { calcWastage, calcNetWt, calcAmount } from "../Src-1/Hook/UsePurchase";
+import { calcWastage, calcNetWt, calcAmount, effectiveAmount } from "../Src-1/Hook/UsePurchase";
 
 const PurchaseContext = createContext(null);
 
@@ -20,7 +20,7 @@ export const buildPurchasePayload = (row) => ({
   dustwt:      row.dustwt      || null,
   rate:         Number(row.rate) || 0,
   boardrate:    Number(row.boardrate || row.rate) || 0,
-  amount:       calcAmount(row) || 0,
+  amount:       effectiveAmount(row) || 0,
   mcharge:      Number(row.mcharge) || 0,
   mcgrm:        Number(row.mcgrm) || 0,
   wastage:      calcWastage(row) || 0,
