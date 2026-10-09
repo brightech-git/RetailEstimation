@@ -134,7 +134,7 @@ const HomeScreen = () => {
         batchNo,
         username,
         API_BASE_URL,
-        estimation.lastEmpId,
+        estimation.empIdText || estimation.lastEmpId,
         purchaseEstBatchNo,
         !estimation.estBatchNo && !!purchaseEstBatchNo,
       );

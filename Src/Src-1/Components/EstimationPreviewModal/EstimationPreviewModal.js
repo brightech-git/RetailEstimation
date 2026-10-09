@@ -65,7 +65,7 @@ const EstimationPreviewModal = ({
   }, []);
   const empDisplay = useEmployeeDisplay(
     API_BASE_URL,
-    storedEmpId || slipData?.sample?.empid,
+    slipData?.sample?.empid || storedEmpId,
   );
 
   useEffect(() => {

@@ -126,8 +126,8 @@ body{
 .grand-row .wt{width:${WC}px;text-align:right;}
 .grand-row .amt{width:${AC}px;text-align:right;}
 
-.big-estno{text-align:center;font-weight:700;font-size:${Math.round(F*1.8)}px;padding:${Math.round(F*0.2)}px 0;}
-.emp-line{text-align:center;font-weight:700;font-size:${Math.round(F*0.95)}px;padding:${Math.round(F*0.8)}px 0 ${Math.round(F*0.2)}px 0;}
+.big-estno{text-align:left;font-weight:700;font-size:${Math.round(F*1.8)}px;padding:${Math.round(F*0.2)}px 0;}
+.emp-line{text-align:left;font-weight:700;font-size:${Math.round(F*0.95)}px;padding:${Math.round(F*0.8)}px 0 ${Math.round(F*0.2)}px 0;}
 </style>
 </head>
 <body>
@@ -137,7 +137,7 @@ body{
     <div class="customer-line"><span class="customer-label">Mobile</span><span class="customer-colon">:</span><span class="customer-input-line"></span></div>
     <div class="customer-line"><span class="customer-label">Aadhaar</span><span class="customer-colon">:</span><span class="customer-input-line"></span></div>
   </div>
-  <div class="slip-heading">ESTIMATION SLIP</div>
+  <div class="slip-heading">ESTIMATION SLIP - <span id="heading-estno"></span></div>
   <div class="hdr-row">
     <div>
       <div id="date-line"></div>
@@ -283,9 +283,11 @@ if (purchItems.length > 0) {
 }
 document.getElementById('purchase-section').innerHTML = purchHtml;
 
+document.getElementById('heading-estno').textContent = P.estNo || '';
+
 var bracket=P.empDisplay||(P.sample&&P.sample.empid?'E'+P.sample.empid:'');
 document.getElementById('emp-line').textContent=bracket?'['+bracket+']':'';
-document.getElementById('estno-big').textContent=P.estNo ? 'Est.No :'+P.estNo : '';
+document.getElementById('estno-big').textContent='';
 
 function doCapture(){
   var receipt=document.getElementById('receipt');

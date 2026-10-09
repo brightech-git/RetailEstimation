@@ -351,7 +351,6 @@ const selectCompanyId = async (companyIdValue) => {
   // --- load stored company data (existing) and stored selected cost ID (new) ---
   const loadStoredData = async () => {
     try {
-      // Load company data
       const stored = await AsyncStorage.getItem("COMPANY_DATA");
       if (stored) {
         const data = JSON.parse(stored);
@@ -367,6 +366,20 @@ const selectCompanyId = async (companyIdValue) => {
         setStockUsername(data.STOCKUSERNAME || "");
         setStockPassword(data.STOCKPASSWORD || "");
         console.log("📦 Restored company data:", data);
+
+        // If logged in but employee was never selected, force logout so the
+        // full setup flow (SelectCostCenter → employee pick) runs again.
+        const empId = await AsyncStorage.getItem("EMPLOYEE_ID");
+        if (!empId) {
+          console.log("⚠️ No EMPLOYEE_ID stored — forcing logout to re-run setup");
+          await AsyncStorage.multiRemove([
+            "COMPANY_DATA", "SELECTED_COST_ID", "SELECTED_COMPANY_ID",
+            "HAS_COST_CENTRES", "COST_OPTIONS",
+          ]);
+          // Leave all state at defaults (empty) so AppStack renders Login
+          setLoading(false);
+          return;
+        }
       }
 
       const storedCostId = await AsyncStorage.getItem("SELECTED_COST_ID");
@@ -380,18 +393,10 @@ const selectCompanyId = async (companyIdValue) => {
         setSelectedCompanyId(storedCompanyId);
         console.log("📦 Restored selected company ID:", storedCompanyId);
       }
-      // Do NOT restore HAS_COST_CENTRES — always show SelectCostCenter on app open
       if (storedCostOptions) {
-        try {
-          setCostOptions(JSON.parse(storedCostOptions));
-        } catch {}
+        try { setCostOptions(JSON.parse(storedCostOptions)); } catch {}
       }
-      // Warm up the sync cache so interceptor works immediately
       await initCostCache();
-
-      // Optionally fetch fresh cost options after restoring (if needed)
-      // Uncomment the next line if you want to always fetch on app start
-      // await fetchCostOptions();
     } catch (err) {
       console.error("Error loading stored data:", err);
     } finally {

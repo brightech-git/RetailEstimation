@@ -43,14 +43,20 @@ const { isTablet } = DEVICE;
 
 // Inner stack handles proper back navigation between screens
 function AppScreensStack() {
-  const { hasCostCentres, loading } = useContext(LoginContext);
+  const { hasCostCentres, loading, selectedCostId, selectedCompanyId } = useContext(LoginContext);
   const { theme } = useTheme();
+  const [initialRoute, setInitialRoute] = React.useState(null);
 
-  // Wait until AsyncStorage restore is done before deciding the initial route.
-  // Without this, hasCostCentres is null on mount and always falls through to
-  // SelectCostCenter — which is what causes the cost-centre screen to flash
-  // after the app is killed and resumed.
-  if (loading) {
+  React.useEffect(() => {
+    AsynchStorage.multiGet(["EMPLOYEE_ID", "SELECTED_COST_ID", "SELECTED_COMPANY_ID"])
+      .then(([[, empId], [, costId], [, companyId]]) => {
+        const hasSetup = !!(empId && (costId || companyId));
+        setInitialRoute(hasSetup ? "Home" : "SelectCostCenter");
+      })
+      .catch(() => setInitialRoute("SelectCostCenter"));
+  }, []);
+
+  if (loading || !initialRoute) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.COLORS.primary} />
@@ -58,7 +64,6 @@ function AppScreensStack() {
     );
   }
 
-  const initialRoute = "SelectCostCenter";
   return (
     <InnerStack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
       <InnerStack.Screen name="SelectCostCenter" component={SelectCostCenterScreen} />

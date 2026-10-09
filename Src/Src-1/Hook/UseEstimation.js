@@ -297,8 +297,8 @@ export const useEstimation = (apiBaseUrl) => {
 
       setTableData((prev) => [...prev, ...newData]);
 
-      // Store last used emp before reset
-      setLastEmpId(storedEmpId.current);
+      // Store last used emp before reset — use the typed/row emp, not the login emp
+      setLastEmpId(rowEmpId.current || storedEmpId.current);
 
       // Reset form and focus — Emp ID too, so every row needs its own
       setITEMID("");
@@ -794,6 +794,7 @@ export const useEstimation = (apiBaseUrl) => {
     scanningField,
     scannerVisible,
     lastEmpName: "",
+    lastEmpId,
     offerPrintGst,
 
     // Refs

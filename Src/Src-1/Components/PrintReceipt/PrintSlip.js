@@ -17,6 +17,7 @@ import { LoginContext } from "../../../Context/LoginContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import useEmployeeDisplay from "../../Hook/useEmployeeDisplay";
 import { SoftControlService } from "../../Service/SoftControlService";
+import { EmployeeService } from "../../Service/EmployeeService";
 
 // Preview management for estimation slips
 // One entry per mounted screen using useEstimationPreview; the most recent
@@ -403,10 +404,9 @@ const loadActivePrinter = useCallback(async () => {
     });
     return () => { cancelled = true; unsubscribe(); };
   }, [navigation, slipData]);
-  const empDisplay = useEmployeeDisplay(
-    API_BASE_URL,
-    selectedEmployeeId || employeeId || slipData?.sample?.empid,
-  );
+  // Prefer the emp on the slip (typed by the user) over the login employee
+  const empIdForDisplay = slipData?.sample?.empid || selectedEmployeeId || employeeId;
+  const empDisplay = useEmployeeDisplay(API_BASE_URL, empIdForDisplay);
 
   // Pre-warm the receipt bitmap render as soon as the preview is shown, so
   // the ~40s html2canvas/CDN/font pipeline runs while the user is reviewing
@@ -512,18 +512,35 @@ const executePrint = useCallback(async (printCount = 1) => {
       const currentEmployeeId = await loadEmployeeId();
       setPrintStage("Preparing your receipt...");
       const receiptControls = await receiptControlsRef.current;
-      const [savedEmployeeId, savedEmployeeName] = await Promise.all([
-        AsyncStorage.getItem('EMPLOYEE_ID'), AsyncStorage.getItem('EMPLOYEE_NAME'),
-      ]);
-      const selectedEmployeeDisplay = savedEmployeeId && savedEmployeeName
-        ? `E${String(savedEmployeeId).trim().replace(/^E/i, '')}-${savedEmployeeName.trim().toUpperCase()}`
-        : empDisplay;
+
+      // Use the emp on the slip (typed by user) — fall back to login emp
+      const slipEmpIdRaw = slipData?.sample?.empid;
+      const slipEmpIdStr = slipEmpIdRaw ? String(slipEmpIdRaw).trim().replace(/^E/i, '') : null;
+      let resolvedEmpDisplay = empDisplay;
+      if (slipEmpIdStr) {
+        const [savedEmployeeId, savedEmployeeName] = await Promise.all([
+          AsyncStorage.getItem('EMPLOYEE_ID'), AsyncStorage.getItem('EMPLOYEE_NAME'),
+        ]);
+        const normalizeId = (id) => String(id ?? '').trim().replace(/^E/i, '').replace(/^0+(?=\d)/, '');
+        const idLabel = `E${slipEmpIdStr}`;
+        if (savedEmployeeName && normalizeId(savedEmployeeId) === normalizeId(slipEmpIdStr)) {
+          resolvedEmpDisplay = `${idLabel}-${savedEmployeeName.trim().toUpperCase()}`;
+        } else {
+          try {
+            const found = await new EmployeeService(API_BASE_URL).getEmployeeById(slipEmpIdStr);
+            resolvedEmpDisplay = found?.empName ? `${idLabel}-${String(found.empName).trim().toUpperCase()}` : idLabel;
+          } catch (_) {
+            resolvedEmpDisplay = idLabel;
+          }
+        }
+      }
+
       const companyInfo = {
         companyName,
         companyLogoUri: companyLogoFullPath,
         username: loggedInUsername,
         costId: selectedCostId,
-        empDisplay: selectedEmployeeDisplay,
+        empDisplay: resolvedEmpDisplay,
       };
 
       let bitmap = null;
@@ -532,7 +549,8 @@ const executePrint = useCallback(async (printCount = 1) => {
         // if it's still for the slip currently being printed, so the
         // ~40s render/CDN/font work has already happened by the time the
         // user taps Print. Otherwise render fresh as a fallback.
-        if (bitmapForSlipRef.current === slipData && bitmapPromiseRef.current && selectedEmployeeDisplay === empDisplay) {
+        // Always render fresh so the correct slip emp (not login emp) is used.
+        if (false && bitmapForSlipRef.current === slipData && bitmapPromiseRef.current && selectedEmployeeDisplay === empDisplay) {
           console.log("⚡ Using pre-warmed receipt bitmap...");
           bitmap = await bitmapPromiseRef.current;
         }
