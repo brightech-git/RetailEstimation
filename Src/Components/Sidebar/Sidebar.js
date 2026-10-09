@@ -18,6 +18,7 @@ import {
 } from "@react-navigation/drawer";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from 'expo-constants';
 
 import { useTheme } from "../../Context/ThemeContext";
 import { LoginContext } from "../../Context/LoginContext";
@@ -309,6 +310,11 @@ const Sidebar = (props) => {
           danger
           onPress={handleLogout}
         />
+
+        <View style={styles.divider} />
+        <Text style={[styles.drawerUsername, { textAlign: 'center', paddingVertical: 8 }]}>
+          v{Constants.expoConfig?.version || '1.1.0'}
+        </Text>
       </DrawerContentScrollView>
 
       {/* 🔒 Admin Authentication Modal */}
