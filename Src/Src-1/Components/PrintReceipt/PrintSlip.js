@@ -83,6 +83,7 @@ export const useEstimationPreview = (employeeId, { autoPrint = false } = {}) => 
   const [offerPrintGst, setOfferPrintGst] = useState('N');
   const [estTabPrint, setEstTabPrint] = useState('N');
   const [estItemOrSubItem, setEstItemOrSubItem] = useState('I');
+  const [externalCounterIds, setExternalCounterIds] = useState('');
   const receiptControlsRef = useRef(Promise.resolve({ offerVal: 'N', tabVal: 'N', nameVal: 'I' }));
   // slipData the soft-control lookups have finished for
   const [offerReadyFor, setOfferReadyFor] = useState(null);
@@ -370,7 +371,7 @@ const loadActivePrinter = useCallback(async () => {
     const svc = new SoftControlService(API_BASE_URL);
     let cancelled = false;
     setOfferReadyFor(null);
-    const controlIds = ['OFFERPRINTGST', 'ESTTABPRINT', 'ESTITEMORSUBITEM'];
+    const controlIds = ['OFFERPRINTGST', 'ESTTABPRINT', 'ESTITEMORSUBITEM', 'EXTERNAL_COUNTERID'];
     receiptControlsRef.current = Promise.all(controlIds.map(async (id) =>
       [id, await svc.getControlValue(selectedCostId || '', id)]))
       .then((entries) => Object.fromEntries(entries))
@@ -378,15 +379,17 @@ const loadActivePrinter = useCallback(async () => {
       const offerVal = values.OFFERPRINTGST || 'N';
       const tabVal = values.ESTTABPRINT || 'N';
       let nameVal = values.ESTITEMORSUBITEM || 'I';
+      const counterVal = String(values.EXTERNAL_COUNTERID || '').trim();
       nameVal = String(nameVal || 'I').trim().toUpperCase();
-      if (cancelled) return { offerVal, tabVal, nameVal };
+      if (cancelled) return { offerVal, tabVal, nameVal, counterVal };
       setOfferPrintGst(offerVal || 'N');
       setEstTabPrint(tabVal || 'N');
       setEstItemOrSubItem(nameVal);
+      setExternalCounterIds(counterVal);
       console.log('ESTITEMORSUBITEM applied:', nameVal);
       console.log('🖨️ ESTTABPRINT soft control value:', tabVal, '| applied:', tabVal || 'N');
       setOfferReadyFor(slipData);
-      return { offerVal: offerVal || 'N', tabVal: tabVal || 'N', nameVal };
+      return { offerVal: offerVal || 'N', tabVal: tabVal || 'N', nameVal, counterVal };
     });
     return () => { cancelled = true; };
   }, [slipData, API_BASE_URL, selectedCostId]);
@@ -435,12 +438,13 @@ const loadActivePrinter = useCallback(async () => {
       576,
       offerPrintGst,
       estTabPrint,
-      estItemOrSubItem
+      estItemOrSubItem,
+      externalCounterIds
     ).catch((err) => {
       console.warn("⚠️ Pre-warm bitmap render failed:", err);
       return null;
     });
-  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst, estTabPrint, estItemOrSubItem, offerReadyFor]);
+  }, [previewVisible, slipData, companyName, companyLogoFullPath, loggedInUsername, selectedCostId, empDisplay, offerPrintGst, estTabPrint, estItemOrSubItem, externalCounterIds, offerReadyFor]);
 
 const executePrint = useCallback(async (printCount = 1) => {
   if (printInProgressRef.current) return;
@@ -556,7 +560,7 @@ const executePrint = useCallback(async (printCount = 1) => {
         }
         if (!bitmap) {
           console.log("🖼️ No pre-warmed bitmap available, rendering now...");
-          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, receiptControls.offerVal, receiptControls.tabVal, receiptControls.nameVal);
+          bitmap = await renderReceiptBitmap(slipData, imageProcessorRef, companyInfo, 576, receiptControls.offerVal, receiptControls.tabVal, receiptControls.nameVal, receiptControls.counterVal);
         }
 
         // Send every copy over a single TCP connection instead of
@@ -570,7 +574,7 @@ const executePrint = useCallback(async (printCount = 1) => {
         );
         for (let copy = 0; copy < printCount; copy++) {
           setPrintStage(`Printing receipt ${copy + 1} of ${printCount}...`);
-          await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, receiptControls.offerVal, receiptControls.nameVal);
+          await printEstimationToPrinter(slipData, currentPrinter, currentEmployeeId, API_BASE_URL, receiptControls.offerVal, receiptControls.nameVal, receiptControls.counterVal);
         }
         console.log(`✅ All ${printCount} copies printed successfully (text fallback)`);
       } finally {
@@ -701,6 +705,7 @@ const executePrint = useCallback(async (printCount = 1) => {
           offerPrintGst={offerPrintGst}
           estTabPrint={estTabPrint}
           estItemOrSubItem={estItemOrSubItem}
+          externalCounterIds={externalCounterIds}
         />
         {/* Hidden WebView that renders the Trajan-Pro receipt HTML and
             captures it to a 1-bit bitmap for printing. */}
@@ -738,6 +743,7 @@ const executePrint = useCallback(async (printCount = 1) => {
       estTabPrint,
       printStage,
       estItemOrSubItem,
+      externalCounterIds,
     ]
   );
 

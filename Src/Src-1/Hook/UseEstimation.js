@@ -466,6 +466,7 @@ export const useEstimation = (apiBaseUrl) => {
               tagDetails?.itemtypeid ?? item.ITEMTYPEID ?? item.itemtypeid,
             itemctrid:
               tagDetails?.itemctrid ?? item.ITEMCTRID ?? item.itemctrid,
+           
             purity: tagDetails?.purity ?? item.PURITY ?? item.purity,
             tagsvalue: tagDetails?.salvalue ?? item.SALVALUE ?? item.tagsvalue,
 

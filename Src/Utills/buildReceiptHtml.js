@@ -241,6 +241,9 @@ var rows = '';
   rows +=
     '<tr class="item-name-row"><td colspan="4">' + (idx + 1) + ' ' + esc(itemName) +
       ' (' + (item.pcs || 0) + ' Pcs) [' + esc(item.itemid) + '-' + esc(item.tagno) + ']</td></tr>' +
+    (String(item.itemctrid == null ? '' : item.itemctrid).trim() && item.itemctrname &&
+      String(P.externalCounterIds || '').split(',').map(function(id){return id.trim();}).indexOf(String(item.itemctrid).trim()) !== -1
+      ? '<tr class="sub-row"><td colspan="4">' + esc(item.itemctrname) + '</td></tr>' : '') +
     '<tr>' +
       '<td>' + mcDisplay + '</td>' +
       '<td class="r">' + fmtWt(item.grswt) + '</td>' +

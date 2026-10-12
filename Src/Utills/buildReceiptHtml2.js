@@ -140,12 +140,12 @@ body{
   <div class="slip-heading">ESTIMATION SLIP - <span id="heading-estno"></span></div>
   <div class="hdr-row">
     <div>
-      <div id="date-line"></div>
-      <div id="time-line"></div>
-    </div>
-    <div style="text-align:right">
       <div id="gold-line"></div>
       <div id="silver-line"></div>
+    </div>
+    <div style="text-align:right">
+      <div id="date-line"></div>
+      <div id="time-line"></div>
     </div>
   </div>
   <hr class="sep header-sep">
@@ -201,6 +201,10 @@ items.forEach(function(item,idx){
   var subTotal=preGst+gstAmt;
 
   html+='<div class="item-name">'+(idx+1)+' '+esc(itemName)+'&nbsp;&nbsp;'+esc(item.itemid)+'-'+esc(item.tagno)+'</div>';
+  var counterId=String(item.itemctrid==null?'':item.itemctrid).trim();
+  if(counterId && item.itemctrname && String(P.externalCounterIds||'').split(',').map(function(id){return id.trim();}).indexOf(counterId)!==-1){
+    html+='<div class="item-counter">'+esc(item.itemctrname)+'</div>';
+  }
 
   // Weight row: label | weight-col=grswt | amt-col=empty
   if((item.wastage||0)>0){
@@ -272,7 +276,6 @@ if (purchItems.length > 0) {
   // Grand Total row
   var grandNet = salesGrand - totalPurchAmt;
   purchHtml +=
-    '<hr class="sep">'+
     '<div class="grand-row">'+
       '<span class="lbl"><b>Grand Total</b></span>'+
       '<span class="pcs"></span>'+

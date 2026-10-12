@@ -601,7 +601,8 @@ export const printEstimationToPrinter = async (
   employeeId = null,
   apiBaseUrl = null,
   offerPrintGst = 'N',
-  estItemOrSubItem = 'I'
+  estItemOrSubItem = 'I',
+  externalCounterIds = ''
 ) => {
   try {
     console.log("🖨️ Starting print process...");
@@ -769,6 +770,12 @@ export const printEstimationToPrinter = async (
             FONTS.BOLD_ON,
             FONTS.ALIGN_LEFT
           );
+
+          const counterId = String(item.itemctrid ?? item.ITEMCTRID ?? '').trim();
+          const counterName = item.itemctrname ?? item.ITEMCTRNAME ?? '';
+          if (counterId && counterName && String(externalCounterIds).split(',').map((id) => id.trim()).includes(counterId)) {
+            printContent += formatStyledLine(`${indent}${counterName}`, '', FONTS.BOLD_ON, FONTS.ALIGN_LEFT);
+          }
 
           const rateValue =
             item.salemode === "R"
@@ -1008,6 +1015,8 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       itemid: item.itemid,
       tagno: item.tagno,
       itemname: item.itemname,
+      itemctrid: item.itemctrid ?? item.ITEMCTRID,
+      itemctrname: item.itemctrname ?? item.ITEMCTRNAME,
       subitemname: item.subitemname ?? item.SUBITEMNAME ?? item.subItemName,
       productname: item.productname ?? item.PRODUCTNAME ?? item.productName,
       pcs: item.pcs,
@@ -1073,7 +1082,8 @@ export const renderReceiptBitmap = async (
   printerWidthPx = 576,
   offerPrintGst = 'N',
   estTabPrint = 'N',
-  estItemOrSubItem = 'I'
+  estItemOrSubItem = 'I',
+  externalCounterIds = ''
 ) => {
   if (!processorRef || !processorRef.current) {
     throw new Error(
@@ -1083,6 +1093,7 @@ export const renderReceiptBitmap = async (
   const params = buildReceiptImageParams(slipData, companyInfo, offerPrintGst);
   params.estTabPrint = estTabPrint;
   params.estItemOrSubItem = estItemOrSubItem;
+  params.externalCounterIds = externalCounterIds;
   const useSubitem = String(estItemOrSubItem).trim().toUpperCase() === 'S';
   console.log('[ESTITEMORSUBITEM] printer names', JSON.stringify({
     ctlText: estItemOrSubItem,
