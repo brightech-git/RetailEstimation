@@ -273,10 +273,10 @@ if (purchItems.length > 0) {
     var amt = p.amount || 0;
     purchHtml +=
       '<div style="margin-top:${Math.round(F*0.4)}px" class="row3">'+
-        '<span class="lbl">'+esc(label)+'</span>'+
+        '<span class="lbl" style="font-weight:700;">'+esc(label)+'</span>'+
         '<span class="pcs"></span>'+
-        '<span class="wt">'+fmtWt(wt)+'</span>'+
-        '<span class="amt">'+fmt(-amt)+'</span>'+
+        '<span class="wt" style="font-weight:700;">'+fmtWt(wt)+'</span>'+
+        '<span class="amt" style="font-weight:700;">'+fmt(-amt)+'</span>'+
       '</div>';
   });
 
