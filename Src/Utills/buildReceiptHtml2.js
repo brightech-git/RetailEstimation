@@ -107,6 +107,11 @@ body{
   padding:${Math.round(F*0.25)}px 0 ${Math.round(F*0.1)}px 0;
   -webkit-text-stroke:0;
 }
+.item-counter{
+  font-weight:400;font-size:${Math.round(F*0.9)}px;
+  padding:0 0 ${Math.round(F*0.1)}px 0;
+  -webkit-text-stroke:0;
+}
 .subtotal-row{
   display:flex;font-weight:400;
   padding:${Math.round(F*0.1)}px 0;
@@ -201,9 +206,13 @@ items.forEach(function(item,idx){
   var subTotal=preGst+gstAmt;
 
   html+='<div class="item-name">'+(idx+1)+' '+esc(itemName)+'&nbsp;&nbsp;'+esc(item.itemid)+'-'+esc(item.tagno)+'</div>';
-  var counterId=String(item.itemctrid==null?'':item.itemctrid).trim();
-  if(counterId && item.itemctrname && String(P.externalCounterIds||'').split(',').map(function(id){return id.trim();}).indexOf(counterId)!==-1){
-    html+='<div class="item-counter">'+esc(item.itemctrname)+'</div>';
+  var itemTypeName=String(item.itemtypename==null?'':item.itemtypename).trim();
+  if(itemTypeName && String(P.estItemTypePrint||'').trim().toUpperCase()==='Y'){
+    html+='<div class="item-name">('+esc(itemTypeName)+')</div>';
+  }
+  var counterName=String(item.itemctrname==null?'':item.itemctrname).trim();
+  if(counterName && String(P.externalCounterIds||'').trim().toUpperCase()==='Y'){
+    html+='<div class="item-counter">'+esc(counterName)+'</div>';
   }
 
   // Weight row: label | weight-col=grswt | amt-col=empty

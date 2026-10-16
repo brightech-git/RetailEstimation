@@ -602,7 +602,8 @@ export const printEstimationToPrinter = async (
   apiBaseUrl = null,
   offerPrintGst = 'N',
   estItemOrSubItem = 'I',
-  externalCounterIds = ''
+  externalCounterIds = '',
+  estItemTypePrint = ''
 ) => {
   try {
     console.log("🖨️ Starting print process...");
@@ -771,9 +772,12 @@ export const printEstimationToPrinter = async (
             FONTS.ALIGN_LEFT
           );
 
-          const counterId = String(item.itemctrid ?? item.ITEMCTRID ?? '').trim();
+          const itemTypeName = String(item.itemtypename ?? item.ITEMTYPENAME ?? '').trim();
+          if (itemTypeName && String(estItemTypePrint).trim().toUpperCase() === 'Y') {
+            printContent += formatStyledLine(`${indent}(${itemTypeName})`, '', FONTS.BOLD_ON, FONTS.ALIGN_LEFT);
+          }
           const counterName = item.itemctrname ?? item.ITEMCTRNAME ?? '';
-          if (counterId && counterName && String(externalCounterIds).split(',').map((id) => id.trim()).includes(counterId)) {
+          if (counterName && String(externalCounterIds).trim().toUpperCase() === 'Y') {
             printContent += formatStyledLine(`${indent}${counterName}`, '', FONTS.BOLD_ON, FONTS.ALIGN_LEFT);
           }
 
@@ -1017,6 +1021,8 @@ export const buildReceiptImageParams = (slipData, companyInfo = {}, offerPrintGs
       itemname: item.itemname,
       itemctrid: item.itemctrid ?? item.ITEMCTRID,
       itemctrname: item.itemctrname ?? item.ITEMCTRNAME,
+      itemtypeid: item.itemtypeid ?? item.ITEMTYPEID,
+      itemtypename: item.itemtypename ?? item.ITEMTYPENAME,
       subitemname: item.subitemname ?? item.SUBITEMNAME ?? item.subItemName,
       productname: item.productname ?? item.PRODUCTNAME ?? item.productName,
       pcs: item.pcs,
@@ -1083,7 +1089,8 @@ export const renderReceiptBitmap = async (
   offerPrintGst = 'N',
   estTabPrint = 'N',
   estItemOrSubItem = 'I',
-  externalCounterIds = ''
+  externalCounterIds = '',
+  estItemTypePrint = ''
 ) => {
   if (!processorRef || !processorRef.current) {
     throw new Error(
@@ -1094,6 +1101,7 @@ export const renderReceiptBitmap = async (
   params.estTabPrint = estTabPrint;
   params.estItemOrSubItem = estItemOrSubItem;
   params.externalCounterIds = externalCounterIds;
+  params.estItemTypePrint = estItemTypePrint;
   const useSubitem = String(estItemOrSubItem).trim().toUpperCase() === 'S';
   console.log('[ESTITEMORSUBITEM] printer names', JSON.stringify({
     ctlText: estItemOrSubItem,

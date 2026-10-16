@@ -51,6 +51,7 @@ const EstimationPreviewModal = ({
   estTabPrint = "N",
   estItemOrSubItem = "I",
   externalCounterIds = "",
+  estItemTypePrint = "N",
 }) => {
   const { theme } = useTheme();
   const styles = createEstimationPreviewModalStyles(theme);
@@ -100,6 +101,7 @@ const EstimationPreviewModal = ({
     const params = {
       estItemOrSubItem,
       externalCounterIds,
+      estItemTypePrint,
       companyName,
       costId: selectedCostId || "",
       empDisplay,
@@ -114,12 +116,16 @@ const EstimationPreviewModal = ({
         itemid: item.itemid, tagno: item.tagno, itemname: item.itemname,
         itemctrid: item.itemctrid ?? item.ITEMCTRID,
         itemctrname: item.itemctrname ?? item.ITEMCTRNAME,
+        itemtypeid: item.itemtypeid ?? item.ITEMTYPEID,
+        itemtypename: item.itemtypename ?? item.ITEMTYPENAME,
         subitemname: item.subitemname || item.SUBITEMNAME || item.subItemName,
         productname: item.productname || item.PRODUCTNAME || item.productName,
         pcs: item.pcs, grswt: item.grswt, netwt: item.netwt,
         wastper: item.wastper, wastage: item.wastage, mcharge: item.mcharge,
         amount: item.amount, displayAmount: item.displayAmount,
         rate: item.rate,
+        itemctrid: item.itemctrid ?? item.ITEMCTRID,
+        itemctrname: item.itemctrname ?? item.ITEMCTRNAME,
         // debug
         ...(console.log('[PreviewItem] wastage:', item.wastage, '| mcharge:', item.mcharge) || {}),
         stones: (item.stones || []).map((s) => ({ stnwt: s.stnwt, stnamt: s.stnamt, stoneunit: s.stoneunit })),
@@ -160,6 +166,7 @@ const EstimationPreviewModal = ({
       })),
     };
     const useSubitem = String(estItemOrSubItem).trim().toUpperCase() === 'S';
+    console.log('[ESTITEMTYPEID] preview estItemTypePrint:', estItemTypePrint, '| items itemtypename:', params.items.map((item) => item.itemtypename ?? null));
     console.log('[ESTITEMORSUBITEM] preview names', JSON.stringify({
       ctlText: estItemOrSubItem,
       items: params.items.map((item) => ({
@@ -173,7 +180,7 @@ const EstimationPreviewModal = ({
       })),
     }));
     return estTabPrint === 'Y' ? buildHtml2(params, previewWidth) : buildHtml(params, previewWidth);
-  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, offerPrintGst, estTabPrint, estItemOrSubItem, externalCounterIds]);
+  }, [slipData, companyName, selectedCostId, previewWidth, empDisplay, offerPrintGst, estTabPrint, estItemOrSubItem, externalCounterIds, estItemTypePrint]);
 
   if (!slipData) {
     return (
